@@ -51,6 +51,44 @@ resource "random_id" "suffix" {
   byte_length = 4
 }
 
+module "resume_table" {
+  source     = "./modules/dynamodb_table"
+  table_name = "benson-haire-resume"
+  hash_key   = "resume_id"
+  attributes = [
+    { name = "resume_id", type = "S" }
+  ]
+}
+
+module "job_posting_table" {
+  source     = "./modules/dynamodb_table"
+  table_name = "benson-haire-job-posting"
+  hash_key   = "job_id"
+  attributes = [
+    { name = "job_id", type = "S" }
+  ]
+}
+
+module "job_requirement_table" {
+  source     = "./modules/dynamodb_table"
+  table_name = "benson-haire-job-requirement"
+  hash_key   = "job_id"
+  attributes = [
+    { name = "job_id", type = "S" }
+  ]
+}
+
+module "match_result_table" {
+  source     = "./modules/dynamodb_table"
+  table_name = "benson-haire-match-result"
+  hash_key   = "job_id"
+  range_key  = "resume_id"
+  attributes = [
+    { name = "job_id", type = "S" },
+    { name = "resume_id", type = "S" }
+  ]
+}
+
 output "bucket_names" {
   value = {
     raw_resume    = aws_s3_bucket.raw_resume.bucket

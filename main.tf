@@ -17,11 +17,8 @@ terraform {
 
 provider "aws" {
   region = var.aws_region
-}
-
-variable "aws_region" {
-  type    = string
-  default = "ap-southeast-1"  # 新加坡
+  shared_credentials_files = ["~/.aws/credentials"]
+  profile = "default"
 }
 
 resource "random_id" "suffix" {
@@ -33,7 +30,7 @@ resource "aws_s3_bucket" "static_site" {
   force_destroy = true
 
   tags = {
-    Name        = "Benson-hAIre-Demo"
+    Name        = var.aws_resource_tag
     Environment = "dev"
   }
 }

@@ -47,7 +47,7 @@ sequenceDiagram
 
 ---
 
-## resume （解析後履歷）
+## parsed_resume （解析後履歷）
 
 primary key`resume_id`（string）
 

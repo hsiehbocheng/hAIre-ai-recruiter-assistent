@@ -9,3 +9,19 @@ variable "aws_region" {
   type        = string
   default     = "ap-southeast-1"  # 新加坡
 }
+
+variable "function_name" {
+  type = string
+}
+
+variable "lambda_package_path" {
+  type = string
+}
+
+variable "iam_role_arn" {
+  type = string
+}
+
+variable "dynamodb_table_name" {
+  type = string
+}

@@ -51,9 +51,11 @@ resource "random_id" "suffix" {
   byte_length = 4
 }
 
+## DynamoDB Table
+
 module "resume_table" {
   source     = "./modules/dynamodb_table"
-  table_name = "benson-haire-resume"
+  table_name = "benson-haire-parsed_resume"
   hash_key   = "resume_id"
   attributes = [
     { name = "resume_id", type = "S" }
@@ -87,6 +89,17 @@ module "match_result_table" {
     { name = "job_id", type = "S" },
     { name = "resume_id", type = "S" }
   ]
+}
+
+## Lambda Function
+
+module "resume_parser_lambda" {
+  source = "./modules/lambda_function"
+
+  function_name       = "benson-haire-resume-parser"
+  lambda_package_path = "${path.module}/lambdas/resume_parser/resume_parser.zip"
+  iam_role_arn        = aws_iam_role.lambda_exec_role.arn
+  dynamodb_table_name = "benson-haire-parsed_resume"
 }
 
 output "bucket_names" {

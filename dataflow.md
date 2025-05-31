@@ -34,6 +34,14 @@ sequenceDiagram
     StepFn_Match->>SNS: 若推薦，通知主管
     SNS->>Email: 發送候選人摘要信件
 ```
+🪣 S3 Bucket 規劃
+
+| Bucket 名稱 | 用途說明 | 建議 prefix 結構 |
+|------------|----------|------------------|
+| benson-haire-raw-resume | 儲存履歷原始檔（如 PDF） | raw-resumes/{team_id}/{job_id}/{yyyymmdd}/resume.pdf |
+| benson-haire-parsed-resume | 履歷解析後的結構化 JSON（備用存取） | parsed-resumes/{resume_id}.json |
+| benson-haire-job-posting | HR 上傳的職缺與團隊 JSON 資料 | job-postings/{team_id}/{job_id}.json |
+| benson-haire-static-site | 靜態網站前端頁面（若有 UI） | index.html, assets/, js/ 等 |
 
 ## 🧱 資料表 Schema
 
@@ -117,7 +125,7 @@ primary key：`job_id`（string）
 | `requirement_text` | array<string> | LLM 組合出的人才需求敘述 |
 | `generated_at` | string | 萃取時間（ISO 8601） |
 
-## match_result（即時比對結果）
+## match_result（比對結果）
 
 primary key：`job_id`（string）
 

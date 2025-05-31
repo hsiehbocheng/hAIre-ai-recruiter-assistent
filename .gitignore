@@ -1,8 +1,34 @@
+# Terraform 相關檔案
 .terraform/
 *.tfstate
 *.tfstate.*
 crash.log
 *.backup
+
+# Terraform 計劃檔案
+*.tfplan
+*.tfplan.*
+
+# Terraform 變數檔案（可能包含敏感資訊）
+*.tfvars
+*.tfvars.json
+
+# Terraform 覆蓋檔案
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# Terraform CLI 配置檔案
+.terraformrc
+terraform.rc
+
+# Terraform 鎖定檔案（在某些情況下可能需要忽略）
+# .terraform.lock.hcl
+
+# Terraform 快取和臨時檔案
+.terraform.tfstate.lock.info
+
 .venv/
 .env
 

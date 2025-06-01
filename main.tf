@@ -21,6 +21,106 @@ locals {
   }
 }
 
+# IAM Role
+## IAM role for Lambda execution
+resource "aws_iam_role" "lambda_exec_bedrock_role" {
+    name = "benson-haire-lambda_exec_bedrock_role"
+    
+    assume_role_policy = jsonencode({
+        Version = "2012-10-17"
+        Statement = [
+        {
+            Action = "sts:AssumeRole"
+            Effect = "Allow"
+            Principal = {
+            Service = "lambda.amazonaws.com"
+            }
+        }
+        ]
+    })
+
+    tags = merge(local.common_tags, { Name = "benson-haire-lambda_exec_bedrock_role" })
+}
+
+## IAM policy
+# IAM Policy - 定義 Bedrock Lambda 的權限
+resource "aws_iam_role_policy" "lambda_exec_bedrock_policy" {
+  name = "benson-haire-lambda-exec-bedrock-policy"
+  role = aws_iam_role.lambda_exec_bedrock_role.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      # CloudWatch Logs 權限 - Lambda 基本執行權限
+      {
+        Effect = "Allow"
+        Action = [
+          "logs:CreateLogGroup",
+          "logs:CreateLogStream",
+          "logs:PutLogEvents"
+        ]
+        Resource = "arn:aws:logs:ap-southeast-1:*:*"
+      },
+      # S3 完整權限 - 可以對所有 S3 buckets 進行任何操作
+      {
+        Effect = "Allow"
+        Action = [
+          "s3:*",
+          "s3-object-lambda:*"
+        ]
+        Resource = "*"
+      },
+      # DynamoDB 權限 - 讀寫履歷和職缺資料
+      {
+        Effect = "Allow"
+        Action = [
+          "dynamodb:PutItem",
+          "dynamodb:GetItem",
+          "dynamodb:UpdateItem",
+          "dynamodb:Query",
+          "dynamodb:Scan"
+        ]
+        Resource = [
+          module.resume_table.table_arn,
+          module.job_posting_table.table_arn,
+          module.job_requirement_table.table_arn,
+          module.match_result_table.table_arn
+        ]
+      },
+      # Bedrock 完整權限 - 可以呼叫任何 Bedrock 服務
+      {
+        Effect = "Allow"
+        Action = [
+          "bedrock:*"
+        ]
+        Resource = "*"
+      }
+    ]
+  })
+}
+
+# S3 事件觸發 Lambda
+resource "aws_s3_bucket_notification" "raw_resume_notification" {
+  bucket = aws_s3_bucket.raw_resume.id
+
+  lambda_function {
+    lambda_function_arn = module.resume_parser_lambda.lambda_arn
+    events              = ["s3:ObjectCreated:*"]
+    filter_suffix       = ".json"
+  }
+
+  depends_on = [aws_lambda_permission.allow_bucket]
+}
+
+# Lambda 權限讓 S3 可以呼叫
+resource "aws_lambda_permission" "allow_bucket" {
+  statement_id  = "AllowExecutionFromS3Bucket"
+  action        = "lambda:InvokeFunction"
+  function_name = module.resume_parser_lambda.function_name
+  principal     = "s3.amazonaws.com"
+  source_arn    = aws_s3_bucket.raw_resume.arn
+}
+
 # 四個 Bucket ─ 依用途拆開
 resource "aws_s3_bucket" "raw_resume" {
   bucket        = "benson-haire-raw-resume-${random_id.suffix.hex}"
@@ -98,8 +198,9 @@ module "resume_parser_lambda" {
 
   function_name       = "benson-haire-resume-parser"
   lambda_package_path = "${path.module}/lambdas/resume_parser/resume_parser.zip"
-  iam_role_arn        = aws_iam_role.lambda_exec_role.arn
+  iam_role_arn        = aws_iam_role.lambda_exec_bedrock_role.arn
   dynamodb_table_name = "benson-haire-parsed_resume"
+  parsed_bucket_name  = aws_s3_bucket.parsed_resume.bucket
 }
 
 output "bucket_names" {

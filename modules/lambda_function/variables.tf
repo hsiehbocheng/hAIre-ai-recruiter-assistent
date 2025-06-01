@@ -17,3 +17,8 @@ variable "dynamodb_table_name" {
   description = "Target DynamoDB table for resume storage"
   type        = string
 }
+
+variable "parsed_bucket_name" {
+  description = "Name of the S3 bucket for parsed resumes"
+  type        = string
+}

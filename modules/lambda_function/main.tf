@@ -2,7 +2,7 @@
 
 resource "aws_lambda_function" "this" {
   function_name = var.function_name
-  handler       = "main.lambda_handler"
+  handler       = "lambda_function.lambda_handler"
   runtime       = "python3.11"
   role          = var.iam_role_arn
 
@@ -14,6 +14,7 @@ resource "aws_lambda_function" "this" {
   environment {
     variables = {
       DYNAMODB_TABLE = var.dynamodb_table_name
+      PARSED_BUCKET  = var.parsed_bucket_name
     }
   }
 
@@ -22,4 +23,12 @@ resource "aws_lambda_function" "this" {
     Environment = "dev"
     Project     = "Benson-hAIre-Demo"
   }
+}
+
+output "lambda_arn" {
+  value = aws_lambda_function.this.arn
+}
+
+output "function_name" {
+  value = aws_lambda_function.this.function_name
 }

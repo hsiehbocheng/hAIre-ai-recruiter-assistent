@@ -1,4 +1,6 @@
-import os, json, urllib.parse
+import os
+import json
+import urllib.parse
 import logging
 
 import boto3

@@ -1,59 +1,172 @@
 # 📊 Benson-hAIre 智能招募系統資料架構
 
-## 🎯 系統資料流程圖
+## 🎯 系統資料流程總覽
 
-```mermaid
-sequenceDiagram
-    participant HR
-    participant Frontend
-    participant S3
-    participant Lambda_Parse
-    participant DynamoDB
-    participant StepFn_Match
-    participant Bedrock
-    participant OpenSearch
-    participant SNS
-    participant Email
-
-    HR->>Frontend: 上傳職缺/團隊資訊
-    Frontend->>S3: 儲存 JSON (job-postings/)
-    S3-->>Lambda_Parse: 觸發 AI 條件萃取
-    Lambda_Parse->>Bedrock: 呼叫 LLM 萃取條件
-    Bedrock-->>Lambda_Parse: 回傳條件列表
-    Lambda_Parse->>DynamoDB: 儲存於 JobPosting 表
-
-    求職者->>Frontend: 投遞履歷
-    Frontend->>S3: 儲存履歷檔案 (raw-resumes/{team_id}/{job_id}/yyyymmdd/resume_id.pdf)
-    S3-->>Lambda_Parse: 觸發履歷解析 Lambda
-    Lambda_Parse->>Bedrock: 呼叫 LLM 萃取摘要
-    Lambda_Parse->>DynamoDB: 寫入 Resume 表
-
-    Lambda_Parse->>StepFn_Match: 依模式決定是否即時比對
-    StepFn_Match->>OpenSearch: 向量比對職缺需求
-    StepFn_Match->>DynamoDB: 寫入 JobMatch 表
-    StepFn_Match->>SNS: 若推薦，通知主管
-    SNS->>Email: 發送候選人摘要信件
-```
-🪣 S3 Bucket 規劃
-
-| Bucket 名稱 | 用途說明 | 建議 prefix 結構 |
-|------------|----------|------------------|
-| benson-haire-raw-resume | 儲存履歷原始檔| yyyymmdd/{job_id}-{resume_id}.pdf |
-| benson-haire-parsed-resume | 履歷解析後的結構化 JSON | yyyymmdd/{job_id}-{resume_id}.json |
-| benson-haire-job-posting | HR 上傳的職缺與團隊 JSON 資料 | job-postings/{team_id}/{job_id}.json |
-| benson-haire-static-site | 靜態網站前端頁面（若有 UI） | index.html, assets/, js/ 等 |
-
-## 🧱 資料表 Schema
+本系統包含三個主要資料流程：
+1. **團隊資訊管理流程**
+2. **職缺資訊管理流程**  
+3. **履歷處理與配對流程**
 
 ---
 
-## parsed_resume （解析後履歷）
+## 🏢 **1. 團隊資訊管理流程**
 
-primary key`resume_id`（string）
+```mermaid
+sequenceDiagram
+    participant Admin as 管理員
+    participant Frontend as 前端介面
+    participant API as API Gateway
+    participant Lambda as Team管理Lambda
+    participant DynamoDB as DynamoDB
+    participant S3 as S3-JobPosting
+
+    Admin->>Frontend: 新增/編輯團隊資訊
+    Frontend->>API: POST/PUT /teams
+    API->>Lambda: 觸發團隊管理函數
+    Lambda->>DynamoDB: 寫入/更新 teams 表
+    Lambda->>S3: 同步團隊資訊到 S3
+    Lambda-->>Frontend: 回傳操作結果
+    Frontend-->>Admin: 顯示成功訊息
+```
+
+---
+
+## 💼 **2. 職缺資訊管理流程**
+
+```mermaid
+sequenceDiagram
+    participant Admin as 管理員
+    participant Frontend as 前端介面
+    participant API as API Gateway
+    participant JobLambda as Job管理Lambda
+    participant DynamoDB as DynamoDB
+    participant S3 as S3-JobPosting
+    participant ReqLambda as 需求萃取Lambda
+    participant Bedrock as Bedrock AI
+
+    Admin->>Frontend: 新增/編輯職缺
+    Frontend->>API: POST/PUT /jobs
+    API->>JobLambda: 觸發職缺管理函數
+    JobLambda->>DynamoDB: 寫入 job_posting 表
+    JobLambda->>S3: 同步職缺到 S3 (team_id/job_id.json)
+    
+    Note over S3,ReqLambda: S3 事件觸發
+    S3-->>ReqLambda: 觸發需求萃取Lambda
+    ReqLambda->>S3: 讀取職缺與團隊資訊
+    ReqLambda->>Bedrock: 呼叫 LLM 萃取需求
+    Bedrock-->>ReqLambda: 回傳需求列表
+    ReqLambda->>DynamoDB: 寫入 job_requirement 表
+    
+    JobLambda-->>Frontend: 回傳職缺ID與需求萃取狀態
+    Frontend-->>Admin: 顯示職缺建立成功，需求萃取中
+```
+
+---
+
+## 📄 **3. 履歷處理與配對流程**
+
+```mermaid
+sequenceDiagram
+    participant Candidate as 求職者
+    participant Frontend as 前端介面
+    participant S3Raw as S3-RawResume
+    participant ParseLambda as 履歷解析Lambda
+    participant Bedrock as Bedrock AI
+    participant S3Parsed as S3-ParsedResume
+    participant DynamoDB as DynamoDB
+    participant MatchLambda as 配對Lambda
+    participant OpenSearch as OpenSearch
+    participant SNS as SNS通知
+    participant Manager as 用人主管
+
+    Candidate->>Frontend: 投遞履歷檔案
+    Frontend->>S3Raw: 上傳履歷 (raw-resumes/xxx.json)
+    
+    Note over S3Raw,ParseLambda: S3 事件觸發
+    S3Raw-->>ParseLambda: 觸發履歷解析Lambda
+    ParseLambda->>Bedrock: 呼叫 LLM 解析履歷
+    Bedrock-->>ParseLambda: 回傳結構化履歷
+    ParseLambda->>S3Parsed: 儲存解析結果
+    ParseLambda->>DynamoDB: 寫入 parsed_resume 表
+    
+    ParseLambda->>MatchLambda: 觸發配對流程
+    MatchLambda->>DynamoDB: 讀取職缺需求
+    MatchLambda->>OpenSearch: 執行向量比對
+    MatchLambda->>DynamoDB: 寫入 match_result 表
+    MatchLambda->>SNS: 若配對成功，發送通知
+    SNS->>Manager: Email/Teams 通知
+```
+
+---
+
+## 🪣 **S3 Bucket 規劃**
+
+| Bucket 名稱 | 用途說明 | 路徑結構 | 備註 |
+|------------|----------|----------|----------|
+| benson-haire-raw-resume | 儲存履歷原始檔案 | `raw-resumes/{yyyymmdd}/{job_id}-{resume_id}.json` | 以 job_id 與 resume_id 組成檔案名稱 |
+| benson-haire-parsed-resume | 履歷解析後的結構化 JSON | `parsed-resumes/{yyyymmdd}/{job_id}-{resume_id}.json` | 以 job_id 與 resume_id 組成檔案名稱 |
+| benson-haire-job-posting | 職缺與團隊 JSON 資料 | `teams/{team_id}.json`<br>`jobs/{team_id}/{job_id}.json` |  |
+| benson-haire-job-requirement | 職缺需求 JSON 資料 | `job-requirements/{job_id}.json` | |
+| benson-haire-static-site | 靜態網站前端頁面 | `index.html`, `assets/`, `js/` 等 | |
+
+---
+
+## 🗃️ **資料表 Schema**
+
+### **teams 表（團隊資訊）**
+
+**Primary Key**: `team_id` (string)
+
+| 欄位名稱 | 資料型別 | 說明 | 範例 |
+|----------|----------|------|------|
+| `team_id` | string | 團隊唯一識別碼 | `cxi-dataai-ci` |
+| `company` | string | 公司名稱 | `國泰產險` |
+| `department` | string | 部門名稱 | `數據暨人工智慧發展部` |
+| `team_name` | string | 團隊/科別名稱 | `企業智能科` |
+| `team_description` | string | 團隊描述 | `負責企業智能化專案開發與維運` |
+| `created_at` | string | 建立時間 (ISO 8601) | `2024-01-15T10:00:00Z` |
+| `updated_at` | string | 更新時間 (ISO 8601) | `2024-01-15T10:00:00Z` |
+| `version` | number | 版本號 | `1` |
+
+---
+
+### **job_posting 表（職缺資訊）**
+
+**Primary Key**: `job_id` (string) - 格式: `{team_id}-{uuid}`
+
+| 欄位名稱 | 資料型別 | 說明 | 範例 |
+|----------|----------|------|------|
+| `job_id` | string | 職缺 ID | `cxi-dataai-ci-a1b2c3d4` |
+| `team_id` | string | 團隊 ID | `cxi-dataai-ci` |
+| `job_title` | string | 職缺名稱 | `資深資料科學家` |
+| `employment_type` | string | 聘用類型 | `全職` |
+| `location` | string | 工作地點 | `台北市` |
+| `salary_min` | number | 最低薪資 | `800000` |
+| `salary_max` | number | 最高薪資 | `1200000` |
+| `salary_note` | string | 薪資說明 | `年薪，含年終獎金` |
+| `responsibilities` | array<string> | 工作內容 | `["開發ML模型", "資料分析"]` |
+| `required_skills` | array<string> | 必備技能 | `["Python", "SQL", "Machine Learning"]` |
+| `nice_to_have_skills` | array<string> | 加分技能 | `["AWS", "Docker", "Kubernetes"]` |
+| `min_experience_years` | number | 最低年資 | `3` |
+| `education_required` | string | 學歷要求 | `碩士以上` |
+| `majors_required` | array<string> | 主修條件 | `["資工", "資管", "統計"]` |
+| `language_required` | array<string> | 語言條件 | `["中文", "英文"]` |
+| `status` | string | 職缺狀態 | `active/paused/closed` |
+| `created_at` | string | 建立時間 (ISO 8601) | `2024-01-15T10:00:00Z` |
+| `updated_at` | string | 更新時間 (ISO 8601) | `2024-01-15T10:00:00Z` |
+| `version` | number | 版本號 | `1` |
+
+---
+
+### **parsed_resume 表（解析後履歷）**
+
+**Primary Key**: `resume_id` (string)
 
 | 欄位階層 | 欄位名稱 | 資料型別 | 說明 |
 |----------|----------|-----------|------|
 | 1 | `resume_id` | string | 履歷唯一識別碼 |
+| 1 | `uuid` | string | 履歷 UUID |
+| 1 | `has_applied` | boolean | 是否曾經投遞過 |
 | 1 | `profile` | object | 履歷內容主體 |
 | 2 | `profile.basics` | object | 基本資料 |
 | 3 | `first_name` / `last_name` | string | 姓名 |
@@ -86,55 +199,95 @@ primary key`resume_id`（string）
 
 ---
 
-## job_psosting 表（原始職缺）
+### **job_requirement 表（LLM 萃取後職缺需求）**
 
-primary key：`job_id`（string）
+**Primary Key**: `job_id` (string)
 
 | 欄位名稱 | 資料型別 | 說明 |
 |----------|-----------|------|
-| `job_id` | string | 職缺 UUID |
-| `company_name` | string | 公司名稱 |
-| `team_id` | string | 單位／部門 |
-| `job_title` | string | 職缺名稱 |
-| `employment_type` | string | 聘用類型（全職、兼職等） |
-| `location` | string | 工作地點 |
-| `salary_min` | number | 最低薪資 |
-| `salary_note` | string | 薪資說明 |
-| `responsibilities` | array<string> | 工作內容 |
-| `domains` | array<string> | 技術／業務領域 |
-| `required_skills` | array<string> | 必備技能 |
-| `nice_to_have_skills` | array<string> | 加分技能 |
-| `min_experience_years` | number | 最低年資 |
-| `industry_experience` | string | 業界經驗需求 |
-| `education_required` | string | 學歷要求 |
-| `majors_required` | array<string> | 主修條件 |
-| `language_required` | array<string> | 語言條件 |
-| `culture_traits` | array<string> | 團隊文化特質 |
-| `post_date` | string | 發佈日期（ISO 8601） |
+| `job_id` | string | 職缺 ID |
+| `requirement_text` | array<string> | LLM 組合出的人才需求敘述 |
+| `is_confirmed` | boolean | 使用者是否已確認需求 |
+| `generated_at` | string | 萃取時間（ISO 8601） |
+| `confirmed_at` | string | 確認時間（ISO 8601） |
+| `version` | number | 版本號 |
 
 ---
 
-## job_requirement（LLM 萃取後職缺敘述）
+### **match_result 表（履歷配對結果）**
 
-primary key：`job_id`（string）
-
-| 欄位名稱 | 資料型別 | 說明 |
-|----------|-----------|------|
-| `job_id` | string | 職缺 ID |\
-| `requirement_text` | array<string> | LLM 組合出的人才需求敘述 |
-| `generated_at` | string | 萃取時間（ISO 8601） |
-
-## match_result（比對結果）
-
-primary key：`job_id`（string）
+**Primary Key**: `job_id` (string), **Sort Key**: `resume_id` (string)
 
 | 欄位名稱 | 資料型別 | 說明 |
 |----------|-----------|------|
-| `job_id` | string | JOB#<job_id> |
-| `resume_id` | string | RESUME#<resume_id> |
+| `job_id` | string | 職缺 ID |
+| `resume_id` | string | 履歷 ID |
 | `match_score` | number | 匹配分數（0-1） |
-| `is_matched` | boolean | 是否匹配 |
+| `is_matched` | boolean | 是否符合配對條件 |
 | `cot_reason` | string | LLM 評分理由 |
 | `matched_at` | string | 比對時間（ISO 8601） |
 | `matched_requirements` | array<string> | 符合的需求項目列表 |
 | `unmatched_requirements` | array<string> | 不符合的需求項目列表 |
+| `notification_sent` | boolean | 是否已發送通知 |
+
+---
+
+## 🔧 **版本控制策略**
+
+### **資料版本控制**：
+1. **團隊資訊**：每次更新 `version` +1，保留歷史版本在 S3
+2. **職缺資訊**：每次修改 `version` +1，需求重新萃取
+3. **需求確認**：使用者確認後更新 `is_confirmed` 和 `confirmed_at`
+
+### **API 版本控制**：
+- 所有 API 使用 `/v1/` 前綴
+- 未來版本變更使用 `/v2/` 等
+
+---
+
+## 🔐 **權限管理與 Cognito 整合**
+
+### **第一階段：Admin Only**
+- 使用 Cognito User Pool 建立管理員帳號
+- 前端使用 Cognito Hosted UI 進行登入
+- Lambda 函數驗證 JWT token
+
+### **Cognito 整合流程**：
+```mermaid
+sequenceDiagram
+    participant User as 管理員
+    participant Frontend as 前端
+    participant Cognito as Cognito
+    participant API as API Gateway
+    participant Lambda as Lambda
+
+    User->>Frontend: 點擊登入
+    Frontend->>Cognito: 重導向到 Hosted UI
+    Cognito->>User: 顯示登入表單
+    User->>Cognito: 輸入帳密
+    Cognito->>Frontend: 回傳 JWT Token
+    Frontend->>API: 請求時帶入 Authorization Header
+    API->>Cognito: 驗證 JWT Token
+    API->>Lambda: Token 有效，執行函數
+```
+
+---
+
+## 📊 **需要建立的 DynamoDB 資料表清單**
+
+1. ✅ **benson-haire-parsed_resume** (已存在)
+2. ✅ **benson-haire-job-posting** (已存在)  
+3. ✅ **benson-haire-job-requirement** (已存在)
+4. ✅ **benson-haire-match-result** (已存在)
+5. ➕ **benson-haire-teams** (需新增)
+
+---
+
+## 🚀 **下一步實作優先順序**
+
+1. **新增 teams 資料表**
+2. **建立團隊管理 API (Lambda + API Gateway)**
+3. **建立職缺管理 API** 
+4. **實作需求萃取 Lambda**
+5. **設定 Cognito 身分驗證**
+6. **建立基本前端介面**

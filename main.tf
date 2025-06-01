@@ -140,6 +140,12 @@ resource "aws_s3_bucket" "job_posting" {
   tags          = merge(local.common_tags, { Name = "job-posting" })
 }
 
+resource "aws_s3_bucket" "job_posting" {
+  bucket        = "benson-haire-job-posting-${random_id.suffix.hex}"
+  force_destroy = true
+  tags          = merge(local.common_tags, { Name = "job-requirement" })
+}
+
 resource "aws_s3_bucket" "static_site" {
   bucket        = "benson-haire-static-site-${random_id.suffix.hex}"
   force_destroy = true

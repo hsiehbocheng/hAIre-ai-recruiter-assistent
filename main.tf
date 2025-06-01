@@ -84,7 +84,8 @@ resource "aws_iam_role_policy" "lambda_exec_bedrock_policy" {
           module.resume_table.table_arn,
           module.job_posting_table.table_arn,
           module.job_requirement_table.table_arn,
-          module.match_result_table.table_arn
+          module.match_result_table.table_arn,
+          module.teams_table.table_arn
         ]
       },
       # Bedrock 完整權限 - 可以呼叫任何 Bedrock 服務
@@ -143,8 +144,8 @@ resource "aws_s3_bucket" "job_posting" {
   tags          = merge(local.common_tags, { Name = "job-posting" })
 }
 
-## 刊登的職缺內容
-resource "aws_s3_bucket" "job_team_info" {
+## 團隊資訊
+resource "aws_s3_bucket" "team_info" {
   bucket        = "benson-haire-team-info-${random_id.suffix.hex}"
   force_destroy = true
   tags          = merge(local.common_tags, { Name = "team-info" })
@@ -183,7 +184,7 @@ module "resume_table" {
 
 module "teams_table" {
   source     = "./modules/dynamodb_table"
-  table_name = "benson-haire-teams-info"
+  table_name = "benson-haire-teams"
   hash_key   = "team_id"
   attributes = [
     { name = "team_id", type = "S" }
@@ -219,7 +220,218 @@ module "match_result_table" {
   ]
 }
 
-## Lambda Function
+# API Gateway
+resource "aws_api_gateway_rest_api" "haire_api" {
+  name        = "benson-haire-api"
+  description = "hAIre API Gateway"
+  
+  tags = merge(local.common_tags, { Name = "benson-haire-api" })
+}
+
+# API Gateway Resource - /teams
+resource "aws_api_gateway_resource" "teams" {
+  rest_api_id = aws_api_gateway_rest_api.haire_api.id
+  parent_id   = aws_api_gateway_rest_api.haire_api.root_resource_id
+  path_part   = "teams"
+}
+
+# API Gateway Resource - /teams/{team_id}
+resource "aws_api_gateway_resource" "team_id" {
+  rest_api_id = aws_api_gateway_rest_api.haire_api.id
+  parent_id   = aws_api_gateway_resource.teams.id
+  path_part   = "{team_id}"
+}
+
+# API Gateway Methods - GET /teams
+resource "aws_api_gateway_method" "teams_get" {
+  rest_api_id   = aws_api_gateway_rest_api.haire_api.id
+  resource_id   = aws_api_gateway_resource.teams.id
+  http_method   = "GET"
+  authorization = "NONE"
+}
+
+# API Gateway Methods - POST /teams
+resource "aws_api_gateway_method" "teams_post" {
+  rest_api_id   = aws_api_gateway_rest_api.haire_api.id
+  resource_id   = aws_api_gateway_resource.teams.id
+  http_method   = "POST"
+  authorization = "NONE"
+}
+
+# API Gateway Methods - GET /teams/{team_id}
+resource "aws_api_gateway_method" "team_get" {
+  rest_api_id   = aws_api_gateway_rest_api.haire_api.id
+  resource_id   = aws_api_gateway_resource.team_id.id
+  http_method   = "GET"
+  authorization = "NONE"
+}
+
+# API Gateway Methods - PUT /teams/{team_id}
+resource "aws_api_gateway_method" "team_put" {
+  rest_api_id   = aws_api_gateway_rest_api.haire_api.id
+  resource_id   = aws_api_gateway_resource.team_id.id
+  http_method   = "PUT"
+  authorization = "NONE"
+}
+
+# API Gateway Methods - DELETE /teams/{team_id}
+resource "aws_api_gateway_method" "team_delete" {
+  rest_api_id   = aws_api_gateway_rest_api.haire_api.id
+  resource_id   = aws_api_gateway_resource.team_id.id
+  http_method   = "DELETE"
+  authorization = "NONE"
+}
+
+# OPTIONS for CORS - /teams
+resource "aws_api_gateway_method" "teams_options" {
+  rest_api_id   = aws_api_gateway_rest_api.haire_api.id
+  resource_id   = aws_api_gateway_resource.teams.id
+  http_method   = "OPTIONS"
+  authorization = "NONE"
+}
+
+# OPTIONS for CORS - /teams/{team_id}
+resource "aws_api_gateway_method" "team_options" {
+  rest_api_id   = aws_api_gateway_rest_api.haire_api.id
+  resource_id   = aws_api_gateway_resource.team_id.id
+  http_method   = "OPTIONS"
+  authorization = "NONE"
+}
+
+# 團隊管理 Lambda
+module "team_management_lambda" {
+  source = "./modules/lambda_function"
+
+  function_name       = "benson-haire-team-management"
+  lambda_package_path = "${path.module}/lambdas/team_management/team_management.zip"
+  iam_role_arn        = aws_iam_role.lambda_exec_bedrock_role.arn
+  handler             = "lambda_function.lambda_handler"
+  runtime             = "python3.11"
+  timeout             = 30
+  
+  environment_variables = {
+    TEAMS_TABLE_NAME = module.teams_table.table_name
+    BACKUP_S3_BUCKET = aws_s3_bucket.job_team_info.bucket
+  }
+  
+  common_tags = local.common_tags
+}
+
+# API Gateway Integration - 所有 teams 相關請求都導向同一個 Lambda
+resource "aws_api_gateway_integration" "teams_get_integration" {
+  rest_api_id = aws_api_gateway_rest_api.haire_api.id
+  resource_id = aws_api_gateway_resource.teams.id
+  http_method = aws_api_gateway_method.teams_get.http_method
+  
+  integration_http_method = "POST"
+  type                   = "AWS_PROXY"
+  uri                    = module.team_management_lambda.invoke_arn
+}
+
+resource "aws_api_gateway_integration" "teams_post_integration" {
+  rest_api_id = aws_api_gateway_rest_api.haire_api.id
+  resource_id = aws_api_gateway_resource.teams.id
+  http_method = aws_api_gateway_method.teams_post.http_method
+  
+  integration_http_method = "POST"
+  type                   = "AWS_PROXY"
+  uri                    = module.team_management_lambda.invoke_arn
+}
+
+resource "aws_api_gateway_integration" "team_get_integration" {
+  rest_api_id = aws_api_gateway_rest_api.haire_api.id
+  resource_id = aws_api_gateway_resource.team_id.id
+  http_method = aws_api_gateway_method.team_get.http_method
+  
+  integration_http_method = "POST"
+  type                   = "AWS_PROXY"
+  uri                    = module.team_management_lambda.invoke_arn
+}
+
+resource "aws_api_gateway_integration" "team_put_integration" {
+  rest_api_id = aws_api_gateway_rest_api.haire_api.id
+  resource_id = aws_api_gateway_resource.team_id.id
+  http_method = aws_api_gateway_method.team_put.http_method
+  
+  integration_http_method = "POST"
+  type                   = "AWS_PROXY"
+  uri                    = module.team_management_lambda.invoke_arn
+}
+
+resource "aws_api_gateway_integration" "team_delete_integration" {
+  rest_api_id = aws_api_gateway_rest_api.haire_api.id
+  resource_id = aws_api_gateway_resource.team_id.id
+  http_method = aws_api_gateway_method.team_delete.http_method
+  
+  integration_http_method = "POST"
+  type                   = "AWS_PROXY"
+  uri                    = module.team_management_lambda.invoke_arn
+}
+
+# CORS Integration
+resource "aws_api_gateway_integration" "teams_options_integration" {
+  rest_api_id = aws_api_gateway_rest_api.haire_api.id
+  resource_id = aws_api_gateway_resource.teams.id
+  http_method = aws_api_gateway_method.teams_options.http_method
+  
+  type = "MOCK"
+  request_templates = {
+    "application/json" = jsonencode({
+      statusCode = 200
+    })
+  }
+}
+
+resource "aws_api_gateway_integration" "team_options_integration" {
+  rest_api_id = aws_api_gateway_rest_api.haire_api.id
+  resource_id = aws_api_gateway_resource.team_id.id
+  http_method = aws_api_gateway_method.team_options.http_method
+  
+  type = "MOCK"
+  request_templates = {
+    "application/json" = jsonencode({
+      statusCode = 200
+    })
+  }
+}
+
+# API Gateway Method Responses and Integration Responses (省略詳細的回應設定)
+# 使用 AWS_PROXY 整合，Lambda 會處理回應格式
+
+# Lambda 權限 - 讓 API Gateway 可以呼叫
+resource "aws_lambda_permission" "allow_api_gateway_teams" {
+  statement_id  = "AllowExecutionFromAPIGateway"
+  action        = "lambda:InvokeFunction"
+  function_name = module.team_management_lambda.function_name
+  principal     = "apigateway.amazonaws.com"
+  source_arn    = "${aws_api_gateway_rest_api.haire_api.execution_arn}/*/*"
+}
+
+# API Gateway Deployment
+resource "aws_api_gateway_deployment" "haire_api_deployment" {
+  depends_on = [
+    aws_api_gateway_integration.teams_get_integration,
+    aws_api_gateway_integration.teams_post_integration,
+    aws_api_gateway_integration.team_get_integration,
+    aws_api_gateway_integration.team_put_integration,
+    aws_api_gateway_integration.team_delete_integration,
+  ]
+  
+  rest_api_id = aws_api_gateway_rest_api.haire_api.id
+}
+
+# API Gateway Stage
+resource "aws_api_gateway_stage" "haire_api_stage" {
+  deployment_id = aws_api_gateway_deployment.haire_api_deployment.id
+  rest_api_id   = aws_api_gateway_rest_api.haire_api.id
+  stage_name    = "dev"
+}
+
+# 輸出 API Gateway URL
+output "api_gateway_url" {
+  value = "${aws_api_gateway_deployment.haire_api_deployment.invoke_url}"
+  description = "API Gateway endpoint URL"
+}
 
 module "resume_parser_lambda" {
   source = "./modules/lambda_function"
@@ -227,8 +439,16 @@ module "resume_parser_lambda" {
   function_name       = "benson-haire-resume-parser"
   lambda_package_path = "${path.module}/lambdas/resume_parser/resume_parser.zip"
   iam_role_arn        = aws_iam_role.lambda_exec_bedrock_role.arn
-  dynamodb_table_name = "benson-haire-parsed_resume"
-  parsed_bucket_name  = aws_s3_bucket.parsed_resume.bucket
+  handler             = "lambda_function.lambda_handler"
+  runtime             = "python3.11"
+  timeout             = 900
+  
+  environment_variables = {
+    DYNAMODB_TABLE = module.resume_table.table_name
+    PARSED_BUCKET  = aws_s3_bucket.parsed_resume.bucket
+  }
+  
+  common_tags = local.common_tags
 }
 
 output "bucket_names" {

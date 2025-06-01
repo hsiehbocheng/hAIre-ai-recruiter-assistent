@@ -13,12 +13,48 @@ variable "iam_role_arn" {
   type        = string
 }
 
-variable "dynamodb_table_name" {
-  description = "Target DynamoDB table for resume storage"
+variable "handler" {
+  description = "Lambda function handler"
   type        = string
+  default     = "lambda_function.lambda_handler"
+}
+
+variable "runtime" {
+  description = "Lambda runtime"
+  type        = string
+  default     = "python3.11"
+}
+
+variable "timeout" {
+  description = "Lambda timeout in seconds"
+  type        = number
+  default     = 900
+}
+
+variable "environment_variables" {
+  description = "Environment variables for the Lambda function"
+  type        = map(string)
+  default     = {}
+}
+
+variable "common_tags" {
+  description = "Common tags to apply to resources"
+  type        = map(string)
+  default     = {
+    Environment = "dev"
+    Project     = "Benson-hAIre-Demo"
+  }
+}
+
+# 為了向後兼容，保留舊的變數（可選）
+variable "dynamodb_table_name" {
+  description = "Target DynamoDB table name (legacy)"
+  type        = string
+  default     = ""
 }
 
 variable "parsed_bucket_name" {
-  description = "Name of the S3 bucket for parsed resumes"
+  description = "Name of the S3 bucket (legacy)"
   type        = string
+  default     = ""
 }

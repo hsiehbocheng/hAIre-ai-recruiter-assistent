@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>HAIRE 招募系統</title>
+    <style>
+      * {
+        box-sizing: border-box;
+        font-family: "Noto Sans TC", sans-serif;
+      }
+
+      body {
+        margin: 0;
+        background-color: #f7f7f7;
+        color: #333;
+      }
+
+      .job-header {
+        display: flex;
+        gap: 1rem;
+        border-bottom: 2px solid #ccc;
+        margin-bottom: 1rem;
+        margin-left: 1rem;
+      }
+
+      .job-header div {
+        padding: 0.5rem 1rem;
+        cursor: pointer;
+      }
+
+      .job-header .active {
+        border-bottom: 3px solid #009688;
+        color: #009688;
+        font-weight: bold;
+      }
+
+      .section {
+        display: none;
+        border-radius: 8px;
+        padding: 1rem;
+        margin-bottom: 1rem;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+      }
+
+      .section.active {
+        display: block;
+      }
+
+      .section-title {
+        font-weight: bold;
+        margin-bottom: 1rem;
+        color: #009688;
+      }
+
+      .card-section {
+        background-color: #fff;
+        border-radius: 8px;
+        padding: 1rem;
+        margin-bottom: 1rem;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+      }
+
+      .info-row {
+        display: flex;
+        flex-wrap: wrap;
+        margin-bottom: 0.5rem;
+      }
+
+      .info-item {
+        flex: 1 1 200px;
+        margin-bottom: 0.5rem;
+      }
+
+      .label {
+        font-weight: bold;
+      }
+
+      ul,
+      ol {
+        margin: 0 0 1rem 0;
+        padding-left: 1.5rem;
+        line-height: 1.6;
+      }
+
+      li {
+        margin-bottom: 0.3rem;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        background-color: #fff;
+        font-family: "Noto Sans TC", sans-serif;
+      }
+
+      thead {
+        background-color: #f8f8f8;
+        border-bottom: 1px solid #e0e0e0;
+      }
+
+      th,
+      td {
+        padding: 0.75rem 1rem;
+        text-align: center;
+        border-bottom: 1px solid #eee;
+        font-size: 0.95rem;
+      }
+
+      th {
+        font-weight: bold;
+        color: #555;
+      }
+
+      .btn-outline-green {
+        display: inline-block;
+        padding: 0.3rem 0.9rem;
+        border: 1px solid #0ca678;
+        border-radius: 20px;
+        background-color: transparent;
+        color: #0ca678;
+        font-size: 0.9rem;
+        cursor: pointer;
+        transition: all 0.2s ease;
+      }
+
+      .btn-outline-green:hover {
+        background-color: #e6f4f1;
+      }
+
+      .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: rgba(0, 0, 0, 0.4);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 999;
+      }
+
+      .modal-box {
+        background: white;
+        width: 600px;
+        max-width: 90%;
+        max-height: 90vh;
+        display: flex;
+        flex-direction: column;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        overflow: hidden;
+      }
+
+      .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1rem;
+        border-bottom: 1px solid #eee;
+      }
+
+      .modal-title {
+        font-weight: bold;
+        color: #333;
+        display: flex;
+        align-items: center;
+        font-size: 1.1rem;
+      }
+
+      .modal-title .line,
+      .section-title .line {
+        display: inline-block;
+        width: 5px;
+        height: 20px;
+        background-color: #009688;
+        margin-right: 0.5rem;
+        border-radius: 2px;
+      }
+
+      .modal-close {
+        font-size: 1.2rem;
+        cursor: pointer;
+        color: #888;
+      }
+
+      .modal-body {
+        padding: 1rem;
+        font-size: 0.95rem;
+        color: #333;
+        line-height: 1.7;
+        text-align: left;
+      }
+
+      .modal-content {
+        overflow-y: auto;
+        flex: 1 1 auto;
+        padding: 1rem;
+        padding-bottom: 3rem;
+      }
+
+      .modal-footer {
+        padding: 1rem;
+        text-align: right;
+        border-top: 1px solid #eee;
+      }
+
+      .btn-confirm {
+        background-color: #0ca678;
+        color: white;
+        border: none;
+        padding: 0.5rem 1rem;
+        border-radius: 6px;
+        font-size: 0.9rem;
+        cursor: pointer;
+      }
+
+      .btn-confirm:hover {
+        background-color: #08966b;
+      }
+
+      .table-container {
+        width: 100%;
+        overflow-x: auto;
+      }
+
+      .table-container table {
+        width: 100%;
+        min-width: 100%;
+        table-layout: fixed;
+      }
+
+
+      .tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.4rem;
+        max-width: 100%;
+        word-break: break-word;
+        justify-content: center; 
+      }
+
+      .tag {
+        display: inline-block;
+        padding: 0.3rem 0.6rem;
+        font-size: 0.75rem;
+        border-radius: 999px;
+        background-color: #f5c84c;
+        color: black;
+        white-space: normal;
+        max-width: 100%;
+        word-break: break-word;
+      }
+
+
+      .tag.red {
+        background-color: #f44336;
+        color: white;
+      }
+
+      .top-bar-style {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.8rem 1.5rem;
+        background-color: #01274d;
+        color: #fff;
+        position: sticky;
+        top: 0;
+        z-index: 1000;
+      }
+
+      @media (max-width: 768px) {
+        .table-container {
+          overflow-x: hidden;
+        }
+
+        .table-container table,
+        .table-container thead,
+        .table-container tbody,
+        .table-container th,
+        .table-container td,
+        .table-container tr {
+          display: block;
+          width: 100%;
+        }
+
+        .table-container thead {
+          display: none;
+        }
+
+        .table-container tr {
+          margin-bottom: 1rem;
+          border: 1px solid #ccc;
+          border-radius: 8px;
+          background-color: #fff;
+          padding: 0.5rem;
+        }
+
+        .table-container td {
+          word-wrap: break-word;
+          word-break: break-word;
+          white-space: normal;
+          text-align: left;
+        }
+
+        .table-container td::before {
+          content: attr(data-label);
+          font-weight: bold;
+          color: #666;
+          margin-right: 1rem;
+        }
+
+        .table-container td:last-child {
+          border-bottom: none;
+        }
+
+        .tags {
+          display: flex;
+          flex-direction: column;
+          align-items: flex-start;
+          gap: 0.3rem;
+          width: 100%;
+        }
+
+        .tag {
+          display: inline-block;
+          white-space: normal;
+          max-width: 100%;
+          box-sizing: border-box;
+          background-color: #f5c84c;
+          padding: 0.3rem 0.6rem;
+          border-radius: 999px;
+          font-size: 0.75rem;
+          color: black;
+        }
+
+        .tag .red {
+          background-color: #f44336;
+          color: white;
+        }
+      }
+
+    </style>
+  </head>
+  <body>
+    <div id="top-bar-placeholder"></div>
+
+    <header class = "job-header">
+      <div class="tab active" data-target="job-info">職缺資訊</div>
+      <div class="tab" data-target="interview-record">面試紀錄</div>
+      <div class="tab" data-target="candidate-record">潛在候選人列表</div>
+    </header>
+    <div id="job-info" class="section active">
+      <div class="card-section">
+        <div class="section-title"><span class="line"></span>職缺說明</div>
+        <p>
+          ChatGPT 說，加入產險數據部你可以……<br />
+          ◆
+          挑戰頂尖的數據技術：追求卓越、擁抱尖端科技，讓你的技能得到充分發揮！<br />
+          ◆
+          探索數據的神祕面紗：參與風險評估、客戶行為分析等多元專案，發現數據背後的驚奇！<br />
+          ◆
+          與頂尖人才同行：與業界頂尖的數據科學家、分析師與工程師共事，學到最實用的技能！<br />
+          ◆ 立即投入數據的海洋，開啟你的冒險之旅！
+        </p>
+      </div>
+
+      <div class="card-section">
+        <div class="section-title"><span class="line"></span>主要任務</div>
+        <ol>
+          <li>公開資料爬蟲、資料或模型服務 API 開發與維護</li>
+          <li>
+            各種結構化及非結構化來源資料盤點、收集、清洗、完善資料倉儲，並因應業務應用場景，規劃與設計分析型資料集
+          </li>
+          <li>
+            建置預測模型、預測客戶商機、風險或行為屬性，協助達成商業決策或提升效率
+          </li>
+          <li>配合業務目標發展數據技術，研究與開發可落地應用之新興數據技術</li>
+        </ol>
+      </div>
+
+      <div class="card-section">
+        <div class="section-title"><span class="line"></span>職務類別</div>
+        <ul>
+          <li>資料科學家</li>
+          <li>資料工程師</li>
+          <li>其他專案管理師</li>
+        </ul>
+      </div>
+
+      <div class="card-section">
+        <div class="section-title"><span class="line"></span>待遇與條件</div>
+        <div class="info-row">
+          <div class="info-item">
+            <span class="label">月薪：</span>44,000
+            元以上（固定或變動薪資因個人資歷或績效而異）
+          </div>
+          <div class="info-item"><span class="label">工作性質：</span>全職</div>
+        </div>
+      </div>
+
+      <div class="card-section">
+        <div class="section-title">
+          <span class="line"></span>擅長工具 / 工作技能
+        </div>
+        <p>不拘</p>
+      </div>
+
+      <div class="card-section">
+        <div class="section-title"><span class="line"></span>其他條件</div>
+        <ol>
+          <li>具 SQL 資料庫程式撰寫能力</li>
+          <li>熟悉 Python、R、SAS 程式分析能力</li>
+        </ol>
+      </div>
+    </div>
+
+    <div id="interview-record" class="section">
+      <div class="card-section">
+        <div class="section-title"><span class="line"></span>面試紀錄</div>
+        <table>
+          <thead>
+            <tr>
+              <th>面試日期</th>
+              <th>面試官</th>
+              <th>面試方式</th>
+              <th>面談結果</th>
+              <th>備註</th>
+              <th>與會紀錄</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>2024-05-01</td>
+              <td>王小明</td>
+              <td>視訊</td>
+              <td>初步通過</td>
+              <td>待主管二面</td>
+              <td>
+                <button class="btn-outline-green" onclick="openModal()">
+                  查看
+                </button>
+              </td>
+            </tr>
+            <tr>
+              <td>2024-05-10</td>
+              <td>李佳蓉</td>
+              <td>現場</td>
+              <td>未通過</td>
+              <td>溝通能力待加強</td>
+              <td>
+                <button class="btn-outline-green" onclick="openModal()">
+                  查看
+                </button>
+              </td>
+            </tr>
+            <tr>
+              <td>2024-05-15</td>
+              <td>張建仁</td>
+              <td>電話</td>
+              <td>錄取</td>
+              <td>薪資條件已確認</td>
+              <td>
+                <button class="btn-outline-green" onclick="openModal()">
+                  查看
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div id="candidate-record" class="section">
+      <div class="card-section">
+        <div class="section-title">
+          <span class="line"></span>潛在候選人列表
+        </div>
+        <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>投遞日期</th>
+              <th>候選人</th>
+              <th>具備</th>
+              <th>未具備</th>
+              <th>匹配度</th>
+              <th>履歷</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td data-label = "投遞日期">2025-01-05</td>
+              <td data-label = "候選人">宋O維</td>
+              <td data-label = "具備">
+                  <div class = "tags">
+                    <span class="tag">#具有前端開發經驗</span>
+                    <span class="tag">#熟悉Python 等開發工具</span>
+                    <span class="tag">#具有5年以上 Data 相關工作經驗</span>
+                  </div>
+              </td>
+              <td data-label = "未具備">
+                <div class = "tags">
+                  <span class="tag red">#無Data 正職工作經驗</span></td>
+                </div>
+              <td data-label = "匹配度">88</td>
+              <td data-label = "履歷">
+                <button class="btn-outline-green" onclick="openResume('resumes/song_wei.pdf')">
+                  查看
+                </button>
+              </td>
+            </tr>
+            <tr>
+              <td data-label = "投遞日期">2025-03-05</td>
+              <td data-label = "候選人">謝O丞</td>
+              <td data-label = "具備">
+                  <div class = "tags">
+                    <span class="tag">#具有前端開發經驗</span>
+                    <span class="tag">#熟悉Python 等開發工具</span>
+                    <span class="tag">#具有5年以上 Data 相關工作經驗</span>
+                    <span class="tag">#具有前端開發經驗</span>
+                    <span class="tag">#熟悉Python 等開發工具</span>
+                    <span class="tag">#具有5年以上 Data 相關工作經驗</span>
+                  </div>
+              </td>
+              <td data-label = "未具備">
+                <div class = "tags">
+                  <span class="tag red">#無Data 正職工作經驗</span>
+                  <span class="tag red">#無Data 正職工作經驗</span>
+                  <span class="tag red">#無Data 正職工作經驗</span>
+                  <span class="tag red">#無Data 正職工作經驗</span>
+                </div>
+              </td>
+              <td data-label = "匹配度">64</td>
+              <td data-label = "履歷">
+                <button class="btn-outline-green" onclick="openResume('resumes/song_wei.pdf')">
+                  查看
+                </button>
+              </td>
+            </tr>
+          </tbody>
+          </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal 彈出視窗 -->
+  <div id="case-modal" class="modal-overlay" style="display: none">
+    <div class="modal-box">
+      <div class="modal-header">
+        <div class="modal-title"><span class="line"></span> 與會紀錄</div>
+        <div class="modal-close" onclick="closeModal()">×</div>
+      </div>
+
+      <div class="modal-content">
+        <div class="modal-body">
+          <strong style="color:#009688;">人資紀錄：</strong><br />
+          候選人具備碩士學歷，主修資料科學，過去三年於金融產業任職資料分析師，熟悉 Python、SQL 與機器學習相關框架（如 scikit-learn、XGBoost）。具備實際參與建模專案經驗，能夠獨立完成資料清理、特徵工程與模型評估，並有撰寫報告與對接業務部門的經驗。回答條理清楚，能舉例說明以資料驅動決策的案例，並強調對 A/B 測試與數據可視化的熟悉度。個人特質穩重，具備良好邏輯思維與溝通能力，對本公司產品方向有基本了解，表達出願意長期發展與持續學習的態度。整體表現穩健，建議進一步安排技術面試。
+          <br /><br />
+          <strong style="color:#009688;">主管回饋：</strong><br />
+          候選人具備紮實的資料科學背景，熟練使用 Python 進行資料處理與模型開發，並對統計分析、機器學習演算法有深入理解。在面談中能清楚說明過去參與的專案，包含從資料清理、建模到模型部署的完整流程，並能針對商業痛點提出數據驅動的解決方案。具備良好的邏輯表達與跨部門溝通能力，曾與 PM、業務單位合作進行產品優化及預測分析，成果有實質貢獻。對於模型評估、調參與部署流程有實務經驗，並能意識到實際應用中的挑戰與限制。態度積極，有持續學習的動力，對於資料治理與 MLOps 亦有基本概念。整體表現佳，具團隊合作精神且能獨立作業，建議納入後續考量。
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button onclick="closeModal()" class="btn-confirm">確認</button>
+      </div>
+    </div>
+  </div>
+    <script>
+      fetch("https://d3tjgl26obrr0.cloudfront.net/top-bar.html")
+        .then((res) => res.text())
+        .then((html) => {
+          document.getElementById("top-bar-placeholder").innerHTML = html;
+          initUserPanelToggle();
+        });
+
+      function initUserPanelToggle() {
+        const toggle = document.getElementById("user-toggle");
+        const panel = document.getElementById("user-panel");
+
+        if (toggle && panel) {
+          toggle.addEventListener("click", (e) => {
+            e.stopPropagation();
+            panel.style.display =
+              panel.style.display === "block" ? "none" : "block";
+          });
+
+          document.addEventListener("click", () => {
+            panel.style.display = "none";
+          });
+
+          panel.addEventListener("click", (e) => {
+            e.stopPropagation();
+          });
+        }
+      }
+      const tabs = document.querySelectorAll(".tab");
+      const sections = document.querySelectorAll(".section");
+
+      tabs.forEach((tab) => {
+        tab.addEventListener("click", () => {
+          // 切換 tab 樣式
+          tabs.forEach((t) => t.classList.remove("active"));
+          tab.classList.add("active");
+
+          // 切換 section 顯示
+          const targetId = tab.getAttribute("data-target");
+          sections.forEach((section) => {
+            section.classList.remove("active");
+          });
+          document.getElementById(targetId).classList.add("active");
+        });
+      });
+
+      function openModal() {
+        document.getElementById("case-modal").style.display = "flex";
+      }
+
+      function closeModal() {
+        document.getElementById("case-modal").style.display = "none";
+      }
+
+      function openResume(pdfUrl) {
+        window.open(pdfUrl, '_blank', 'noopener,noreferrer');
+      }
+
+    </script>
+  </body>
+</html>

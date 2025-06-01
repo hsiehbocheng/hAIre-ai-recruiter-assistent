@@ -2,27 +2,21 @@
 
 resource "aws_lambda_function" "this" {
   function_name = var.function_name
-  handler       = "lambda_function.lambda_handler"
-  runtime       = "python3.11"
+  handler       = var.handler
+  runtime       = var.runtime
   role          = var.iam_role_arn
+  timeout       = var.timeout
 
   filename         = var.lambda_package_path
   source_code_hash = filebase64sha256(var.lambda_package_path)
 
-  timeout = 900 # 15 minutes
-
   environment {
-    variables = {
-      DYNAMODB_TABLE = var.dynamodb_table_name
-      PARSED_BUCKET  = var.parsed_bucket_name
-    }
+    variables = var.environment_variables
   }
 
-  tags = {
-    Name        = var.function_name
-    Environment = "dev"
-    Project     = "Benson-hAIre-Demo"
-  }
+  tags = merge(var.common_tags, {
+    Name = var.function_name
+  })
 }
 
 output "lambda_arn" {
@@ -31,4 +25,8 @@ output "lambda_arn" {
 
 output "function_name" {
   value = aws_lambda_function.this.function_name
+}
+
+output "invoke_arn" {
+  value = aws_lambda_function.this.invoke_arn
 }

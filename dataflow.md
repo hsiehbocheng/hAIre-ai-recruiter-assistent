@@ -38,8 +38,8 @@ sequenceDiagram
 
 | Bucket 名稱 | 用途說明 | 建議 prefix 結構 |
 |------------|----------|------------------|
-| benson-haire-raw-resume | 儲存履歷原始檔（如 PDF） | raw-resumes/{team_id}/{job_id}/{yyyymmdd}/resume.pdf |
-| benson-haire-parsed-resume | 履歷解析後的結構化 JSON（備用存取） | parsed-resumes/{resume_id}.json |
+| benson-haire-raw-resume | 儲存履歷原始檔| yyyymmdd/{job_id}-{resume_id}.pdf |
+| benson-haire-parsed-resume | 履歷解析後的結構化 JSON | yyyymmdd/{job_id}-{resume_id}.json |
 | benson-haire-job-posting | HR 上傳的職缺與團隊 JSON 資料 | job-postings/{team_id}/{job_id}.json |
 | benson-haire-static-site | 靜態網站前端頁面（若有 UI） | index.html, assets/, js/ 等 |
 
@@ -53,8 +53,7 @@ primary key`resume_id`（string）
 
 | 欄位階層 | 欄位名稱 | 資料型別 | 說明 |
 |----------|----------|-----------|------|
-| 1 | `uuid` | string | 履歷唯一識別碼 |
-| 1 | `has_applied` | boolean | 是否曾經投遞過 |
+| 1 | `resume_id` | string | 履歷唯一識別碼 |
 | 1 | `profile` | object | 履歷內容主體 |
 | 2 | `profile.basics` | object | 基本資料 |
 | 3 | `first_name` / `last_name` | string | 姓名 |

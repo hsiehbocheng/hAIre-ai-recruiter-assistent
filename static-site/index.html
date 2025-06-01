@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>hAIre 招募管理系統</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    
+    <!-- 應用程式配置 -->
+    <meta name="api-base-url" content="https://44wy0r4r16.execute-api.ap-southeast-1.amazonaws.com/dev">
+    <meta name="environment" content="production">
+    <meta name="app-version" content="1.0.0">
+    
+    <!-- 載入配置文件 -->
+    <script src="js/config.js"></script>
+    
+    <style>
+        * {
+            box-sizing: border-box;
+            font-family: "Noto Sans TC", sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: #f7f7f7;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        /* 頂部導航 */
+        .top-nav {
+            background: linear-gradient(135deg, #009688 0%, #00695c 100%);
+            color: white;
+            padding: 2rem 0;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        .nav-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 1rem;
+            text-align: center;
+        }
+
+        .nav-brand {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+        }
+
+        .nav-brand i {
+            margin-right: 1rem;
+            font-size: 2.8rem;
+        }
+
+        .nav-subtitle {
+            opacity: 0.9;
+            font-size: 1.2rem;
+            font-weight: 300;
+            margin-bottom: 0.5rem;
+        }
+
+        .nav-description {
+            opacity: 0.8;
+            font-size: 1rem;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        /* 主要內容區 */
+        .main-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 1rem;
+        }
+
+        /* 功能卡片網格 */
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        .feature-card {
+            background-color: #fff;
+            border-radius: 12px;
+            padding: 2rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            transition: all 0.3s ease;
+            text-align: center;
+            border: 2px solid transparent;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 25px rgba(0, 150, 136, 0.15);
+            border-color: #009688;
+        }
+
+        .feature-icon {
+            font-size: 3rem;
+            color: #009688;
+            margin-bottom: 1.5rem;
+        }
+
+        .feature-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 1rem;
+        }
+
+        .feature-description {
+            color: #666;
+            margin-bottom: 1.5rem;
+            line-height: 1.6;
+        }
+
+        .feature-btn {
+            background: linear-gradient(135deg, #009688 0%, #00695c 100%);
+            color: white;
+            border: none;
+            padding: 0.75rem 2rem;
+            border-radius: 25px;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .feature-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0, 150, 136, 0.3);
+        }
+
+        .feature-btn.secondary {
+            background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%);
+        }
+
+        .feature-btn.secondary:hover {
+            box-shadow: 0 4px 12px rgba(108, 117, 125, 0.3);
+        }
+
+        /* 統計區塊 */
+        .stats-section {
+            background-color: #fff;
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 3rem;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+
+        .section-title {
+            font-weight: 700;
+            font-size: 1.3rem;
+            margin-bottom: 1.5rem;
+            color: #009688;
+            display: flex;
+            align-items: center;
+        }
+
+        .section-title .line {
+            display: inline-block;
+            width: 5px;
+            height: 20px;
+            background-color: #009688;
+            margin-right: 0.75rem;
+            border-radius: 2px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .stat-item {
+            text-align: center;
+            padding: 1rem;
+            border-radius: 8px;
+            background-color: #f8f9fa;
+        }
+
+        .stat-number {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #009688;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-label {
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        /* 響應式設計 */
+        @media (max-width: 768px) {
+            .top-nav {
+                padding: 1.5rem 0;
+            }
+
+            .nav-brand {
+                font-size: 2rem;
+            }
+
+            .nav-brand i {
+                font-size: 2.2rem;
+            }
+
+            .features-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .main-container {
+                padding: 0 0.5rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .feature-card {
+                padding: 1.5rem;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* 動畫效果 */
+        .feature-card {
+            animation: fadeInUp 0.6s ease;
+        }
+
+        .feature-card:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .feature-card:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        .feature-card:nth-child(4) {
+            animation-delay: 0.6s;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 頂部導航 -->
+    <div class="top-nav">
+        <div class="nav-container">
+            <div class="nav-brand">
+                <i class="fas fa-brain"></i>
+                hAIre 招募管理系統
+            </div>
+            <div class="nav-subtitle">AI 驅動的智能招募解決方案</div>
+            <div class="nav-description">
+                整合團隊管理、職缺發布、履歷篩選與人才配對，打造高效的招募流程
+            </div>
+        </div>
+    </div>
+
+    <!-- 主要內容 -->
+    <div class="main-container">
+        <!-- 系統統計 -->
+        <div class="stats-section">
+            <div class="section-title">
+                <span class="line"></span>系統概覽
+            </div>
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <div class="stat-number" id="teamsCount">-</div>
+                    <div class="stat-label">團隊數量</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number" id="jobsCount">-</div>
+                    <div class="stat-label">活躍職缺</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number" id="resumesCount">-</div>
+                    <div class="stat-label">履歷總數</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number" id="matchesCount">-</div>
+                    <div class="stat-label">成功配對</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 功能模組 -->
+        <div class="features-grid">
+            <!-- 團隊管理 -->
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <i class="fas fa-users-cog"></i>
+                </div>
+                <div class="feature-title">團隊管理</div>
+                <div class="feature-description">
+                    瀏覽所有團隊，查看團隊詳情和職缺發布狀況。點擊團隊卡片可進入詳細頁面管理團隊職缺。
+                </div>
+                <a href="admin-teams.html" class="feature-btn">
+                    <i class="fas fa-arrow-right"></i> 瀏覽團隊
+                </a>
+            </div>
+
+            <!-- 職缺管理 -->
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <i class="fas fa-briefcase"></i>
+                </div>
+                <div class="feature-title">職缺管理</div>
+                <div class="feature-description">
+                    統一管理所有職缺，進行批次操作和進階篩選。完整的職缺生命週期管理工具。
+                </div>
+                <a href="admin-jobs.html" class="feature-btn">
+                    <i class="fas fa-arrow-right"></i> 管理職缺
+                </a>
+            </div>
+
+            <!-- 履歷管理 -->
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <i class="fas fa-file-alt"></i>
+                </div>
+                <div class="feature-title">履歷管理</div>
+                <div class="feature-description">
+                    自動接收和解析履歷，AI 提取關鍵資訊，建立人才資料庫供快速搜尋配對。
+                </div>
+                <a href="#" class="feature-btn secondary">
+                    <i class="fas fa-clock"></i> 即將推出
+                </a>
+            </div>
+
+            <!-- 數據儀表板 -->
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <i class="fas fa-chart-pie"></i>
+                </div>
+                <div class="feature-title">數據儀表板</div>
+                <div class="feature-description">
+                    招募效率分析、人才流向追蹤、團隊招募狀況，提供決策所需的關鍵數據洞察。
+                </div>
+                <a href="#" class="feature-btn secondary">
+                    <i class="fas fa-clock"></i> 即將推出
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 載入系統統計數據
+        async function loadSystemStats() {
+            try {
+                // 這裡可以調用實際的 API 來取得統計數據
+                // 目前先顯示模擬數據
+                document.getElementById('teamsCount').textContent = '0';
+                document.getElementById('jobsCount').textContent = '0';
+                document.getElementById('resumesCount').textContent = '0';
+                document.getElementById('matchesCount').textContent = '0';
+
+                // 未來可以實作實際的統計 API 調用
+                // const response = await fetch('/api/stats');
+                // const stats = await response.json();
+                // document.getElementById('teamsCount').textContent = stats.teams;
+                // document.getElementById('jobsCount').textContent = stats.jobs;
+                // document.getElementById('resumesCount').textContent = stats.resumes;
+                // document.getElementById('matchesCount').textContent = stats.matches;
+            } catch (error) {
+                console.error('載入統計數據失敗:', error);
+            }
+        }
+
+        // 頁面載入完成後執行
+        document.addEventListener('DOMContentLoaded', () => {
+            loadSystemStats();
+        });
+    </script>
+</body>
+</html> 

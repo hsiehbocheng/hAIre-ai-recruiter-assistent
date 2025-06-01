@@ -2,11 +2,27 @@
 
 class TeamsAPI {
     constructor() {
-        // 替換成您的實際 API Gateway URL
-        this.baseURL = 'https://44wy0r4r16.execute-api.ap-southeast-1.amazonaws.com/dev';
+        // ✅ 使用統一配置系統
+        this.baseURL = this.getApiBaseUrl();
         this.endpoints = {
             teams: '/teams'
         };
+        
+        console.log('🔗 團隊 API 配置:', { baseURL: this.baseURL });
+    }
+
+    /**
+     * 取得 API Base URL
+     */
+    getApiBaseUrl() {
+        // 優先使用 Terraform 生成的配置
+        if (window.CONFIG) {
+            return window.CONFIG.API_BASE_URL;
+        }
+        
+        // 後備配置 - 從 meta 標籤讀取
+        const meta = document.querySelector('meta[name="api-base-url"]');
+        return meta ? meta.getAttribute('content') : 'https://44wy0r4r16.execute-api.ap-southeast-1.amazonaws.com/dev';
     }
 
     /**

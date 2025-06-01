@@ -1,169 +1,892 @@
 <!DOCTYPE html>
-<html lang="zh-TW">
+<html lang="zh-Hant">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>hAIre 團隊管理系統</title>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <title>團隊管理 - hAIre 招募系統</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <link href="css/admin.css" rel="stylesheet">
+    
+    <!-- 載入配置文件 -->
+    <script src="js/config.js"></script>
+    
+    <style>
+        body {
+            background-color: #f8f9fa;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .header-section {
+            background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+            color: white;
+            padding: 2rem 0;
+            margin-bottom: 2rem;
+        }
+        
+        .back-btn {
+            background: rgba(255,255,255,0.2);
+            border: 1px solid rgba(255,255,255,0.3);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.3s ease;
+            margin-bottom: 1rem;
+        }
+        
+        .back-btn:hover {
+            background: rgba(255,255,255,0.3);
+            color: white;
+            text-decoration: none;
+            transform: translateX(-3px);
+        }
+        
+        .page-title {
+            font-size: 2rem;
+            font-weight: 600;
+            margin: 0;
+        }
+        
+        .main-content {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .table-container {
+            padding: 2rem;
+        }
+        
+        .btn-add {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            color: white;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-add:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(40,167,69,0.4);
+            color: white;
+        }
+        
+        .table {
+            margin-top: 1.5rem;
+        }
+        
+        .table th {
+            background-color: #f8f9fa;
+            border-bottom: 2px solid #dee2e6;
+            font-weight: 600;
+            color: #495057;
+        }
+        
+        .btn-action {
+            padding: 0.25rem 0.75rem;
+            font-size: 0.875rem;
+            border-radius: 6px;
+            margin-right: 0.5rem;
+        }
+        
+        .modal-header {
+            background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+            color: white;
+        }
+        
+        .modal-header .btn-close {
+            filter: invert(1);
+        }
+        
+        .upload-area {
+            border: 2px dashed #dee2e6;
+            border-radius: 8px;
+            padding: 2rem;
+            text-align: center;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .upload-area:hover {
+            border-color: #007bff;
+            background-color: #f8f9ff;
+        }
+        
+        .upload-area.dragover {
+            border-color: #007bff;
+            background-color: #e3f2fd;
+        }
+    </style>
 </head>
 <body>
-    <!-- 頂部導航 -->
-    <div class="top-nav">
-        <div class="nav-container">
-            <div class="nav-brand">
-                <i class="fas fa-users-cog"></i>
-                <span>hAIre 團隊管理系統</span>
-            </div>
-            <div class="nav-subtitle">管理組織團隊資訊與結構</div>
+    <div class="header-section">
+        <div class="container">
+            <a href="index.html" class="back-btn">
+                <i class="fas fa-arrow-left"></i>
+                返回主頁
+            </a>
+            <h1 class="page-title">
+                <i class="fas fa-users-cog me-3"></i>
+                團隊管理
+            </h1>
         </div>
     </div>
 
-    <!-- 主要內容 -->
-    <div class="main-container">
-        <!-- 左側：新增團隊表單 -->
-        <div class="left-panel">
-            <div class="card-section">
-                <div class="section-title">
-                    <span class="line"></span>新增團隊
+    <div class="container">
+        <div class="main-content">
+            <div class="table-container">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h2 class="mb-0">團隊列表</h2>
+                    <button type="button" class="btn btn-add" data-bs-toggle="modal" data-bs-target="#addTeamModal">
+                        <i class="fas fa-plus me-2"></i>新增團隊
+                    </button>
                 </div>
                 
-                <form id="teamForm">
-                    <div class="form-group">
-                        <label for="company" class="form-label">公司名稱 <span class="required">*</span></label>
-                        <input type="text" class="form-input" id="company" name="company" 
-                               placeholder="例：國泰產險" required>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="company_code" class="form-label">公司代碼 <span class="required">*</span></label>
-                        <input type="text" class="form-input" id="company_code" name="company_code" 
-                               placeholder="例：CXI (2-8個英數字)" pattern="[a-zA-Z0-9]{2,8}" required>
-                        <div class="form-hint">2-8個英文字母或數字</div>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="department" class="form-label">部門名稱 <span class="required">*</span></label>
-                        <input type="text" class="form-input" id="department" name="department" 
-                               placeholder="例：數據暨人工智慧發展部" required>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="dept_code" class="form-label">部門代碼 <span class="required">*</span></label>
-                        <input type="text" class="form-input" id="dept_code" name="dept_code" 
-                               placeholder="例：DATAAI (2-10個英數字)" pattern="[a-zA-Z0-9]{2,10}" required>
-                        <div class="form-hint">2-10個英文字母或數字</div>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="team_name" class="form-label">團隊名稱 <span class="required">*</span></label>
-                        <input type="text" class="form-input" id="team_name" name="team_name" 
-                               placeholder="例：企業智能科" required>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="team_code" class="form-label">團隊代碼 <span class="required">*</span></label>
-                        <input type="text" class="form-input" id="team_code" name="team_code" 
-                               placeholder="例：CI (2-8個英數字)" pattern="[a-zA-Z0-9]{2,8}" required>
-                        <div class="form-hint">2-8個英文字母或數字</div>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="team_description" class="form-label">團隊描述</label>
-                        <textarea class="form-textarea" id="team_description" name="team_description" 
-                                  rows="4" placeholder="團隊職責與工作內容說明..."></textarea>
-                    </div>
-                    
-                    <!-- 預覽 ID -->
-                    <div class="preview-section" id="previewSection" style="display: none;">
-                        <div class="preview-label">預覽團隊 ID：</div>
-                        <code class="preview-id" id="previewId"></code>
-                    </div>
-                    
-                    <div class="form-actions">
-                        <button type="submit" class="btn-primary" id="submitBtn">
-                            <i class="fas fa-save"></i>建立團隊
-                        </button>
-                        <button type="button" class="btn-secondary" id="cancelBtn" style="display:none;">
-                            <i class="fas fa-times"></i>取消編輯
-                        </button>
-                    </div>
-                </form>
+                <table class="table table-striped table-hover" id="teamsTable">
+                    <thead>
+                        <tr>
+                            <th>公司</th>
+                            <th>部門</th>
+                            <th>團隊名稱</th>
+                            <th>團隊描述</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- 動態載入的團隊資料 -->
+                    </tbody>
+                </table>
             </div>
         </div>
+    </div>
 
-        <!-- 右側：團隊列表 -->
-        <div class="right-panel">
-            <div class="card-section">
-                <div class="section-title">
-                    <span class="line"></span>團隊列表
-                    <div class="title-actions">
-                        <button class="btn-refresh" id="refreshBtn">
-                            <i class="fas fa-sync"></i>重新載入
-                        </button>
-                    </div>
+    <!-- 新增團隊 Modal -->
+    <div class="modal fade" id="addTeamModal" tabindex="-1" aria-labelledby="addTeamModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addTeamModalLabel">
+                        <i class="fas fa-plus me-2"></i>新增團隊
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="關閉"></button>
                 </div>
-                
-                <!-- 搜尋控制區 -->
-                <div class="search-controls">
-                    <div class="search-row">
-                        <div class="search-input-group">
-                            <input type="text" class="search-input" id="searchInput" 
-                                   placeholder="搜尋團隊名稱、公司或部門...">
-                            <button class="search-btn" id="searchBtn">
-                                <i class="fas fa-search"></i>
-                            </button>
+                <div class="modal-body">
+                    <form id="addTeamForm">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="company" class="form-label">公司名稱 *</label>
+                                    <input type="text" class="form-control" id="company" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="companyCode" class="form-label">公司代碼 *</label>
+                                    <input type="text" class="form-control" id="companyCode" required 
+                                           placeholder="例如：CXI, CATHAY, FUBON" maxlength="8" style="text-transform: uppercase;">
+                                    <div class="form-text">2-8個英數字，例如：CXI（國泰產險）、CATHAY（國泰金控）</div>
+                                </div>
+                            </div>
                         </div>
-                        <select class="filter-select" id="companyFilter">
-                            <option value="">所有公司</option>
-                        </select>
-                    </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="department" class="form-label">部門名稱 *</label>
+                                    <input type="text" class="form-control" id="department" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="deptCode" class="form-label">部門代碼 *</label>
+                                    <input type="text" class="form-control" id="deptCode" required 
+                                           placeholder="例如：DATAAI, IT, HR, FINANCE" maxlength="10" style="text-transform: uppercase;">
+                                    <div class="form-text">2-10個英數字，例如：DATAAI（數據AI部）、IT（資訊部）</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="teamName" class="form-label">團隊/科別名稱 *</label>
+                                    <input type="text" class="form-control" id="teamName" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="teamCode" class="form-label">科別代碼 *</label>
+                                    <input type="text" class="form-control" id="teamCode" required 
+                                           placeholder="例如：CI, CT, DEV, QA" maxlength="8" style="text-transform: uppercase;">
+                                    <div class="form-text">2-8個英數字，例如：CI（企業智能科）、CT（客戶科技科）</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="teamDescription" class="form-label">團隊描述</label>
+                            <textarea class="form-control" id="teamDescription" rows="3" 
+                                      placeholder="例如：負責企業智能化專案開發與維運"></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <div class="alert alert-info">
+                                <i class="fas fa-info-circle me-2"></i>
+                                <strong>團隊 ID 預覽：</strong> <span id="teamIdPreview">請填寫必要欄位</span>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">團隊相關文件上傳 (可選)</label>
+                            <div class="upload-area" id="uploadArea">
+                                <i class="fas fa-cloud-upload-alt fa-3x text-muted mb-3"></i>
+                                <p class="mb-2">點擊或拖拽文件到此處</p>
+                                <p class="text-muted small">支援 TXT, JSON, CSV, PDF 格式</p>
+                                <input type="file" id="fileInput" multiple accept=".txt,.json,.csv,.pdf" style="display: none;">
+                            </div>
+                            <div id="fileList" class="mt-2"></div>
+                        </div>
+                    </form>
                 </div>
-                
-                <!-- 載入狀態 -->
-                <div id="loadingSpinner" class="loading-state">
-                    <div class="spinner"></div>
-                    <p>載入團隊資料中...</p>
-                </div>
-                
-                <!-- 團隊列表 -->
-                <div id="teamsContainer" style="display:none;">
-                    <div class="teams-grid" id="teamsGrid">
-                        <!-- 動態載入內容 -->
-                    </div>
-                </div>
-                
-                <!-- 空狀態 -->
-                <div id="emptyState" class="empty-state" style="display:none;">
-                    <div class="empty-icon">
-                        <i class="fas fa-users"></i>
-                    </div>
-                    <h3>尚無團隊資料</h3>
-                    <p>請使用左側表單建立第一個團隊</p>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" id="createTeam" class="btn btn-primary">儲存團隊</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- 成功/錯誤訊息 Toast -->
-    <div class="toast-container" id="toastContainer">
-        <div class="toast" id="messageToast" style="display: none;">
-            <div class="toast-icon" id="toastIcon">
-                <i class="fas fa-info-circle"></i>
+    <!-- 編輯團隊 Modal -->
+    <div class="modal fade" id="editTeamModal" tabindex="-1" aria-labelledby="editTeamModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editTeamModalLabel">
+                        <i class="fas fa-edit me-2"></i>編輯團隊
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="關閉"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="editTeamForm">
+                        <input type="hidden" id="editTeamId">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="editCompany" class="form-label">公司名稱 *</label>
+                                    <input type="text" class="form-control" id="editCompany" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="editCompanyCode" class="form-label">公司代碼 *</label>
+                                    <input type="text" class="form-control" id="editCompanyCode" required 
+                                           placeholder="例如：CXI, CATHAY, FUBON" maxlength="8" style="text-transform: uppercase;">
+                                    <div class="form-text">2-8個英數字，例如：CXI（國泰產險）、CATHAY（國泰金控）</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="editDepartment" class="form-label">部門名稱 *</label>
+                                    <input type="text" class="form-control" id="editDepartment" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="editDeptCode" class="form-label">部門代碼 *</label>
+                                    <input type="text" class="form-control" id="editDeptCode" required 
+                                           placeholder="例如：DATAAI, IT, HR, FINANCE" maxlength="10" style="text-transform: uppercase;">
+                                    <div class="form-text">2-10個英數字，例如：DATAAI（數據AI部）、IT（資訊部）</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="editTeamName" class="form-label">團隊/科別名稱 *</label>
+                                    <input type="text" class="form-control" id="editTeamName" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="editTeamCode" class="form-label">科別代碼 *</label>
+                                    <input type="text" class="form-control" id="editTeamCode" required 
+                                           placeholder="例如：CI, CT, DEV, QA" maxlength="8" style="text-transform: uppercase;">
+                                    <div class="form-text">2-8個英數字，例如：CI（企業智能科）、CT（客戶科技科）</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="editTeamDescription" class="form-label">團隊描述</label>
+                            <textarea class="form-control" id="editTeamDescription" rows="3" 
+                                      placeholder="例如：負責企業智能化專案開發與維運"></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">現有文件</label>
+                            <div id="existingFiles" class="border rounded p-3 bg-light">
+                                <!-- 現有文件列表 -->
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">上傳新文件 (可選)</label>
+                            <div class="upload-area" id="editUploadArea">
+                                <i class="fas fa-cloud-upload-alt fa-3x text-muted mb-3"></i>
+                                <p class="mb-2">點擊或拖拽文件到此處</p>
+                                <p class="text-muted small">支援 TXT, JSON, CSV, PDF 格式</p>
+                                <input type="file" id="editFileInput" multiple accept=".txt,.json,.csv,.pdf" style="display: none;">
+                            </div>
+                            <div id="editFileList" class="mt-2"></div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" id="updateTeam" class="btn btn-primary">更新團隊</button>
+                </div>
             </div>
-            <div class="toast-content">
-                <div class="toast-title" id="toastTitle">訊息</div>
-                <div class="toast-message" id="toastMessage">內容</div>
-            </div>
-            <button class="toast-close" onclick="hideToast()">
-                <i class="fas fa-times"></i>
-            </button>
         </div>
     </div>
 
-    <!-- Scripts -->
-    <script src="js/teams-api.js"></script>
-    <script src="js/teams-ui.js"></script>
+    <!-- 團隊詳情 Modal -->
+    <div class="modal fade" id="teamDetailModal" tabindex="-1" aria-labelledby="teamDetailModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="teamDetailModalLabel">
+                        <i class="fas fa-info-circle me-2"></i>團隊詳情
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="關閉"></button>
+                </div>
+                <div class="modal-body" id="teamDetailContent">
+                    <!-- 團隊詳情內容 -->
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">關閉</button>
+                    <button type="button" class="btn btn-primary" id="editFromDetail">編輯團隊</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // 全域變數
+        let teamsData = [];
+        let selectedFiles = [];
+        let editSelectedFiles = [];
+
+        // 頁面載入完成後執行
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('頁面載入完成，開始初始化...');
+            
+            // 檢查配置
+            if (window.CONFIG) {
+                console.log('✅ 配置載入成功:', window.CONFIG);
+            } else {
+                console.error('❌ 配置載入失敗');
+            }
+            
+            // 載入團隊資料
+            fetchTeams();
+            
+            // 初始化事件監聽器
+            initializeEventListeners();
+        });
+
+        // 初始化事件監聽器
+        function initializeEventListeners() {
+            // 新增團隊按鈕
+            document.getElementById('createTeam').addEventListener('click', createTeam);
+            
+            // 更新團隊按鈕
+            document.getElementById('updateTeam').addEventListener('click', updateTeam);
+            
+            // 文件上傳相關
+            setupFileUpload('uploadArea', 'fileInput', 'fileList', selectedFiles);
+            setupFileUpload('editUploadArea', 'editFileInput', 'editFileList', editSelectedFiles);
+            
+            // 從詳情頁編輯
+            document.getElementById('editFromDetail').addEventListener('click', function() {
+                const teamId = this.getAttribute('data-team-id');
+                showEditModal(teamId);
+                bootstrap.Modal.getInstance(document.getElementById('teamDetailModal')).hide();
+            });
+
+            // 新增團隊 ID 預覽功能
+            const previewFields = ['companyCode', 'deptCode', 'teamCode'];
+            previewFields.forEach(fieldId => {
+                document.getElementById(fieldId).addEventListener('input', updateTeamIdPreview);
+            });
+        }
+
+        // 設置文件上傳功能
+        function setupFileUpload(areaId, inputId, listId, filesArray) {
+            const uploadArea = document.getElementById(areaId);
+            const fileInput = document.getElementById(inputId);
+            const fileList = document.getElementById(listId);
+
+            // 點擊上傳區域觸發文件選擇
+            uploadArea.addEventListener('click', () => fileInput.click());
+
+            // 文件選擇事件
+            fileInput.addEventListener('change', function(e) {
+                handleFiles(e.target.files, filesArray, fileList);
+            });
+
+            // 拖拽事件
+            uploadArea.addEventListener('dragover', function(e) {
+                e.preventDefault();
+                uploadArea.classList.add('dragover');
+            });
+
+            uploadArea.addEventListener('dragleave', function(e) {
+                e.preventDefault();
+                uploadArea.classList.remove('dragover');
+            });
+
+            uploadArea.addEventListener('drop', function(e) {
+                e.preventDefault();
+                uploadArea.classList.remove('dragover');
+                handleFiles(e.dataTransfer.files, filesArray, fileList);
+            });
+        }
+
+        // 處理文件
+        function handleFiles(files, filesArray, fileListElement) {
+            for (let file of files) {
+                if (isValidFileType(file)) {
+                    filesArray.push(file);
+                } else {
+                    alert(`檔案 ${file.name} 格式不支援，僅支援 TXT, JSON, CSV, PDF 格式。`);
+                }
+            }
+            renderFileList(filesArray, fileListElement);
+        }
+
+        // 驗證文件類型
+        function isValidFileType(file) {
+            const allowedTypes = ['.txt', '.json', '.csv', '.pdf'];
+            const fileName = file.name.toLowerCase();
+            return allowedTypes.some(type => fileName.endsWith(type));
+        }
+
+        // 渲染文件列表
+        function renderFileList(filesArray, fileListElement) {
+            fileListElement.innerHTML = '';
+            filesArray.forEach((file, index) => {
+                const fileItem = document.createElement('div');
+                fileItem.className = 'alert alert-info alert-dismissible fade show';
+                fileItem.innerHTML = `
+                    <i class="fas fa-file me-2"></i>${file.name}
+                    <button type="button" class="btn-close" onclick="removeFile(${index}, '${fileListElement.id}')"></button>
+                `;
+                fileListElement.appendChild(fileItem);
+            });
+        }
+
+        // 移除文件
+        function removeFile(index, listId) {
+            if (listId === 'fileList') {
+                selectedFiles.splice(index, 1);
+                renderFileList(selectedFiles, document.getElementById('fileList'));
+            } else if (listId === 'editFileList') {
+                editSelectedFiles.splice(index, 1);
+                renderFileList(editSelectedFiles, document.getElementById('editFileList'));
+            }
+        }
+
+        // 載入團隊資料
+        async function fetchTeams() {
+            try {
+                console.log('🔄 開始載入團隊資料...');
+                
+                // 使用配置中的 API URL，如果沒有則使用後備 URL
+                const apiUrl = window.CONFIG ? window.CONFIG.API_BASE_URL : 'https://m3jj8hrfhj.execute-api.ap-southeast-1.amazonaws.com/dev';
+                console.log('🔗 API URL:', apiUrl + '/teams');
+                
+                const response = await fetch(apiUrl + '/teams', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        // 如果需要驗證，加上 Authorization header
+                        // 'Authorization': localStorage.getItem('id_token')
+                    }
+                });
+
+                console.log('📡 API 回應狀態:', response.status);
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                console.log('✅ 團隊資料載入成功:', data);
+                
+                teamsData = data.teams || data; // 處理可能的資料結構差異
+                renderTeamsTable(teamsData);
+                
+            } catch (error) {
+                console.error('❌ 載入團隊資料失敗:', error);
+                showAlert('載入團隊資料失敗: ' + error.message, 'danger');
+            }
+        }
+
+        // 渲染團隊表格
+        function renderTeamsTable(teams) {
+            const tbody = document.querySelector('#teamsTable tbody');
+            tbody.innerHTML = '';
+
+            if (!teams || teams.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="5" class="text-center text-muted py-4">
+                            <i class="fas fa-inbox fa-2x mb-2 d-block"></i>
+                            尚無團隊資料
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            teams.forEach(team => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${team.company || ''}</td>
+                    <td>${team.department || ''}</td>
+                    <td>${team.team_name || ''}</td>
+                    <td>
+                        <div class="text-truncate" style="max-width: 200px;" title="${team.team_description || ''}">
+                            ${team.team_description || ''}
+                        </div>
+                    </td>
+                    <td>
+                        <button class="btn btn-info btn-action btn-sm" onclick="showTeamDetail('${team.team_id}')">
+                            <i class="fas fa-eye"></i> 檢視
+                        </button>
+                        <button class="btn btn-primary btn-action btn-sm" onclick="showEditModal('${team.team_id}')">
+                            <i class="fas fa-edit"></i> 編輯
+                        </button>
+                        <button class="btn btn-danger btn-action btn-sm" onclick="deleteTeam('${team.team_id}')">
+                            <i class="fas fa-trash"></i> 刪除
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        // 新增團隊
+        async function createTeam() {
+            try {
+                const formData = {
+                    company: document.getElementById('company').value.trim(),
+                    company_code: document.getElementById('companyCode').value.trim().toUpperCase(),
+                    department: document.getElementById('department').value.trim(),
+                    dept_code: document.getElementById('deptCode').value.trim().toUpperCase(),
+                    team_name: document.getElementById('teamName').value.trim(),
+                    team_code: document.getElementById('teamCode').value.trim().toUpperCase(),
+                    team_description: document.getElementById('teamDescription').value.trim()
+                };
+
+                // 驗證必填欄位
+                if (!formData.company || !formData.company_code || !formData.department || 
+                    !formData.dept_code || !formData.team_name || !formData.team_code) {
+                    showAlert('請填寫所有必填欄位', 'warning');
+                    return;
+                }
+
+                console.log('📤 建立團隊資料:', formData);
+
+                const apiUrl = window.CONFIG ? window.CONFIG.API_BASE_URL : 'https://m3jj8hrfhj.execute-api.ap-southeast-1.amazonaws.com/dev';
+                
+                const response = await fetch(apiUrl + '/teams', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(formData)
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.text();
+                    throw new Error(`HTTP ${response.status}: ${errorData}`);
+                }
+
+                const result = await response.json();
+                console.log('✅ 團隊建立成功:', result);
+
+                // 如果有文件需要上傳
+                if (selectedFiles.length > 0 && result.team_id) {
+                    await uploadFiles(result.team_id, selectedFiles);
+                }
+
+                // 關閉 modal 並重新載入資料
+                bootstrap.Modal.getInstance(document.getElementById('addTeamModal')).hide();
+                resetAddForm();
+                fetchTeams();
+                showAlert('團隊建立成功！', 'success');
+
+            } catch (error) {
+                console.error('❌ 建立團隊失敗:', error);
+                showAlert('建立團隊失敗: ' + error.message, 'danger');
+            }
+        }
+
+        // 顯示編輯 Modal
+        function showEditModal(teamId) {
+            const team = teamsData.find(t => t.team_id === teamId);
+            if (!team) return;
+
+            document.getElementById('editTeamId').value = team.team_id;
+            document.getElementById('editCompany').value = team.company || '';
+            document.getElementById('editCompanyCode').value = team.company_code || '';
+            document.getElementById('editDepartment').value = team.department || '';
+            document.getElementById('editDeptCode').value = team.dept_code || '';
+            document.getElementById('editTeamName').value = team.team_name || '';
+            document.getElementById('editTeamCode').value = team.team_code || '';
+            document.getElementById('editTeamDescription').value = team.team_description || '';
+
+            // 清空編輯文件列表
+            editSelectedFiles = [];
+            renderFileList(editSelectedFiles, document.getElementById('editFileList'));
+
+            // 顯示現有文件（如果有的話）
+            displayExistingFiles(team.team_id);
+
+            new bootstrap.Modal(document.getElementById('editTeamModal')).show();
+        }
+
+        // 更新團隊
+        async function updateTeam() {
+            try {
+                const teamId = document.getElementById('editTeamId').value;
+                const formData = {
+                    team_id: teamId,
+                    company: document.getElementById('editCompany').value.trim(),
+                    company_code: document.getElementById('editCompanyCode').value.trim().toUpperCase(),
+                    department: document.getElementById('editDepartment').value.trim(),
+                    dept_code: document.getElementById('editDeptCode').value.trim().toUpperCase(),
+                    team_name: document.getElementById('editTeamName').value.trim(),
+                    team_code: document.getElementById('editTeamCode').value.trim().toUpperCase(),
+                    team_description: document.getElementById('editTeamDescription').value.trim()
+                };
+
+                // 驗證必填欄位
+                if (!formData.company || !formData.company_code || !formData.department || 
+                    !formData.dept_code || !formData.team_name || !formData.team_code) {
+                    showAlert('請填寫所有必填欄位', 'warning');
+                    return;
+                }
+
+                console.log('📤 更新團隊資料:', formData);
+
+                const apiUrl = window.CONFIG ? window.CONFIG.API_BASE_URL : 'https://m3jj8hrfhj.execute-api.ap-southeast-1.amazonaws.com/dev';
+                
+                const response = await fetch(apiUrl + '/teams/' + teamId, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(formData)
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.text();
+                    throw new Error(`HTTP ${response.status}: ${errorData}`);
+                }
+
+                console.log('✅ 團隊更新成功');
+
+                // 如果有新文件需要上傳
+                if (editSelectedFiles.length > 0) {
+                    await uploadFiles(teamId, editSelectedFiles);
+                }
+
+                // 關閉 modal 並重新載入資料
+                bootstrap.Modal.getInstance(document.getElementById('editTeamModal')).hide();
+                fetchTeams();
+                showAlert('團隊更新成功！', 'success');
+
+            } catch (error) {
+                console.error('❌ 更新團隊失敗:', error);
+                showAlert('更新團隊失敗: ' + error.message, 'danger');
+            }
+        }
+
+        // 刪除團隊
+        async function deleteTeam(teamId) {
+            if (!confirm('確定要刪除這個團隊嗎？此操作無法復原。')) {
+                return;
+            }
+
+            try {
+                console.log('🗑️ 刪除團隊:', teamId);
+
+                const apiUrl = window.CONFIG ? window.CONFIG.API_BASE_URL : 'https://m3jj8hrfhj.execute-api.ap-southeast-1.amazonaws.com/dev';
+                
+                const response = await fetch(`${apiUrl}/teams/${encodeURIComponent(teamId)}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.text();
+                    throw new Error(`HTTP ${response.status}: ${errorData}`);
+                }
+
+                console.log('✅ 團隊刪除成功');
+                fetchTeams();
+                showAlert('團隊刪除成功！', 'success');
+
+            } catch (error) {
+                console.error('❌ 刪除團隊失敗:', error);
+                showAlert('刪除團隊失敗: ' + error.message, 'danger');
+            }
+        }
+
+        // 顯示團隊詳情
+        function showTeamDetail(teamId) {
+            const team = teamsData.find(t => t.team_id === teamId);
+            if (!team) return;
+
+            const content = document.getElementById('teamDetailContent');
+            content.innerHTML = `
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6><i class="fas fa-building me-2"></i>公司</h6>
+                        <p class="border-bottom pb-2">${team.company || '未設定'}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <h6><i class="fas fa-building me-2"></i>部門</h6>
+                        <p class="border-bottom pb-2">${team.department || '未設定'}</p>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6><i class="fas fa-users me-2"></i>團隊名稱</h6>
+                        <p class="border-bottom pb-2">${team.team_name || '未設定'}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <h6><i class="fas fa-code me-2"></i>團隊代碼</h6>
+                        <p class="border-bottom pb-2">${team.company_code}-${team.dept_code}-${team.team_code}</p>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <h6><i class="fas fa-info-circle me-2"></i>團隊描述</h6>
+                    <p class="border-bottom pb-2">${team.team_description || '未設定'}</p>
+                </div>
+                <div class="mb-3">
+                    <h6><i class="fas fa-file me-2"></i>相關文件</h6>
+                    <div id="teamFiles" class="border rounded p-3 bg-light">
+                        載入中...
+                    </div>
+                </div>
+                <div class="text-muted small">
+                    <p><strong>團隊 ID:</strong> ${team.team_id}</p>
+                    <p><strong>建立時間:</strong> ${team.created_at || '未知'}</p>
+                    <p><strong>最後更新:</strong> ${team.updated_at || '未知'}</p>
+                </div>
+            `;
+
+            // 設置編輯按鈕的 team_id
+            document.getElementById('editFromDetail').setAttribute('data-team-id', teamId);
+
+            // 載入文件列表
+            loadTeamFiles(teamId);
+
+            new bootstrap.Modal(document.getElementById('teamDetailModal')).show();
+        }
+
+        // 載入團隊文件
+        async function loadTeamFiles(teamId) {
+            const filesContainer = document.getElementById('teamFiles');
+            try {
+                // 這裡應該呼叫 S3 API 來取得文件列表
+                // 暫時顯示佔位符
+                filesContainer.innerHTML = '<p class="text-muted">文件功能開發中...</p>';
+            } catch (error) {
+                filesContainer.innerHTML = '<p class="text-danger">載入文件失敗</p>';
+            }
+        }
+
+        // 顯示現有文件
+        function displayExistingFiles(teamId) {
+            const container = document.getElementById('existingFiles');
+            // 這裡應該從 S3 取得現有文件列表
+            container.innerHTML = '<p class="text-muted">文件功能開發中...</p>';
+        }
+
+        // 上傳文件到 S3
+        async function uploadFiles(teamId, files) {
+            console.log('📁 準備上傳文件:', files.length, '個文件到團隊:', teamId);
+            // 這裡需要實作 S3 上傳邏輯
+            // 暫時跳過文件上傳
+        }
+
+        // 重置新增表單
+        function resetAddForm() {
+            document.getElementById('addTeamForm').reset();
+            selectedFiles = [];
+            renderFileList(selectedFiles, document.getElementById('fileList'));
+        }
+
+        // 顯示警告訊息
+        function showAlert(message, type = 'info') {
+            // 移除現有的 alert
+            const existingAlert = document.querySelector('.alert-dismissible');
+            if (existingAlert) {
+                existingAlert.remove();
+            }
+
+            // 建立新的 alert
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+            alertDiv.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+            alertDiv.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+
+            document.body.appendChild(alertDiv);
+
+            // 3秒後自動關閉
+            setTimeout(() => {
+                if (alertDiv && alertDiv.parentNode) {
+                    alertDiv.remove();
+                }
+            }, 3000);
+        }
+
+        // 更新團隊 ID 預覽
+        function updateTeamIdPreview() {
+            const companyCode = document.getElementById('companyCode').value.trim().toUpperCase();
+            const deptCode = document.getElementById('deptCode').value.trim().toUpperCase();
+            const teamCode = document.getElementById('teamCode').value.trim().toUpperCase();
+            
+            const previewElement = document.getElementById('teamIdPreview');
+            
+            if (companyCode && deptCode && teamCode) {
+                // 生成時間戳 (MMDDHHSS 格式)
+                const now = new Date();
+                const month = String(now.getMonth() + 1).padStart(2, '0');
+                const day = String(now.getDate()).padStart(2, '0');
+                const hour = String(now.getHours()).padStart(2, '0');
+                const minute = String(now.getMinutes()).padStart(2, '0');
+                const timestamp = `${month}${day}${hour}${minute}`;
+                
+                const teamId = `${companyCode}-${deptCode}-${teamCode}-${timestamp}`;
+                previewElement.innerHTML = `<code>${teamId}</code>`;
+                previewElement.className = 'text-success';
+            } else {
+                previewElement.textContent = '請填寫必要欄位';
+                previewElement.className = 'text-muted';
+            }
+        }
+    </script>
 </body>
 </html>
+

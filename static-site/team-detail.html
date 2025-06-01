@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>團隊詳情 - hAIre 招募系統</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="css/admin.css" rel="stylesheet">
+    
+    <!-- 應用程式配置 -->
+    <meta name="api-base-url" content="https://44wy0r4r16.execute-api.ap-southeast-1.amazonaws.com/dev">
+    <meta name="environment" content="production">
+    <meta name="app-version" content="1.0.0">
+    
+    <!-- 載入配置文件 -->
+    <script src="js/config.js"></script>
+    
+    <style>
+        .team-detail-container {
+            display: flex;
+            gap: 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem 1rem;
+        }
+
+        .team-info-section {
+            flex: 2;
+        }
+
+        .jobs-section {
+            flex: 1;
+        }
+
+        .team-header {
+            background: linear-gradient(135deg, #009688 0%, #00695c 100%);
+            color: white;
+            padding: 2rem;
+            border-radius: 12px;
+            margin-bottom: 2rem;
+        }
+
+        .team-title {
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .team-company {
+            font-size: 1.2rem;
+            opacity: 0.9;
+            margin-bottom: 1rem;
+        }
+
+        .team-meta {
+            display: flex;
+            gap: 2rem;
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+
+        .expandable-section {
+            background-color: #fff;
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+
+        .section-title {
+            font-weight: 700;
+            font-size: 1.3rem;
+            margin-bottom: 1.5rem;
+            color: #009688;
+            display: flex;
+            align-items: center;
+        }
+
+        .section-title .line {
+            display: inline-block;
+            width: 5px;
+            height: 20px;
+            background-color: #009688;
+            margin-right: 0.75rem;
+            border-radius: 2px;
+        }
+
+        .collapsible-wrapper {
+            overflow: hidden;
+            max-height: 6em;
+            transition: max-height 0.5s ease;
+            position: relative;
+        }
+
+        .collapsible-wrapper.expanded {
+            max-height: 1000px;
+        }
+
+        .collapsible-text {
+            text-align: justify;
+            line-height: 1.7;
+            color: #555;
+        }
+
+        .collapsible-text.clamped {
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .more-btn {
+            color: #009688;
+            text-decoration: none;
+            font-weight: 500;
+            margin-top: 0.5rem;
+            display: inline-block;
+        }
+
+        .more-btn:hover {
+            text-decoration: underline;
+        }
+
+        .job-card {
+            background-color: #fff;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            border-left: 4px solid #009688;
+            transition: all 0.2s ease;
+        }
+
+        .job-card:hover {
+            box-shadow: 0 4px 12px rgba(0, 150, 136, 0.15);
+            transform: translateY(-2px);
+        }
+
+        .job-title {
+            font-weight: 700;
+            font-size: 1.1rem;
+            color: #333;
+            margin-bottom: 0.5rem;
+        }
+
+        .job-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-bottom: 1rem;
+            font-size: 0.85rem;
+            color: #666;
+        }
+
+        .job-meta-item {
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+        }
+
+        .job-status {
+            padding: 0.3rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+
+        .job-status.active {
+            background-color: #e8f5e8;
+            color: #2e7d32;
+        }
+
+        .job-status.paused {
+            background-color: #fff3e0;
+            color: #f57c00;
+        }
+
+        .add-job-btn {
+            background: linear-gradient(135deg, #009688 0%, #00695c 100%);
+            color: white;
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            width: 100%;
+            margin-bottom: 1.5rem;
+            transition: all 0.2s ease;
+        }
+
+        .add-job-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0, 150, 136, 0.3);
+        }
+
+        .back-link {
+            color: white;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+            opacity: 0.9;
+        }
+
+        .back-link:hover {
+            opacity: 1;
+            text-decoration: underline;
+        }
+
+        @media (max-width: 768px) {
+            .team-detail-container {
+                flex-direction: column;
+            }
+            
+            .team-meta {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 團隊詳情容器 -->
+    <div class="team-detail-container">
+        <!-- 左側：團隊資訊 -->
+        <div class="team-info-section">
+            <!-- 團隊標題 -->
+            <div class="team-header">
+                <a href="admin-teams.html" class="back-link">
+                    <i class="fas fa-arrow-left"></i>
+                    返回團隊列表
+                </a>
+                <div class="team-title" id="teamTitle">載入中...</div>
+                <div class="team-company" id="teamCompany"></div>
+                <div class="team-meta">
+                    <div><i class="fas fa-building"></i> 部門：<span id="teamDepartment"></span></div>
+                    <div><i class="fas fa-users"></i> 團隊代碼：<span id="teamCode"></span></div>
+                    <div><i class="fas fa-calendar"></i> 建立時間：<span id="teamCreated"></span></div>
+                </div>
+            </div>
+
+            <!-- 團隊介紹 -->
+            <div class="expandable-section">
+                <div class="section-title">
+                    <span class="line"></span>團隊介紹
+                </div>
+                <div class="collapsible-wrapper" id="team-intro-wrapper">
+                    <div class="collapsible-text clamped" id="team-intro-text">
+                        <p id="teamDescription">載入中...</p>
+                    </div>
+                </div>
+                <p style="text-align: right">
+                    <a href="javascript:void(0)" class="more-btn" onclick="toggleText('team-intro')" id="introMoreBtn">more...</a>
+                </p>
+            </div>
+
+            <!-- 團隊專案資訊 -->
+            <div class="expandable-section">
+                <div class="section-title">
+                    <span class="line"></span>團隊專案與技術
+                </div>
+                <div class="collapsible-wrapper" id="team-projects-wrapper">
+                    <div class="collapsible-text clamped" id="team-projects-text">
+                        <p id="teamProjects">
+                            我們專注於 AI 驅動的人才招募解決方案，結合機器學習、自然語言處理與雲端架構技術。
+                            主要技術堆疊包含 Python、AWS、DynamoDB、Lambda 等現代技術，
+                            致力於打造智能化的招募管理系統，提升人才配對效率。
+                        </p>
+                    </div>
+                </div>
+                <p style="text-align: right">
+                    <a href="javascript:void(0)" class="more-btn" onclick="toggleText('team-projects')" id="projectsMoreBtn">more...</a>
+                </p>
+            </div>
+        </div>
+
+        <!-- 右側：職缺管理 -->
+        <div class="jobs-section">
+            <div class="expandable-section">
+                <div class="section-title">
+                    <span class="line"></span>We are hAIring...
+                </div>
+                
+                <!-- 新增職缺按鈕 -->
+                <button class="add-job-btn" onclick="openJobModal()">
+                    <i class="fas fa-plus"></i> 新增職缺
+                </button>
+                
+                <!-- 職缺列表 -->
+                <div id="jobsList">
+                    <div style="text-align: center; color: #666; padding: 2rem;">
+                        <i class="fas fa-spinner fa-spin"></i> 載入職缺中...
+                    </div>
+                </div>
+                
+                <!-- 查看所有職缺 -->
+                <div style="text-align: center; margin-top: 1rem;">
+                    <a href="admin-jobs.html" class="btn btn-outline-secondary">
+                        <i class="fas fa-list"></i> 查看所有職缺
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 職缺表單模態框 -->
+    <div id="jobModal" class="modal">
+        <div class="modal-content large">
+            <div class="modal-header">
+                <h3 id="modalTitle">新增職缺</h3>
+                <button class="modal-close" onclick="closeJobModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="jobForm">
+                    <input type="hidden" id="teamIdInput" name="team_id">
+                    
+                    <div class="form-group">
+                        <label for="jobTitle">職缺標題 <span class="required">*</span></label>
+                        <input type="text" id="jobTitle" name="job_title" class="form-input" placeholder="例：資深前端工程師" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="jobDescription">職缺描述 <span class="required">*</span></label>
+                        <textarea id="jobDescription" name="job_description" class="form-textarea" placeholder="請詳細描述工作內容、職責範圍等..." required></textarea>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="employmentType">就業類型 <span class="required">*</span></label>
+                            <select id="employmentType" name="employment_type" class="form-select" required>
+                                <option value="">請選擇</option>
+                                <option value="full-time">全職</option>
+                                <option value="part-time">兼職</option>
+                                <option value="contract">約聘</option>
+                                <option value="internship">實習</option>
+                                <option value="freelance">自由接案</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="experienceLevel">經驗等級</label>
+                            <select id="experienceLevel" name="experience_level" class="form-select">
+                                <option value="entry">新手</option>
+                                <option value="junior">初級</option>
+                                <option value="mid" selected>中級</option>
+                                <option value="senior">資深</option>
+                                <option value="lead">主管</option>
+                                <option value="executive">高階主管</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="salaryMin">最低薪資 (月薪)</label>
+                            <input type="number" id="salaryMin" name="salary_min" class="form-input" placeholder="例：50000" min="0">
+                        </div>
+                        <div class="form-group">
+                            <label for="salaryMax">最高薪資 (月薪)</label>
+                            <input type="number" id="salaryMax" name="salary_max" class="form-input" placeholder="例：80000" min="0">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="location">工作地點</label>
+                            <input type="text" id="location" name="location" class="form-input" placeholder="例：台北市信義區">
+                        </div>
+                        <div class="form-group">
+                            <label for="remoteOption">工作模式</label>
+                            <select id="remoteOption" name="remote_option" class="form-select">
+                                <option value="onsite">現場辦公</option>
+                                <option value="remote">完全遠端</option>
+                                <option value="hybrid">混合辦公</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="requiredSkills">必備技能 <span class="required">*</span></label>
+                        <input type="text" id="requiredSkillsInput" class="form-input" placeholder="輸入技能後按 Enter 新增" onkeypress="addSkill(event)">
+                        <div id="requiredSkillsList" class="required-skills-input"></div>
+                        <input type="hidden" id="requiredSkills" name="required_skills">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeJobModal()">取消</button>
+                <button type="submit" form="jobForm" class="btn btn-primary">
+                    <i class="fas fa-save"></i> 儲存
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript -->
+    <script src="js/jobs-api.js"></script>
+    <script src="js/teams-api.js"></script>
+    <script>
+        let currentTeamId = null;
+        let jobsApiClient = null;
+        let requiredSkills = [];
+
+        // 頁面載入完成後執行
+        document.addEventListener('DOMContentLoaded', async function() {
+            // 從 URL 參數獲取團隊 ID
+            const urlParams = new URLSearchParams(window.location.search);
+            currentTeamId = urlParams.get('team_id');
+            
+            if (!currentTeamId) {
+                alert('缺少團隊 ID 參數');
+                window.location.href = 'admin-teams.html';
+                return;
+            }
+            
+            // 初始化 API 客戶端
+            jobsApiClient = new JobsApiClient();
+            
+            // 載入團隊資訊和職缺
+            await loadTeamInfo();
+            await loadTeamJobs();
+        });
+
+        // 載入團隊資訊
+        async function loadTeamInfo() {
+            try {
+                const response = await window.teamsAPI.getTeam(currentTeamId);
+                if (response.success) {
+                    const team = response.data.data;
+                    displayTeamInfo(team);
+                } else {
+                    throw new Error(response.error);
+                }
+            } catch (error) {
+                console.error('載入團隊資訊失敗:', error);
+                alert('載入團隊資訊失敗：' + error.message);
+            }
+        }
+
+        // 顯示團隊資訊
+        function displayTeamInfo(team) {
+            document.getElementById('teamTitle').textContent = team.team_name;
+            document.getElementById('teamCompany').textContent = team.company;
+            document.getElementById('teamDepartment').textContent = team.department;
+            document.getElementById('teamCode').textContent = team.team_id;
+            document.getElementById('teamCreated').textContent = new Date(team.created_at).toLocaleDateString('zh-TW');
+            
+            const description = team.team_description || '尚未提供團隊描述。';
+            document.getElementById('teamDescription').textContent = description;
+            
+            // 設定團隊 ID 到隱藏欄位
+            document.getElementById('teamIdInput').value = currentTeamId;
+        }
+
+        // 載入團隊職缺
+        async function loadTeamJobs() {
+            try {
+                const response = await jobsApiClient.getJobs({ team_id: currentTeamId, limit: 10 });
+                displayTeamJobs(response.data);
+            } catch (error) {
+                console.error('載入職缺失敗:', error);
+                document.getElementById('jobsList').innerHTML = 
+                    '<div style="text-align: center; color: #f44336; padding: 2rem;">載入職缺失敗</div>';
+            }
+        }
+
+        // 顯示團隊職缺
+        function displayTeamJobs(jobs) {
+            const jobsList = document.getElementById('jobsList');
+            
+            if (jobs.length === 0) {
+                jobsList.innerHTML = `
+                    <div style="text-align: center; color: #666; padding: 2rem;">
+                        <i class="fas fa-briefcase" style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.3;"></i>
+                        <div>目前沒有刊登職缺</div>
+                        <div style="font-size: 0.9rem; margin-top: 0.5rem;">點擊上方按鈕新增第一個職缺</div>
+                    </div>
+                `;
+                return;
+            }
+
+            jobsList.innerHTML = jobs.map(job => `
+                <div class="job-card">
+                    <div class="job-title">${job.job_title}</div>
+                    <div class="job-meta">
+                        <div class="job-meta-item">
+                            <i class="fas fa-briefcase"></i>
+                            ${formatEmploymentType(job.employment_type)}
+                        </div>
+                        <div class="job-meta-item">
+                            <i class="fas fa-map-marker-alt"></i>
+                            ${job.location || '未指定'}
+                        </div>
+                        <div class="job-meta-item">
+                            <i class="fas fa-clock"></i>
+                            ${formatRelativeTime(job.created_at)}
+                        </div>
+                    </div>
+                    <div class="job-status ${job.status}">${formatJobStatus(job.status)}</div>
+                </div>
+            `).join('');
+        }
+
+        // 開啟職缺模態框
+        function openJobModal() {
+            document.getElementById('jobModal').style.display = 'block';
+        }
+
+        // 關閉職缺模態框
+        function closeJobModal() {
+            document.getElementById('jobModal').style.display = 'none';
+            document.getElementById('jobForm').reset();
+            requiredSkills = [];
+            updateSkillsDisplay();
+        }
+
+        // 提交職缺表單
+        document.getElementById('jobForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            try {
+                const formData = new FormData(this);
+                const jobData = {
+                    team_id: currentTeamId,
+                    job_title: formData.get('job_title'),
+                    job_description: formData.get('job_description'),
+                    employment_type: formData.get('employment_type'),
+                    experience_level: formData.get('experience_level'),
+                    salary_min: formData.get('salary_min') ? parseInt(formData.get('salary_min')) : null,
+                    salary_max: formData.get('salary_max') ? parseInt(formData.get('salary_max')) : null,
+                    location: formData.get('location'),
+                    remote_option: formData.get('remote_option'),
+                    required_skills: requiredSkills,
+                    status: 'active'
+                };
+
+                const response = await jobsApiClient.createJob(jobData);
+                alert('職缺建立成功！');
+                closeJobModal();
+                await loadTeamJobs(); // 重新載入職缺列表
+            } catch (error) {
+                console.error('建立職缺失敗:', error);
+                alert('建立職缺失敗：' + error.message);
+            }
+        });
+
+        // 技能管理
+        function addSkill(event) {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                const input = event.target;
+                const skill = input.value.trim();
+                
+                if (skill && !requiredSkills.includes(skill)) {
+                    requiredSkills.push(skill);
+                    input.value = '';
+                    updateSkillsDisplay();
+                }
+            }
+        }
+
+        function removeSkill(skill) {
+            requiredSkills = requiredSkills.filter(s => s !== skill);
+            updateSkillsDisplay();
+        }
+
+        function updateSkillsDisplay() {
+            const container = document.getElementById('requiredSkillsList');
+            container.innerHTML = requiredSkills.map(skill => `
+                <div class="skill-input-tag">
+                    ${skill}
+                    <span class="remove-skill" onclick="removeSkill('${skill}')">&times;</span>
+                </div>
+            `).join('');
+            
+            document.getElementById('requiredSkills').value = JSON.stringify(requiredSkills);
+        }
+
+        // 文字展開/收合
+        function toggleText(section) {
+            const wrapper = document.getElementById(`${section}-wrapper`);
+            const textBlock = document.getElementById(`${section}-text`);
+            const btn = document.querySelector(`a[onclick="toggleText('${section}')"]`);
+
+            if (wrapper.classList.contains('expanded')) {
+                wrapper.style.maxHeight = "6em";
+                textBlock.classList.add('clamped');
+                btn.innerText = "more...";
+                setTimeout(() => {
+                    wrapper.classList.remove('expanded');
+                }, 500);
+                wrapper.scrollIntoView({ behavior: "smooth", block: "start" });
+            } else {
+                const fullHeight = textBlock.scrollHeight;
+                wrapper.style.maxHeight = fullHeight + "px";
+                wrapper.classList.add('expanded');
+                textBlock.classList.remove('clamped');
+                btn.innerText = "less...";
+            }
+        }
+
+        // 格式化輔助函數
+        function formatEmploymentType(type) {
+            const types = {
+                'full-time': '全職',
+                'part-time': '兼職',
+                'contract': '約聘',
+                'internship': '實習',
+                'freelance': '自由接案'
+            };
+            return types[type] || type;
+        }
+
+        function formatJobStatus(status) {
+            const statuses = {
+                'active': '招募中',
+                'paused': '暫停',
+                'closed': '關閉'
+            };
+            return statuses[status] || status;
+        }
+
+        function formatRelativeTime(dateString) {
+            const now = new Date();
+            const date = new Date(dateString);
+            const diffInMs = now - date;
+            const diffInHours = Math.floor(diffInMs / (1000 * 60 * 60));
+            const diffInDays = Math.floor(diffInHours / 24);
+
+            if (diffInHours < 1) return '剛剛';
+            if (diffInHours < 24) return `${diffInHours} 小時前`;
+            if (diffInDays < 7) return `${diffInDays} 天前`;
+            return `${Math.floor(diffInDays / 7)} 週前`;
+        }
+
+        // 模態框點擊外部關閉
+        window.onclick = function(event) {
+            const modal = document.getElementById('jobModal');
+            if (event.target === modal) {
+                closeJobModal();
+            }
+        }
+    </script>
+</body>
+</html> 

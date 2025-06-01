@@ -311,7 +311,7 @@ module "team_management_lambda" {
   
   environment_variables = {
     TEAMS_TABLE_NAME = module.teams_table.table_name
-    BACKUP_S3_BUCKET = aws_s3_bucket.job_team_info.bucket
+    BACKUP_S3_BUCKET = aws_s3_bucket.team_info.bucket
   }
   
   common_tags = local.common_tags

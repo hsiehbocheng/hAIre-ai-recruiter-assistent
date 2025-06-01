@@ -134,10 +134,13 @@ sequenceDiagram
 
 | 欄位名稱 | 資料型別 | 說明 | 範例 |
 |----------|----------|------|------|
-| `team_id` | string | 團隊唯一識別碼 | `cxi-dataai-ci` |
+| `team_id` | string | 團隊唯一識別碼（自動生成：公司代碼-部門代碼-科別代碼-時間戳） | `CXI-DATAAI-CI-06011425` |
 | `company` | string | 公司名稱 | `國泰產險` |
+| `company_code` | string | 公司代碼（2-8個英數字） | `CXI` |
 | `department` | string | 部門名稱 | `數據暨人工智慧發展部` |
+| `dept_code` | string | 部門代碼（2-10個英數字） | `DATAAI` |
 | `team_name` | string | 團隊/科別名稱 | `企業智能科` |
+| `team_code` | string | 科別代碼（2-8個英數字） | `CI` |
 | `team_description` | string | 團隊描述 | `負責企業智能化專案開發與維運` |
 | `created_at` | string | 建立時間 (ISO 8601) | `2024-01-15T10:00:00Z` |
 | `updated_at` | string | 更新時間 (ISO 8601) | `2024-01-15T10:00:00Z` |

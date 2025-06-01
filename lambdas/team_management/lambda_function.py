@@ -86,26 +86,27 @@ def list_teams() -> Dict[str, Any]:
 
 def create_team(team_data: Dict[str, Any]) -> Dict[str, Any]:
     """新增團隊"""
-    # 驗證必要欄位（新增 company_code 和 dept_code）
-    required_fields = ['company', 'company_code', 'department', 'dept_code', 'team_name']
+    # 驗證必要欄位（新增 team_code）
+    required_fields = ['company', 'company_code', 'department', 'dept_code', 'team_name', 'team_code']
     for field in required_fields:
         if not team_data.get(field):
             raise ValueError(f'Missing required field: {field}')
     
-    # 驗證代碼格式（只允許英文數字）
+    # 驗證代碼格式
     import re
     if not re.match(r'^[a-zA-Z0-9]{2,8}$', team_data['company_code']):
         raise ValueError('company_code must be 2-8 alphanumeric characters')
     if not re.match(r'^[a-zA-Z0-9]{2,10}$', team_data['dept_code']):
         raise ValueError('dept_code must be 2-10 alphanumeric characters')
+    if not re.match(r'^[a-zA-Z0-9]{2,8}$', team_data['team_code']):
+        raise ValueError('team_code must be 2-8 alphanumeric characters')
     
-    # 生成 team_id：公司代碼-部門代碼-時間戳
+    # 生成 team_id：公司代碼-部門代碼-科別代碼-時間戳
     timestamp = datetime.utcnow().strftime("%m%d%H%M")
-    team_id = f"{team_data['company_code'].upper()}-{team_data['dept_code'].upper()}-{timestamp}"
+    team_id = f"{team_data['company_code'].upper()}-{team_data['dept_code'].upper()}-{team_data['team_code'].upper()}"
     
     current_time = datetime.utcnow().isoformat() + 'Z'
     
-    # 準備完整的團隊資料
     full_team_data = {
         'team_id': team_id,
         'company': team_data['company'],
@@ -113,11 +114,11 @@ def create_team(team_data: Dict[str, Any]) -> Dict[str, Any]:
         'department': team_data['department'],
         'dept_code': team_data['dept_code'].upper(),
         'team_name': team_data['team_name'],
+        'team_code': team_data['team_code'].upper(),
         'team_description': team_data.get('team_description', ''),
         'created_at': current_time,
         'updated_at': current_time
     }
-    
     try:
         # 寫入 DynamoDB
         teams_table.put_item(Item=full_team_data)

@@ -395,8 +395,65 @@ resource "aws_api_gateway_integration" "team_options_integration" {
   }
 }
 
-# API Gateway Method Responses and Integration Responses (省略詳細的回應設定)
-# 使用 AWS_PROXY 整合，Lambda 會處理回應格式
+# CORS Integration Response for /teams
+resource "aws_api_gateway_integration_response" "teams_options_integration_response" {
+  rest_api_id = aws_api_gateway_rest_api.haire_api.id
+  resource_id = aws_api_gateway_resource.teams.id
+  http_method = aws_api_gateway_method.teams_options.http_method
+  status_code = "200"
+
+  response_parameters = {
+    "method.response.header.Access-Control-Allow-Headers" = "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+    "method.response.header.Access-Control-Allow-Methods" = "'GET,OPTIONS,POST,PUT,DELETE'"
+    "method.response.header.Access-Control-Allow-Origin"  = "'*'"
+  }
+
+  depends_on = [aws_api_gateway_method_response.teams_options_method_response]
+}
+
+# CORS Integration Response for /teams/{team_id}
+resource "aws_api_gateway_integration_response" "team_options_integration_response" {
+  rest_api_id = aws_api_gateway_rest_api.haire_api.id
+  resource_id = aws_api_gateway_resource.team_id.id
+  http_method = aws_api_gateway_method.team_options.http_method
+  status_code = "200"
+
+  response_parameters = {
+    "method.response.header.Access-Control-Allow-Headers" = "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+    "method.response.header.Access-Control-Allow-Methods" = "'GET,OPTIONS,POST,PUT,DELETE'"
+    "method.response.header.Access-Control-Allow-Origin"  = "'*'"
+  }
+
+  depends_on = [aws_api_gateway_method_response.team_options_method_response]
+}
+
+# Method Response for OPTIONS /teams
+resource "aws_api_gateway_method_response" "teams_options_method_response" {
+  rest_api_id = aws_api_gateway_rest_api.haire_api.id
+  resource_id = aws_api_gateway_resource.teams.id
+  http_method = aws_api_gateway_method.teams_options.http_method
+  status_code = "200"
+
+  response_parameters = {
+    "method.response.header.Access-Control-Allow-Headers" = true
+    "method.response.header.Access-Control-Allow-Methods" = true
+    "method.response.header.Access-Control-Allow-Origin"  = true
+  }
+}
+
+# Method Response for OPTIONS /teams/{team_id}
+resource "aws_api_gateway_method_response" "team_options_method_response" {
+  rest_api_id = aws_api_gateway_rest_api.haire_api.id
+  resource_id = aws_api_gateway_resource.team_id.id
+  http_method = aws_api_gateway_method.team_options.http_method
+  status_code = "200"
+
+  response_parameters = {
+    "method.response.header.Access-Control-Allow-Headers" = true
+    "method.response.header.Access-Control-Allow-Methods" = true
+    "method.response.header.Access-Control-Allow-Origin"  = true
+  }
+}
 
 # Lambda 權限 - 讓 API Gateway 可以呼叫
 resource "aws_lambda_permission" "allow_api_gateway_teams" {
@@ -415,9 +472,27 @@ resource "aws_api_gateway_deployment" "haire_api_deployment" {
     aws_api_gateway_integration.team_get_integration,
     aws_api_gateway_integration.team_put_integration,
     aws_api_gateway_integration.team_delete_integration,
+    aws_api_gateway_integration.teams_options_integration,
+    aws_api_gateway_integration.team_options_integration,
+    aws_api_gateway_integration_response.teams_options_integration_response,
+    aws_api_gateway_integration_response.team_options_integration_response,
+    aws_api_gateway_method_response.teams_options_method_response,
+    aws_api_gateway_method_response.team_options_method_response,
   ]
   
   rest_api_id = aws_api_gateway_rest_api.haire_api.id
+  
+  # 強制重新部署
+  triggers = {
+    redeployment = sha1(jsonencode([
+      aws_api_gateway_resource.teams.id,
+      aws_api_gateway_resource.team_id.id,
+      aws_api_gateway_method.teams_get.id,
+      aws_api_gateway_method.teams_post.id,
+      aws_api_gateway_method.teams_options.id,
+      aws_api_gateway_method.team_options.id,
+    ]))
+  }
 }
 
 # API Gateway Stage
@@ -425,12 +500,19 @@ resource "aws_api_gateway_stage" "haire_api_stage" {
   deployment_id = aws_api_gateway_deployment.haire_api_deployment.id
   rest_api_id   = aws_api_gateway_rest_api.haire_api.id
   stage_name    = "dev"
+
+  # 重要：確保階段總是使用最新的部署
+  lifecycle {
+    replace_triggered_by = [
+      aws_api_gateway_deployment.haire_api_deployment
+    ]
+  }
 }
 
 # 輸出 API Gateway URL
 output "api_gateway_url" {
-  value = "${aws_api_gateway_deployment.haire_api_deployment.invoke_url}"
-  description = "API Gateway endpoint URL"
+  value = aws_api_gateway_stage.haire_api_stage.invoke_url
+  description = "API Gateway endpoint URL for dev stage"
 }
 
 module "resume_parser_lambda" {
@@ -451,6 +533,86 @@ module "resume_parser_lambda" {
   common_tags = local.common_tags
 }
 
+# CloudFront Origin Access Control
+resource "aws_cloudfront_origin_access_control" "static_site_oac" {
+  name                              = "benson-haire-static-site-oac"
+  description                       = "OAC for static site S3 bucket"
+  origin_access_control_origin_type = "s3"
+  signing_behavior                  = "always"
+  signing_protocol                  = "sigv4"
+}
+
+# CloudFront 分發 - 使用 OAC
+resource "aws_cloudfront_distribution" "static_site_distribution" {
+  origin {
+    domain_name              = aws_s3_bucket.static_site.bucket_regional_domain_name
+    origin_id                = "S3-${aws_s3_bucket.static_site.bucket}"
+    origin_access_control_id = aws_cloudfront_origin_access_control.static_site_oac.id
+  }
+
+  enabled             = true
+  is_ipv6_enabled     = true
+  default_root_object = "admin-teams.html"
+
+  default_cache_behavior {
+    allowed_methods        = ["GET", "HEAD", "OPTIONS"]
+    cached_methods         = ["GET", "HEAD"]
+    target_origin_id       = "S3-${aws_s3_bucket.static_site.bucket}"
+    viewer_protocol_policy = "redirect-to-https"
+    compress              = true
+
+    forwarded_values {
+      query_string = false
+      cookies {
+        forward = "none"
+      }
+    }
+
+    min_ttl     = 0
+    default_ttl = 3600
+    max_ttl     = 86400
+  }
+
+  restrictions {
+    geo_restriction {
+      restriction_type = "none"
+    }
+  }
+
+  viewer_certificate {
+    cloudfront_default_certificate = true
+  }
+
+  tags = merge(local.common_tags, { Name = "benson-haire-cloudfront" })
+}
+
+# S3 Bucket Policy - 只允許 CloudFront 存取
+resource "aws_s3_bucket_policy" "static_site_policy" {
+  bucket = aws_s3_bucket.static_site.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid    = "AllowCloudFrontServicePrincipal"
+        Effect = "Allow"
+        Principal = {
+          Service = "cloudfront.amazonaws.com"
+        }
+        Action   = "s3:GetObject"
+        Resource = "${aws_s3_bucket.static_site.arn}/*"
+        Condition = {
+          StringEquals = {
+            "AWS:SourceArn" = aws_cloudfront_distribution.static_site_distribution.arn
+          }
+        }
+      }
+    ]
+  })
+
+  depends_on = [aws_cloudfront_distribution.static_site_distribution]
+}
+
 output "bucket_names" {
   value = {
     raw_resume    = aws_s3_bucket.raw_resume.bucket
@@ -458,4 +620,9 @@ output "bucket_names" {
     job_posting   = aws_s3_bucket.job_posting.bucket
     static_site   = aws_s3_bucket.static_site.bucket
   }
+}
+
+output "cloudfront_url" {
+  description = "CloudFront distribution URL"
+  value       = "https://${aws_cloudfront_distribution.static_site_distribution.domain_name}"
 }

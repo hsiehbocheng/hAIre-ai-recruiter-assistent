@@ -101,9 +101,16 @@ def create_team(team_data: Dict[str, Any]) -> Dict[str, Any]:
     if not re.match(r'^[a-zA-Z0-9]{2,8}$', team_data['team_code']):
         raise ValueError('team_code must be 2-8 alphanumeric characters')
     
-    # 生成 team_id：公司代碼-部門代碼-科別代碼-時間戳
-    timestamp = datetime.utcnow().strftime("%m%d%H%M")
+    # 生成 team_id：公司代碼-部門代碼-科別代碼 (移除時間戳)
     team_id = f"{team_data['company_code'].upper()}-{team_data['dept_code'].upper()}-{team_data['team_code'].upper()}"
+    
+    # 檢查 team_id 是否已存在
+    try:
+        existing_team = teams_table.get_item(Key={'team_id': team_id})
+        if 'Item' in existing_team:
+            raise ValueError(f'Team ID {team_id} already exists')
+    except ClientError:
+        pass  # 如果查詢失敗，可能是因為團隊不存在，這是正常的
     
     current_time = datetime.utcnow().isoformat() + 'Z'
     

@@ -11,9 +11,9 @@ dynamodb = boto3.resource('dynamodb')
 s3 = boto3.client('s3')
 
 # 環境變數
-JOBS_TABLE = 'haire-jobs'
-TEAMS_TABLE = 'haire-teams'
-S3_BUCKET = 'haire-static-site'
+JOBS_TABLE = 'benson-haire-job-posting'
+TEAMS_TABLE = 'benson-haire-teams'
+S3_BUCKET = 'benson-haire-static-site-e36d5aee'
 
 # DynamoDB 表格
 jobs_table = dynamodb.Table(JOBS_TABLE)
@@ -41,9 +41,7 @@ def response(status_code: int, body: Dict[str, Any]) -> Dict[str, Any]:
 
 def validate_job_data(data: Dict[str, Any], is_update: bool = False) -> Optional[str]:
     """驗證職缺資料格式"""
-    required_fields = ['team_id', 'job_title', 'job_description', 'employment_type', 'required_skills']
-    optional_fields = ['salary_min', 'salary_max', 'location', 'remote_option', 'experience_level', 
-                      'education_requirement', 'language_requirement', 'benefits', 'application_deadline']
+    required_fields = ['team_id', 'job_title', 'employment_type', 'location', 'responsibilities', 'required_skills']
     
     # 檢查必填欄位
     if not is_update:
@@ -51,23 +49,23 @@ def validate_job_data(data: Dict[str, Any], is_update: bool = False) -> Optional
             if field not in data or not data[field]:
                 return f"缺少必填欄位: {field}"
     
-    # 驗證 team_id 格式
+    # 驗證 team_id 格式 (修正為新格式)
     if 'team_id' in data and data['team_id']:
-        if not re.match(r'^TEAM-[A-Z]{2,4}-[A-Z]{2,4}-\d{3}$', data['team_id']):
-            return "team_id 格式不正確，應為 TEAM-{公司代碼}-{部門代碼}-{編號}"
+        if not re.match(r'^[A-Z0-9]{2,8}-[A-Z0-9]{2,10}-[A-Z0-9]{2,8}$', data['team_id']):
+            return "team_id 格式不正確，應為 {公司代碼}-{部門代碼}-{科別代碼}"
     
-    # 驗證就業類型
+    # 驗證聘用類型
     if 'employment_type' in data and data['employment_type']:
-        valid_types = ['full-time', 'part-time', 'contract', 'internship', 'freelance']
+        valid_types = ['全職', '兼職', '約聘', '實習', '顧問']
         if data['employment_type'] not in valid_types:
-            return f"就業類型無效，可選值: {', '.join(valid_types)}"
+            return f"聘用類型無效，可選值: {', '.join(valid_types)}"
     
     # 驗證薪資範圍
     if 'salary_min' in data and 'salary_max' in data:
         if data['salary_min'] and data['salary_max']:
             try:
-                min_salary = float(data['salary_min'])
-                max_salary = float(data['salary_max'])
+                min_salary = int(data['salary_min'])
+                max_salary = int(data['salary_max'])
                 if min_salary < 0 or max_salary < 0:
                     return "薪資不能為負數"
                 if min_salary > max_salary:
@@ -75,17 +73,26 @@ def validate_job_data(data: Dict[str, Any], is_update: bool = False) -> Optional
             except (ValueError, TypeError):
                 return "薪資格式不正確"
     
-    # 驗證經驗等級
-    if 'experience_level' in data and data['experience_level']:
-        valid_levels = ['entry', 'junior', 'mid', 'senior', 'lead', 'executive']
-        if data['experience_level'] not in valid_levels:
-            return f"經驗等級無效，可選值: {', '.join(valid_levels)}"
+    # 驗證年資要求
+    if 'min_experience_years' in data and data['min_experience_years']:
+        try:
+            years = int(data['min_experience_years'])
+            if years < 0 or years > 50:
+                return "年資要求必須在 0-50 年之間"
+        except (ValueError, TypeError):
+            return "年資格式不正確"
     
-    # 驗證遠端選項
-    if 'remote_option' in data and data['remote_option']:
-        valid_options = ['onsite', 'remote', 'hybrid']
-        if data['remote_option'] not in valid_options:
-            return f"遠端選項無效，可選值: {', '.join(valid_options)}"
+    # 驗證學歷要求
+    if 'education_required' in data and data['education_required']:
+        valid_education = ['高中以上', '專科以上', '大學以上', '碩士以上', '博士以上']
+        if data['education_required'] not in valid_education:
+            return f"學歷要求無效，可選值: {', '.join(valid_education)}"
+    
+    # 驗證職缺狀態
+    if 'status' in data and data['status']:
+        valid_status = ['active', 'paused', 'closed']
+        if data['status'] not in valid_status:
+            return f"職缺狀態無效，可選值: {', '.join(valid_status)}"
     
     return None
 
@@ -110,57 +117,73 @@ def create_job(data: Dict[str, Any]) -> Dict[str, Any]:
     if not team_data:
         return response(404, {'error': '指定的團隊不存在'})
     
-    # 生成職缺 ID
-    job_id = f"JOB-{data['team_id'].split('-')[1]}-{data['team_id'].split('-')[2]}-{str(uuid.uuid4())[:8].upper()}"
+    # 生成職缺 ID: {team_id}-{uuid}
+    uuid_part = str(uuid.uuid4())[:8]
+    job_id = f"{data['team_id']}-{uuid_part}"
     
     # 準備職缺資料
-    timestamp = datetime.utcnow().isoformat()
+    timestamp = datetime.utcnow().isoformat() + 'Z'
+    
+    # 處理陣列欄位
+    responsibilities = data.get('responsibilities', [])
+    if isinstance(responsibilities, str):
+        responsibilities = [responsibilities]
+    
+    required_skills = data.get('required_skills', [])
+    if isinstance(required_skills, str):
+        required_skills = [required_skills]
+    
+    nice_to_have_skills = data.get('nice_to_have_skills', [])
+    if isinstance(nice_to_have_skills, str):
+        nice_to_have_skills = [nice_to_have_skills]
+    
+    majors_required = data.get('majors_required', [])
+    if isinstance(majors_required, str):
+        majors_required = [majors_required]
+    
+    language_required = data.get('language_required', [])
+    if isinstance(language_required, str):
+        language_required = [language_required]
+    
     job_data = {
         'job_id': job_id,
         'team_id': data['team_id'],
         # 基本資訊
         'job_title': data['job_title'],
-        'job_description': data['job_description'],
         'employment_type': data['employment_type'],
-        'required_skills': data['required_skills'] if isinstance(data['required_skills'], list) else [data['required_skills']],
-        # 可選資訊
-        'salary_min': Decimal(str(data.get('salary_min', 0))) if data.get('salary_min') else None,
-        'salary_max': Decimal(str(data.get('salary_max', 0))) if data.get('salary_max') else None,
-        'location': data.get('location', ''),
-        'remote_option': data.get('remote_option', 'onsite'),
-        'experience_level': data.get('experience_level', 'mid'),
-        'education_requirement': data.get('education_requirement', ''),
-        'language_requirement': data.get('language_requirement', []),
-        'benefits': data.get('benefits', []),
-        'application_deadline': data.get('application_deadline', ''),
-        # 從團隊繼承的資訊
-        'company': team_data['company'],
-        'company_code': team_data['company_code'],
-        'department': team_data['department'],
-        'dept_code': team_data['dept_code'],
-        'team_name': team_data['team_name'],
-        'team_code': team_data['team_code'],
+        'location': data['location'],
+        # 薪資資訊
+        'salary_min': int(data['salary_min']) if data.get('salary_min') else None,
+        'salary_max': int(data['salary_max']) if data.get('salary_max') else None,
+        'salary_note': data.get('salary_note', ''),
+        # 工作內容與技能
+        'responsibilities': responsibilities,
+        'required_skills': required_skills,
+        'nice_to_have_skills': nice_to_have_skills,
+        # 要求條件
+        'min_experience_years': int(data['min_experience_years']) if data.get('min_experience_years') else None,
+        'education_required': data.get('education_required', ''),
+        'majors_required': majors_required,
+        'language_required': language_required,
         # 狀態和時間戳
-        'status': 'active',
+        'status': data.get('status', 'active'),
         'created_at': timestamp,
-        'updated_at': timestamp,
-        'ai_parsed': False,
-        'view_count': 0,
-        'application_count': 0
+        'updated_at': timestamp
     }
     
     try:
         # 儲存到 DynamoDB
         jobs_table.put_item(Item=job_data)
         
-        # 備份到 S3
-        backup_key = f"backups/jobs/{job_id}.json"
-        s3.put_object(
-            Bucket=S3_BUCKET,
-            Key=backup_key,
-            Body=json.dumps(job_data, cls=DecimalEncoder, ensure_ascii=False, indent=2),
-            ContentType='application/json'
-        )
+        # 備份到 S3 (可選)
+        if S3_BUCKET:
+            backup_key = f"backups/jobs/{job_id}.json"
+            s3.put_object(
+                Bucket=S3_BUCKET,
+                Key=backup_key,
+                Body=json.dumps(job_data, cls=DecimalEncoder, ensure_ascii=False, indent=2),
+                ContentType='application/json'
+            )
         
         return response(201, {
             'message': '職缺建立成功',
@@ -179,13 +202,6 @@ def get_job(job_id: str) -> Dict[str, Any]:
         
         if 'Item' not in response_data:
             return response(404, {'error': '職缺不存在'})
-        
-        # 增加瀏覽次數
-        jobs_table.update_item(
-            Key={'job_id': job_id},
-            UpdateExpression='SET view_count = view_count + :inc',
-            ExpressionAttributeValues={':inc': 1}
-        )
         
         return response(200, {
             'message': '職缺取得成功',
@@ -311,9 +327,9 @@ def update_job(job_id: str, data: Dict[str, Any]) -> Dict[str, Any]:
         
         # 建立可更新欄位列表
         updatable_fields = [
-            'team_id', 'job_title', 'job_description', 'employment_type', 'required_skills',
-            'salary_min', 'salary_max', 'location', 'remote_option', 'experience_level',
-            'education_requirement', 'language_requirement', 'benefits', 'application_deadline', 'status'
+            'team_id', 'job_title', 'employment_type', 'location', 'responsibilities', 'required_skills',
+            'salary_min', 'salary_max', 'salary_note', 'min_experience_years', 'education_required', 'majors_required',
+            'language_required', 'status'
         ]
         
         # 動態建構更新表達式
@@ -321,7 +337,7 @@ def update_job(job_id: str, data: Dict[str, Any]) -> Dict[str, Any]:
             if field in data:
                 update_expression += f', {field} = :{field}'
                 if field in ['salary_min', 'salary_max'] and data[field] is not None:
-                    expression_values[f':{field}'] = Decimal(str(data[field]))
+                    expression_values[f':{field}'] = int(data[field])
                 else:
                     expression_values[f':{field}'] = data[field]
         

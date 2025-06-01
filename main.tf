@@ -181,6 +181,15 @@ module "resume_table" {
   ]
 }
 
+module "teams_table" {
+  source     = "./modules/dynamodb_table"
+  table_name = "benson-haire-teams-info"
+  hash_key   = "team_id"
+  attributes = [
+    { name = "team_id", type = "S" }
+  ]
+}
+
 module "job_posting_table" {
   source     = "./modules/dynamodb_table"
   table_name = "benson-haire-job-posting"

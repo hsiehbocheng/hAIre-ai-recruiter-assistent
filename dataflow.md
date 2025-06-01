@@ -35,30 +35,45 @@ sequenceDiagram
 
 ```mermaid
 sequenceDiagram
+    %% 角色
     participant Admin as 管理員
     participant Frontend as 前端介面
     participant API as API Gateway
-    participant JobLambda as Job管理Lambda
+    participant JobLambda as Job管理 Lambda
     participant DynamoDB as DynamoDB
     participant S3 as S3-JobPosting
-    participant ReqLambda as 需求萃取Lambda
+    participant ReqLambda as 需求萃取 Lambda
     participant Bedrock as Bedrock AI
+    participant ConfirmLambda as 需求確認 Lambda
 
-    Admin->>Frontend: 新增/編輯職缺
-    Frontend->>API: POST/PUT /jobs
-    API->>JobLambda: 觸發職缺管理函數
-    JobLambda->>DynamoDB: 寫入 job_posting 表
-    JobLambda->>S3: 同步職缺到 S3 (team_id/job_id.json)
-    
-    Note over S3,ReqLambda: S3 事件觸發
-    S3-->>ReqLambda: 觸發需求萃取Lambda
-    ReqLambda->>S3: 讀取職缺與團隊資訊
-    ReqLambda->>Bedrock: 呼叫 LLM 萃取需求
-    Bedrock-->>ReqLambda: 回傳需求列表
-    ReqLambda->>DynamoDB: 寫入 job_requirement 表
-    
-    JobLambda-->>Frontend: 回傳職缺ID與需求萃取狀態
-    Frontend-->>Admin: 顯示職缺建立成功，需求萃取中
+    %% 1. 建立或更新職缺
+    Admin->>Frontend: 新增 / 編輯職缺
+    Frontend->>API: POST /jobs 或 PUT /jobs/{id}
+    API->>JobLambda: invoke (create / update)
+    JobLambda->>DynamoDB: upsert job_posting
+    JobLambda->>S3: putObject team_id/job_id.json
+
+    %% 2. 自動萃取需求（非同步）
+    Note over S3,ReqLambda: S3 putObject 事件
+    S3-->>ReqLambda: invoke
+    ReqLambda->>S3: getObject (職缺與團隊資訊)
+    ReqLambda->>Bedrock: 萃取需求
+    Bedrock-->>ReqLambda: requirements (draft)
+
+    %% 3. 將草稿需求回傳前端待人審
+    ReqLambda->>API: POST /jobs/{id}/requirements?status=draft
+    API-->>Frontend: 回傳需求草稿
+    Frontend-->>Admin: 顯示需求草稿 (待確認)
+
+    %% 4. 使用者確認需求
+    Admin->>Frontend: 確認 / 編輯需求
+    Frontend->>API: PUT /jobs/{id}/requirements?status=confirmed
+    API->>ConfirmLambda: invoke
+
+    %% 5. 寫入最終需求
+    ConfirmLambda->>DynamoDB: putItem job_requirement (confirmed)
+    ConfirmLambda->>S3: putObject team_id/job_id_requirements.json
+    ConfirmLambda-->>Frontend: 成功訊息
 ```
 
 ---

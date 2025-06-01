@@ -2,6 +2,7 @@ import os
 import json
 import logging
 import uuid
+import base64
 from datetime import datetime
 from typing import Dict, Any, Optional
 
@@ -18,20 +19,43 @@ s3 = boto3.client('s3', region_name='ap-southeast-1')
 # 環境變數
 TEAMS_TABLE_NAME = os.environ.get('TEAMS_TABLE_NAME', 'benson-haire-teams')
 BACKUP_S3_BUCKET = os.environ.get('BACKUP_S3_BUCKET', '')
+TEAM_INFO_BUCKET = 'benson-haire-team-info-e36d5aee'
 
 # DynamoDB Table
 teams_table = dynamodb.Table(TEAMS_TABLE_NAME)
 
 def lambda_handler(event, context):
     """主要 Lambda 處理函式"""
-    logger.info(f"Received event: {json.dumps(event)}")
+    logger.info(f"Received event: {json.dumps(event, default=str)}")
     
     try:
         http_method = event.get('httpMethod')
+        path = event.get('path', '')
         path_parameters = event.get('pathParameters') or {}
+        
+        # 處理 CORS preflight 請求
+        if http_method == 'OPTIONS':
+            return {
+                'statusCode': 200,
+                'headers': get_cors_headers(),
+                'body': json.dumps({'message': 'CORS preflight successful'})
+            }
+        
+        # 文件管理路由
+        if '/upload-team-file' in path:
+            return handle_file_upload(event)
+        elif '/team-files/' in path:
+            team_id = path_parameters.get('team_id')
+            return handle_list_files(team_id)
+        elif '/download-team-file/' in path:
+            file_key = path_parameters.get('file_key')
+            return handle_file_download(file_key)
+        elif '/delete-team-file' in path:
+            return handle_file_delete(event)
+        
+        # 原有的團隊管理路由
         team_id = path_parameters.get('team_id')
         
-        # 路由到對應的處理函式
         if http_method == 'GET':
             if team_id:
                 result = get_team(team_id)
@@ -59,7 +83,7 @@ def lambda_handler(event, context):
         return error_response(400, 'Invalid JSON format')
     except Exception as e:
         logger.error(f"Unexpected error: {str(e)}")
-        return error_response(500, 'Internal server error')
+        return error_response(500, f'Internal server error: {str(e)}')
 
 def get_team(team_id: str) -> Dict[str, Any]:
     """取得單一團隊資訊"""
@@ -254,3 +278,146 @@ def get_cors_headers() -> Dict[str, str]:
         'Access-Control-Allow-Methods': 'GET,POST,PUT,DELETE,OPTIONS',
         'Content-Type': 'application/json; charset=utf-8'
     }
+
+def handle_file_upload(event: Dict[str, Any]) -> Dict[str, Any]:
+    """處理文件上傳"""
+    try:
+        logger.info("處理文件上傳請求")
+        
+        # 從查詢參數取得 teamId (因為 FormData 中的參數可能不容易解析)
+        query_params = event.get('queryStringParameters') or {}
+        team_id = query_params.get('teamId', '')
+        
+        if not team_id:
+            return error_response(400, '缺少 teamId 參數')
+        
+        # 解析 multipart/form-data (簡化版本)
+        content_type = event.get('headers', {}).get('content-type', '') or event.get('headers', {}).get('Content-Type', '')
+        
+        if 'multipart/form-data' not in content_type:
+            return error_response(400, '需要 multipart/form-data 格式')
+        
+        # 模擬文件上傳 (實際環境中需要完整的 multipart 解析)
+        current_time = datetime.utcnow().isoformat()
+        file_key = f"team_docs/{team_id}-example_document_{current_time}.txt"
+        
+        # 模擬上傳到 S3
+        logger.info(f"模擬上傳文件到 S3: {file_key}")
+        
+        # 在實際環境中，這裡會解析 multipart 數據並上傳到 S3：
+        # s3.put_object(
+        #     Bucket=TEAM_INFO_BUCKET,
+        #     Key=file_key,
+        #     Body=file_content,
+        #     ContentType=file_content_type
+        # )
+        
+        return success_response({
+            'success': True,
+            'message': '文件上傳成功 (模擬)',
+            'key': file_key,
+            'bucket': TEAM_INFO_BUCKET,
+            'uploaded_at': current_time
+        })
+        
+    except Exception as e:
+        logger.error(f"文件上傳失敗: {str(e)}")
+        return error_response(500, f'文件上傳失敗: {str(e)}')
+
+def handle_list_files(team_id: str) -> Dict[str, Any]:
+    """列出團隊文件"""
+    try:
+        if not team_id:
+            return error_response(400, '缺少團隊 ID')
+        
+        logger.info(f"列出團隊文件: {team_id}")
+        
+        prefix = f'team_docs/{team_id}-'
+        
+        # 列出 S3 文件
+        response = s3.list_objects_v2(
+            Bucket=TEAM_INFO_BUCKET,
+            Prefix=prefix
+        )
+        
+        files = []
+        if 'Contents' in response:
+            for obj in response['Contents']:
+                files.append({
+                    'key': obj['Key'],
+                    'name': obj['Key'].replace(prefix, ''),
+                    'size': obj['Size'],
+                    'lastModified': obj['LastModified'].isoformat(),
+                    'etag': obj['ETag'].strip('"')
+                })
+        
+        logger.info(f"找到 {len(files)} 個文件")
+        
+        return success_response({
+            'files': files,
+            'count': len(files),
+            'team_id': team_id
+        })
+        
+    except Exception as e:
+        logger.error(f"列出文件失敗: {str(e)}")
+        return error_response(500, f'列出文件失敗: {str(e)}')
+
+def handle_file_download(file_key: str) -> Dict[str, Any]:
+    """處理文件下載"""
+    try:
+        if not file_key:
+            return error_response(400, '缺少文件 key')
+        
+        logger.info(f"下載文件: {file_key}")
+        
+        # 生成預簽名 URL 用於下載
+        download_url = s3.generate_presigned_url(
+            'get_object',
+            Params={'Bucket': TEAM_INFO_BUCKET, 'Key': file_key},
+            ExpiresIn=3600  # 1小時有效期
+        )
+        
+        logger.info("生成下載 URL 成功")
+        
+        return success_response({
+            'downloadUrl': download_url,
+            'expiresIn': 3600,
+            'key': file_key
+        })
+        
+    except Exception as e:
+        logger.error(f"文件下載失敗: {str(e)}")
+        return error_response(500, f'文件下載失敗: {str(e)}')
+
+def handle_file_delete(event: Dict[str, Any]) -> Dict[str, Any]:
+    """處理文件刪除"""
+    try:
+        # 解析請求體
+        body = json.loads(event.get('body', '{}'))
+        file_key = body.get('key', '')
+        bucket_name = body.get('bucket', TEAM_INFO_BUCKET)
+        
+        if not file_key:
+            return error_response(400, '缺少文件 key')
+        
+        logger.info(f"刪除文件: {file_key}")
+        
+        # 刪除 S3 文件
+        s3.delete_object(
+            Bucket=bucket_name,
+            Key=file_key
+        )
+        
+        logger.info("文件刪除成功")
+        
+        return success_response({
+            'success': True,
+            'message': '文件刪除成功',
+            'key': file_key,
+            'deleted_at': datetime.utcnow().isoformat()
+        })
+        
+    except Exception as e:
+        logger.error(f"文件刪除失敗: {str(e)}")
+        return error_response(500, f'文件刪除失敗: {str(e)}')

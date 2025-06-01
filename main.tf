@@ -481,6 +481,23 @@ resource "aws_api_gateway_deployment" "haire_api_deployment" {
     aws_api_gateway_integration_response.team_options_integration_response,
     aws_api_gateway_method_response.teams_options_method_response,
     aws_api_gateway_method_response.team_options_method_response,
+    # 文件管理相關的整合
+    aws_api_gateway_integration.upload_team_file_integration,
+    aws_api_gateway_integration.team_files_get_integration,
+    aws_api_gateway_integration.download_team_file_integration,
+    aws_api_gateway_integration.delete_team_file_integration,
+    aws_api_gateway_integration.upload_team_file_options_integration,
+    aws_api_gateway_integration.team_files_options_integration,
+    aws_api_gateway_integration.download_team_file_options_integration,
+    aws_api_gateway_integration.delete_team_file_options_integration,
+    aws_api_gateway_integration_response.upload_team_file_options_integration_response,
+    aws_api_gateway_integration_response.team_files_options_integration_response,
+    aws_api_gateway_integration_response.download_team_file_options_integration_response,
+    aws_api_gateway_integration_response.delete_team_file_options_integration_response,
+    aws_api_gateway_method_response.upload_team_file_options_method_response,
+    aws_api_gateway_method_response.team_files_options_method_response,
+    aws_api_gateway_method_response.download_team_file_options_method_response,
+    aws_api_gateway_method_response.delete_team_file_options_method_response,
     # Jobs 相關的整合
     aws_api_gateway_integration.jobs_get_integration,
     aws_api_gateway_integration.jobs_post_integration,
@@ -507,6 +524,21 @@ resource "aws_api_gateway_deployment" "haire_api_deployment" {
       aws_api_gateway_method.teams_post.id,
       aws_api_gateway_method.teams_options.id,
       aws_api_gateway_method.team_options.id,
+      # 文件管理資源
+      aws_api_gateway_resource.upload_team_file.id,
+      aws_api_gateway_resource.team_files.id,
+      aws_api_gateway_resource.team_files_id.id,
+      aws_api_gateway_resource.download_team_file.id,
+      aws_api_gateway_resource.download_team_file_key.id,
+      aws_api_gateway_resource.delete_team_file.id,
+      aws_api_gateway_method.upload_team_file_post.id,
+      aws_api_gateway_method.upload_team_file_options.id,
+      aws_api_gateway_method.team_files_get.id,
+      aws_api_gateway_method.team_files_options.id,
+      aws_api_gateway_method.download_team_file_get.id,
+      aws_api_gateway_method.download_team_file_options.id,
+      aws_api_gateway_method.delete_team_file_delete.id,
+      aws_api_gateway_method.delete_team_file_options.id,
       # Jobs 資源  
       aws_api_gateway_resource.jobs.id,
       aws_api_gateway_resource.job_id.id,
@@ -919,4 +951,309 @@ resource "local_file" "frontend_config" {
     cloudfront_url  = aws_cloudfront_distribution.static_site_distribution.domain_name
   })
   filename = "${path.module}/static-site/js/config.js"
+}
+
+# 團隊文件管理 API 資源
+resource "aws_api_gateway_resource" "upload_team_file" {
+  rest_api_id = aws_api_gateway_rest_api.haire_api.id
+  parent_id   = aws_api_gateway_rest_api.haire_api.root_resource_id
+  path_part   = "upload-team-file"
+}
+
+resource "aws_api_gateway_resource" "team_files" {
+  rest_api_id = aws_api_gateway_rest_api.haire_api.id
+  parent_id   = aws_api_gateway_rest_api.haire_api.root_resource_id
+  path_part   = "team-files"
+}
+
+resource "aws_api_gateway_resource" "team_files_id" {
+  rest_api_id = aws_api_gateway_rest_api.haire_api.id
+  parent_id   = aws_api_gateway_resource.team_files.id
+  path_part   = "{team_id}"
+}
+
+resource "aws_api_gateway_resource" "download_team_file" {
+  rest_api_id = aws_api_gateway_rest_api.haire_api.id
+  parent_id   = aws_api_gateway_rest_api.haire_api.root_resource_id
+  path_part   = "download-team-file"
+}
+
+resource "aws_api_gateway_resource" "download_team_file_key" {
+  rest_api_id = aws_api_gateway_rest_api.haire_api.id
+  parent_id   = aws_api_gateway_resource.download_team_file.id
+  path_part   = "{file_key}"
+}
+
+resource "aws_api_gateway_resource" "delete_team_file" {
+  rest_api_id = aws_api_gateway_rest_api.haire_api.id
+  parent_id   = aws_api_gateway_rest_api.haire_api.root_resource_id
+  path_part   = "delete-team-file"
+}
+
+# API Gateway 方法 - 文件上傳
+resource "aws_api_gateway_method" "upload_team_file_post" {
+  rest_api_id   = aws_api_gateway_rest_api.haire_api.id
+  resource_id   = aws_api_gateway_resource.upload_team_file.id
+  http_method   = "POST"
+  authorization = "NONE"
+}
+
+resource "aws_api_gateway_method" "upload_team_file_options" {
+  rest_api_id   = aws_api_gateway_rest_api.haire_api.id
+  resource_id   = aws_api_gateway_resource.upload_team_file.id
+  http_method   = "OPTIONS"
+  authorization = "NONE"
+}
+
+# API Gateway 方法 - 文件列表
+resource "aws_api_gateway_method" "team_files_get" {
+  rest_api_id   = aws_api_gateway_rest_api.haire_api.id
+  resource_id   = aws_api_gateway_resource.team_files_id.id
+  http_method   = "GET"
+  authorization = "NONE"
+}
+
+resource "aws_api_gateway_method" "team_files_options" {
+  rest_api_id   = aws_api_gateway_rest_api.haire_api.id
+  resource_id   = aws_api_gateway_resource.team_files_id.id
+  http_method   = "OPTIONS"
+  authorization = "NONE"
+}
+
+# API Gateway 方法 - 文件下載
+resource "aws_api_gateway_method" "download_team_file_get" {
+  rest_api_id   = aws_api_gateway_rest_api.haire_api.id
+  resource_id   = aws_api_gateway_resource.download_team_file_key.id
+  http_method   = "GET"
+  authorization = "NONE"
+}
+
+resource "aws_api_gateway_method" "download_team_file_options" {
+  rest_api_id   = aws_api_gateway_rest_api.haire_api.id
+  resource_id   = aws_api_gateway_resource.download_team_file_key.id
+  http_method   = "OPTIONS"
+  authorization = "NONE"
+}
+
+# API Gateway 方法 - 文件刪除
+resource "aws_api_gateway_method" "delete_team_file_delete" {
+  rest_api_id   = aws_api_gateway_rest_api.haire_api.id
+  resource_id   = aws_api_gateway_resource.delete_team_file.id
+  http_method   = "DELETE"
+  authorization = "NONE"
+}
+
+resource "aws_api_gateway_method" "delete_team_file_options" {
+  rest_api_id   = aws_api_gateway_rest_api.haire_api.id
+  resource_id   = aws_api_gateway_resource.delete_team_file.id
+  http_method   = "OPTIONS"
+  authorization = "NONE"
+}
+
+# API Gateway 整合 - 文件管理
+resource "aws_api_gateway_integration" "upload_team_file_integration" {
+  rest_api_id = aws_api_gateway_rest_api.haire_api.id
+  resource_id = aws_api_gateway_resource.upload_team_file.id
+  http_method = aws_api_gateway_method.upload_team_file_post.http_method
+  
+  integration_http_method = "POST"
+  type                   = "AWS_PROXY"
+  uri                    = module.team_management_lambda.invoke_arn
+}
+
+resource "aws_api_gateway_integration" "team_files_get_integration" {
+  rest_api_id = aws_api_gateway_rest_api.haire_api.id
+  resource_id = aws_api_gateway_resource.team_files_id.id
+  http_method = aws_api_gateway_method.team_files_get.http_method
+  
+  integration_http_method = "POST"
+  type                   = "AWS_PROXY"
+  uri                    = module.team_management_lambda.invoke_arn
+}
+
+resource "aws_api_gateway_integration" "download_team_file_integration" {
+  rest_api_id = aws_api_gateway_rest_api.haire_api.id
+  resource_id = aws_api_gateway_resource.download_team_file_key.id
+  http_method = aws_api_gateway_method.download_team_file_get.http_method
+  
+  integration_http_method = "POST"
+  type                   = "AWS_PROXY"
+  uri                    = module.team_management_lambda.invoke_arn
+}
+
+resource "aws_api_gateway_integration" "delete_team_file_integration" {
+  rest_api_id = aws_api_gateway_rest_api.haire_api.id
+  resource_id = aws_api_gateway_resource.delete_team_file.id
+  http_method = aws_api_gateway_method.delete_team_file_delete.http_method
+  
+  integration_http_method = "POST"
+  type                   = "AWS_PROXY"
+  uri                    = module.team_management_lambda.invoke_arn
+}
+
+# CORS 整合 - 文件管理
+resource "aws_api_gateway_integration" "upload_team_file_options_integration" {
+  rest_api_id = aws_api_gateway_rest_api.haire_api.id
+  resource_id = aws_api_gateway_resource.upload_team_file.id
+  http_method = aws_api_gateway_method.upload_team_file_options.http_method
+  
+  type = "MOCK"
+  request_templates = {
+    "application/json" = jsonencode({
+      statusCode = 200
+    })
+  }
+}
+
+resource "aws_api_gateway_integration" "team_files_options_integration" {
+  rest_api_id = aws_api_gateway_rest_api.haire_api.id
+  resource_id = aws_api_gateway_resource.team_files_id.id
+  http_method = aws_api_gateway_method.team_files_options.http_method
+  
+  type = "MOCK"
+  request_templates = {
+    "application/json" = jsonencode({
+      statusCode = 200
+    })
+  }
+}
+
+resource "aws_api_gateway_integration" "download_team_file_options_integration" {
+  rest_api_id = aws_api_gateway_rest_api.haire_api.id
+  resource_id = aws_api_gateway_resource.download_team_file_key.id
+  http_method = aws_api_gateway_method.download_team_file_options.http_method
+  
+  type = "MOCK"
+  request_templates = {
+    "application/json" = jsonencode({
+      statusCode = 200
+    })
+  }
+}
+
+resource "aws_api_gateway_integration" "delete_team_file_options_integration" {
+  rest_api_id = aws_api_gateway_rest_api.haire_api.id
+  resource_id = aws_api_gateway_resource.delete_team_file.id
+  http_method = aws_api_gateway_method.delete_team_file_options.http_method
+  
+  type = "MOCK"
+  request_templates = {
+    "application/json" = jsonencode({
+      statusCode = 200
+    })
+  }
+}
+
+# Method Response - 文件管理 OPTIONS
+resource "aws_api_gateway_method_response" "upload_team_file_options_method_response" {
+  rest_api_id = aws_api_gateway_rest_api.haire_api.id
+  resource_id = aws_api_gateway_resource.upload_team_file.id
+  http_method = aws_api_gateway_method.upload_team_file_options.http_method
+  status_code = "200"
+
+  response_parameters = {
+    "method.response.header.Access-Control-Allow-Headers" = true
+    "method.response.header.Access-Control-Allow-Methods" = true
+    "method.response.header.Access-Control-Allow-Origin"  = true
+  }
+}
+
+resource "aws_api_gateway_method_response" "team_files_options_method_response" {
+  rest_api_id = aws_api_gateway_rest_api.haire_api.id
+  resource_id = aws_api_gateway_resource.team_files_id.id
+  http_method = aws_api_gateway_method.team_files_options.http_method
+  status_code = "200"
+
+  response_parameters = {
+    "method.response.header.Access-Control-Allow-Headers" = true
+    "method.response.header.Access-Control-Allow-Methods" = true
+    "method.response.header.Access-Control-Allow-Origin"  = true
+  }
+}
+
+resource "aws_api_gateway_method_response" "download_team_file_options_method_response" {
+  rest_api_id = aws_api_gateway_rest_api.haire_api.id
+  resource_id = aws_api_gateway_resource.download_team_file_key.id
+  http_method = aws_api_gateway_method.download_team_file_options.http_method
+  status_code = "200"
+
+  response_parameters = {
+    "method.response.header.Access-Control-Allow-Headers" = true
+    "method.response.header.Access-Control-Allow-Methods" = true
+    "method.response.header.Access-Control-Allow-Origin"  = true
+  }
+}
+
+resource "aws_api_gateway_method_response" "delete_team_file_options_method_response" {
+  rest_api_id = aws_api_gateway_rest_api.haire_api.id
+  resource_id = aws_api_gateway_resource.delete_team_file.id
+  http_method = aws_api_gateway_method.delete_team_file_options.http_method
+  status_code = "200"
+
+  response_parameters = {
+    "method.response.header.Access-Control-Allow-Headers" = true
+    "method.response.header.Access-Control-Allow-Methods" = true
+    "method.response.header.Access-Control-Allow-Origin"  = true
+  }
+}
+
+# Integration Response - 文件管理 OPTIONS
+resource "aws_api_gateway_integration_response" "upload_team_file_options_integration_response" {
+  rest_api_id = aws_api_gateway_rest_api.haire_api.id
+  resource_id = aws_api_gateway_resource.upload_team_file.id
+  http_method = aws_api_gateway_method.upload_team_file_options.http_method
+  status_code = "200"
+
+  response_parameters = {
+    "method.response.header.Access-Control-Allow-Headers" = "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+    "method.response.header.Access-Control-Allow-Methods" = "'GET,OPTIONS,POST,PUT,DELETE'"
+    "method.response.header.Access-Control-Allow-Origin"  = "'*'"
+  }
+
+  depends_on = [aws_api_gateway_method_response.upload_team_file_options_method_response]
+}
+
+resource "aws_api_gateway_integration_response" "team_files_options_integration_response" {
+  rest_api_id = aws_api_gateway_rest_api.haire_api.id
+  resource_id = aws_api_gateway_resource.team_files_id.id
+  http_method = aws_api_gateway_method.team_files_options.http_method
+  status_code = "200"
+
+  response_parameters = {
+    "method.response.header.Access-Control-Allow-Headers" = "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+    "method.response.header.Access-Control-Allow-Methods" = "'GET,OPTIONS,POST,PUT,DELETE'"
+    "method.response.header.Access-Control-Allow-Origin"  = "'*'"
+  }
+
+  depends_on = [aws_api_gateway_method_response.team_files_options_method_response]
+}
+
+resource "aws_api_gateway_integration_response" "download_team_file_options_integration_response" {
+  rest_api_id = aws_api_gateway_rest_api.haire_api.id
+  resource_id = aws_api_gateway_resource.download_team_file_key.id
+  http_method = aws_api_gateway_method.download_team_file_options.http_method
+  status_code = "200"
+
+  response_parameters = {
+    "method.response.header.Access-Control-Allow-Headers" = "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+    "method.response.header.Access-Control-Allow-Methods" = "'GET,OPTIONS,POST,PUT,DELETE'"
+    "method.response.header.Access-Control-Allow-Origin"  = "'*'"
+  }
+
+  depends_on = [aws_api_gateway_method_response.download_team_file_options_method_response]
+}
+
+resource "aws_api_gateway_integration_response" "delete_team_file_options_integration_response" {
+  rest_api_id = aws_api_gateway_rest_api.haire_api.id
+  resource_id = aws_api_gateway_resource.delete_team_file.id
+  http_method = aws_api_gateway_method.delete_team_file_options.http_method
+  status_code = "200"
+
+  response_parameters = {
+    "method.response.header.Access-Control-Allow-Headers" = "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+    "method.response.header.Access-Control-Allow-Methods" = "'GET,OPTIONS,POST,PUT,DELETE'"
+    "method.response.header.Access-Control-Allow-Origin"  = "'*'"
+  }
+
+  depends_on = [aws_api_gateway_method_response.delete_team_file_options_method_response]
 }

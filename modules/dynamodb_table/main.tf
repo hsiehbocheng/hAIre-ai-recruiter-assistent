@@ -25,6 +25,9 @@ resource "aws_dynamodb_table" "this" {
   name         = var.table_name
   billing_mode = "PAY_PER_REQUEST"
 
+  # 資料保護設定
+  deletion_protection_enabled = true
+
   hash_key  = var.hash_key
   range_key = var.range_key != null ? var.range_key : null
 
@@ -45,6 +48,15 @@ resource "aws_dynamodb_table" "this" {
       projection_type = global_secondary_index.value.projection_type
       non_key_attributes = global_secondary_index.value.non_key_attributes
     }
+  }
+
+  # 防止意外重建資源
+  lifecycle {
+    prevent_destroy = true
+    ignore_changes = [
+      # 忽略不重要的更改，避免重建
+      tags["CreatedDate"],
+    ]
   }
 
   tags = {

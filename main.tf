@@ -122,30 +122,43 @@ resource "aws_lambda_permission" "allow_bucket" {
 }
 
 # 四個 Bucket ─ 依用途拆開
+## 履歷 raw 檔
 resource "aws_s3_bucket" "raw_resume" {
   bucket        = "benson-haire-raw-resume-${random_id.suffix.hex}"
   force_destroy = true
   tags          = merge(local.common_tags, { Name = "raw-resume" })
 }
 
+## ai 解析後的履歷
 resource "aws_s3_bucket" "parsed_resume" {
   bucket        = "benson-haire-parsed-resume-${random_id.suffix.hex}"
   force_destroy = true
   tags          = merge(local.common_tags, { Name = "parsed-resume" })
 }
 
+## 刊登的職缺內容
 resource "aws_s3_bucket" "job_posting" {
   bucket        = "benson-haire-job-posting-${random_id.suffix.hex}"
   force_destroy = true
   tags          = merge(local.common_tags, { Name = "job-posting" })
 }
 
-resource "aws_s3_bucket" "job_posting" {
-  bucket        = "benson-haire-job-posting-${random_id.suffix.hex}"
+## 刊登的職缺內容
+resource "aws_s3_bucket" "job_team_info" {
+  bucket        = "benson-haire-team-info-${random_id.suffix.hex}"
+  force_destroy = true
+  tags          = merge(local.common_tags, { Name = "team-info" })
+}
+
+
+## ai 解析後，各履歷的需求內容
+resource "aws_s3_bucket" "job_requirement" {
+  bucket        = "benson-haire-job-requirement-${random_id.suffix.hex}"
   force_destroy = true
   tags          = merge(local.common_tags, { Name = "job-requirement" })
 }
 
+## 靜態網站
 resource "aws_s3_bucket" "static_site" {
   bucket        = "benson-haire-static-site-${random_id.suffix.hex}"
   force_destroy = true

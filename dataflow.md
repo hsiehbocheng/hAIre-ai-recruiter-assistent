@@ -126,7 +126,6 @@ sequenceDiagram
 | `team_description` | string | 團隊描述 | `負責企業智能化專案開發與維運` |
 | `created_at` | string | 建立時間 (ISO 8601) | `2024-01-15T10:00:00Z` |
 | `updated_at` | string | 更新時間 (ISO 8601) | `2024-01-15T10:00:00Z` |
-| `version` | number | 版本號 | `1` |
 
 ---
 
@@ -154,7 +153,6 @@ sequenceDiagram
 | `status` | string | 職缺狀態 | `active/paused/closed` |
 | `created_at` | string | 建立時間 (ISO 8601) | `2024-01-15T10:00:00Z` |
 | `updated_at` | string | 更新時間 (ISO 8601) | `2024-01-15T10:00:00Z` |
-| `version` | number | 版本號 | `1` |
 
 ---
 
@@ -228,24 +226,10 @@ sequenceDiagram
 | `matched_at` | string | 比對時間（ISO 8601） |
 | `matched_requirements` | array<string> | 符合的需求項目列表 |
 | `unmatched_requirements` | array<string> | 不符合的需求項目列表 |
-| `notification_sent` | boolean | 是否已發送通知 |
 
 ---
 
-## 🔧 **版本控制策略**
-
-### **資料版本控制**：
-1. **團隊資訊**：每次更新 `version` +1，保留歷史版本在 S3
-2. **職缺資訊**：每次修改 `version` +1，需求重新萃取
-3. **需求確認**：使用者確認後更新 `is_confirmed` 和 `confirmed_at`
-
-### **API 版本控制**：
-- 所有 API 使用 `/v1/` 前綴
-- 未來版本變更使用 `/v2/` 等
-
----
-
-## 🔐 **權限管理與 Cognito 整合**
+<!-- ## 🔐 **權限管理與 Cognito 整合**
 
 ### **第一階段：Admin Only**
 - 使用 Cognito User Pool 建立管理員帳號
@@ -269,25 +253,4 @@ sequenceDiagram
     Frontend->>API: 請求時帶入 Authorization Header
     API->>Cognito: 驗證 JWT Token
     API->>Lambda: Token 有效，執行函數
-```
-
----
-
-## 📊 **需要建立的 DynamoDB 資料表清單**
-
-1. ✅ **benson-haire-parsed_resume** (已存在)
-2. ✅ **benson-haire-job-posting** (已存在)  
-3. ✅ **benson-haire-job-requirement** (已存在)
-4. ✅ **benson-haire-match-result** (已存在)
-5. ➕ **benson-haire-teams** (需新增)
-
----
-
-## 🚀 **下一步實作優先順序**
-
-1. **新增 teams 資料表**
-2. **建立團隊管理 API (Lambda + API Gateway)**
-3. **建立職缺管理 API** 
-4. **實作需求萃取 Lambda**
-5. **設定 Cognito 身分驗證**
-6. **建立基本前端介面**
+``` -->

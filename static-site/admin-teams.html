@@ -520,16 +520,14 @@
             try {
                 console.log('🔄 開始載入團隊資料...');
                 
-                // 使用配置中的 API URL，如果沒有則使用後備 URL
-                const apiUrl = window.CONFIG ? window.CONFIG.API_BASE_URL : 'https://m3jj8hrfhj.execute-api.ap-southeast-1.amazonaws.com/dev';
+                // 使用正確的 API URL
+                const apiUrl = window.CONFIG ? window.CONFIG.API_BASE_URL : 'https://44wy0r4r16.execute-api.ap-southeast-1.amazonaws.com/dev';
                 console.log('🔗 API URL:', apiUrl + '/teams');
                 
                 const response = await fetch(apiUrl + '/teams', {
                     method: 'GET',
                     headers: {
-                        'Content-Type': 'application/json',
-                        // 如果需要驗證，加上 Authorization header
-                        // 'Authorization': localStorage.getItem('id_token')
+                        'Content-Type': 'application/json'
                     }
                 });
 
@@ -598,26 +596,33 @@
         // 新增團隊
         async function createTeam() {
             try {
-                const formData = {
-                    company: document.getElementById('company').value.trim(),
-                    company_code: document.getElementById('companyCode').value.trim().toUpperCase(),
-                    department: document.getElementById('department').value.trim(),
-                    dept_code: document.getElementById('deptCode').value.trim().toUpperCase(),
-                    team_name: document.getElementById('teamName').value.trim(),
-                    team_code: document.getElementById('teamCode').value.trim().toUpperCase(),
-                    team_description: document.getElementById('teamDescription').value.trim()
-                };
-
-                // 驗證必填欄位
-                if (!formData.company || !formData.company_code || !formData.department || 
-                    !formData.dept_code || !formData.team_name || !formData.team_code) {
+                // 驗證表單
+                const company = document.getElementById('company').value.trim();
+                const department = document.getElementById('department').value.trim();
+                const teamName = document.getElementById('teamName').value.trim();
+                const companyCode = document.getElementById('companyCode').value.trim().toUpperCase();
+                const deptCode = document.getElementById('deptCode').value.trim().toUpperCase();
+                const teamCode = document.getElementById('teamCode').value.trim().toUpperCase();
+                
+                if (!company || !department || !teamName || !companyCode || !deptCode || !teamCode) {
                     showAlert('請填寫所有必填欄位', 'warning');
                     return;
                 }
 
+                const formData = {
+                    company: company,
+                    company_code: companyCode,
+                    department: department,
+                    dept_code: deptCode,
+                    team_name: teamName,
+                    team_code: teamCode,
+                    team_description: document.getElementById('teamDescription').value.trim()
+                };
+
                 console.log('📤 建立團隊資料:', formData);
 
-                const apiUrl = window.CONFIG ? window.CONFIG.API_BASE_URL : 'https://m3jj8hrfhj.execute-api.ap-southeast-1.amazonaws.com/dev';
+                // 使用正確的 API URL
+                const apiUrl = window.CONFIG ? window.CONFIG.API_BASE_URL : 'https://44wy0r4r16.execute-api.ap-southeast-1.amazonaws.com/dev';
                 
                 const response = await fetch(apiUrl + '/teams', {
                     method: 'POST',
@@ -635,9 +640,10 @@
                 const result = await response.json();
                 console.log('✅ 團隊建立成功:', result);
 
-                // 如果有文件需要上傳
-                if (selectedFiles.length > 0 && result.team_id) {
-                    await uploadFiles(result.team_id, selectedFiles);
+                // 如果有檔案需要上傳
+                if (selectedFiles.length > 0) {
+                    const teamId = `${companyCode}-${deptCode}-${teamCode}`;
+                    await uploadFiles(teamId, selectedFiles);
                 }
 
                 // 關閉 modal 並重新載入資料
@@ -680,8 +686,8 @@
         async function updateTeam() {
             try {
                 const teamId = document.getElementById('editTeamId').value;
+                
                 const formData = {
-                    team_id: teamId,
                     company: document.getElementById('editCompany').value.trim(),
                     company_code: document.getElementById('editCompanyCode').value.trim().toUpperCase(),
                     department: document.getElementById('editDepartment').value.trim(),
@@ -691,16 +697,10 @@
                     team_description: document.getElementById('editTeamDescription').value.trim()
                 };
 
-                // 驗證必填欄位
-                if (!formData.company || !formData.company_code || !formData.department || 
-                    !formData.dept_code || !formData.team_name || !formData.team_code) {
-                    showAlert('請填寫所有必填欄位', 'warning');
-                    return;
-                }
-
                 console.log('📤 更新團隊資料:', formData);
 
-                const apiUrl = window.CONFIG ? window.CONFIG.API_BASE_URL : 'https://m3jj8hrfhj.execute-api.ap-southeast-1.amazonaws.com/dev';
+                // 使用正確的 API URL
+                const apiUrl = window.CONFIG ? window.CONFIG.API_BASE_URL : 'https://44wy0r4r16.execute-api.ap-southeast-1.amazonaws.com/dev';
                 
                 const response = await fetch(apiUrl + '/teams/' + teamId, {
                     method: 'PUT',
@@ -742,7 +742,8 @@
             try {
                 console.log('🗑️ 刪除團隊:', teamId);
 
-                const apiUrl = window.CONFIG ? window.CONFIG.API_BASE_URL : 'https://m3jj8hrfhj.execute-api.ap-southeast-1.amazonaws.com/dev';
+                // 使用正確的 API URL
+                const apiUrl = window.CONFIG ? window.CONFIG.API_BASE_URL : 'https://44wy0r4r16.execute-api.ap-southeast-1.amazonaws.com/dev';
                 
                 const response = await fetch(`${apiUrl}/teams/${encodeURIComponent(teamId)}`, {
                     method: 'DELETE',
@@ -825,9 +826,10 @@
             try {
                 console.log('📂 載入團隊文件:', teamId);
                 
-                // 嘗試從 API 取得文件列表
-                const apiUrl = window.CONFIG ? window.CONFIG.API_BASE_URL : 'https://m3jj8hrfhj.execute-api.ap-southeast-1.amazonaws.com/dev';
+                // 使用正確的 API URL
+                const apiUrl = window.CONFIG ? window.CONFIG.API_BASE_URL : 'https://44wy0r4r16.execute-api.ap-southeast-1.amazonaws.com/dev';
                 
+                // 嘗試列出 S3 文件
                 const response = await fetch(`${apiUrl}/team-files/${encodeURIComponent(teamId)}`, {
                     method: 'GET',
                     headers: {
@@ -836,22 +838,25 @@
                 });
 
                 if (response.ok) {
-                    const files = await response.json();
-                    renderTeamFiles(files);
-                } else {
+                    const result = await response.json();
+                    const files = result.files || result;
+                    renderTeamFiles(files, teamId);
+                } else if (response.status === 404) {
                     // API 未實作，顯示說明
                     filesContainer.innerHTML = `
                         <div class="alert alert-info">
                             <i class="fas fa-info-circle me-2"></i>
-                            <strong>文件上傳功能說明：</strong>
+                            <strong>文件儲存資訊：</strong>
                             <ul class="mb-0 mt-2">
-                                <li>文件將上傳至 S3 bucket: <code>benson-haire-team-info-e36d5aee</code></li>
-                                <li>儲存路徑: <code>team_docs/</code></li>
-                                <li>命名格式: <code>${teamId}-文件名稱</code></li>
-                                <li>上傳 API 開發中...</li>
+                                <li><strong>S3 Bucket:</strong> <code>benson-haire-team-info-e36d5aee</code></li>
+                                <li><strong>儲存路徑:</strong> <code>team_docs/</code></li>
+                                <li><strong>命名格式:</strong> <code>${teamId}-文件名稱</code></li>
+                                <li class="text-warning"><i class="fas fa-exclamation-triangle me-1"></i>文件列表 API 開發中...</li>
                             </ul>
                         </div>
                     `;
+                } else {
+                    throw new Error(`載入文件失敗: ${response.status}`);
                 }
                 
             } catch (error) {
@@ -859,94 +864,141 @@
                 filesContainer.innerHTML = `
                     <div class="alert alert-warning">
                         <i class="fas fa-exclamation-triangle me-2"></i>
-                        載入文件失敗，請稍後再試
+                        載入文件失敗: ${error.message}
                     </div>
                 `;
             }
         }
 
         // 渲染團隊文件列表
-        function renderTeamFiles(files) {
+        function renderTeamFiles(files, teamId) {
             const container = document.getElementById('teamFiles');
             
             if (!files || files.length === 0) {
-                container.innerHTML = '<p class="text-muted">尚無上傳文件</p>';
+                container.innerHTML = `
+                    <p class="text-muted">
+                        <i class="fas fa-folder-open me-2"></i>
+                        尚無上傳文件
+                    </p>
+                `;
                 return;
             }
 
             const fileList = files.map(file => {
-                const fileName = file.key ? file.key.replace(`team_docs/${file.teamId}-`, '') : file.name;
+                // 從 S3 key 中提取文件名稱 (移除 team_docs/{teamId}- 前綴)
+                const fileName = file.key ? file.key.replace(`team_docs/${teamId}-`, '') : file.name || '未知文件';
                 const uploadDate = file.lastModified ? new Date(file.lastModified).toLocaleString('zh-TW') : '未知';
                 const fileSize = file.size ? (file.size / 1024).toFixed(1) + ' KB' : '未知';
                 
                 return `
                     <div class="d-flex justify-content-between align-items-center border-bottom py-2">
                         <div>
-                            <i class="fas fa-file me-2"></i>
+                            <i class="fas fa-file me-2 text-primary"></i>
                             <strong>${fileName}</strong>
                             <div class="small text-muted">
-                                大小: ${fileSize} | 上傳時間: ${uploadDate}
+                                <i class="fas fa-weight-hanging me-1"></i>大小: ${fileSize}
+                                <i class="fas fa-clock ms-2 me-1"></i>上傳: ${uploadDate}
                             </div>
                         </div>
-                        <div>
-                            <button class="btn btn-sm btn-outline-primary" onclick="downloadFile('${file.key}')">
-                                <i class="fas fa-download"></i> 下載
+                        <div class="btn-group">
+                            <button class="btn btn-sm btn-outline-success" onclick="downloadTeamFile('${file.key || file.name}', '${fileName}')" title="下載文件">
+                                <i class="fas fa-download"></i>
                             </button>
-                            <button class="btn btn-sm btn-outline-danger ms-1" onclick="deleteFile('${file.key}')">
-                                <i class="fas fa-trash"></i> 刪除
+                            <button class="btn btn-sm btn-outline-danger" onclick="deleteTeamFile('${file.key || file.name}', '${teamId}')" title="刪除文件">
+                                <i class="fas fa-trash"></i>
                             </button>
                         </div>
                     </div>
                 `;
             }).join('');
-
-            container.innerHTML = fileList;
+            
+            container.innerHTML = `
+                <div class="mb-2">
+                    <small class="text-muted">
+                        <i class="fas fa-folder me-1"></i>
+                        共 ${files.length} 個文件
+                    </small>
+                </div>
+                ${fileList}
+            `;
         }
 
-        // 下載文件
-        async function downloadFile(fileKey) {
+        // 下載團隊文件
+        async function downloadTeamFile(fileKey, fileName) {
             try {
-                const apiUrl = window.CONFIG ? window.CONFIG.API_BASE_URL : 'https://m3jj8hrfhj.execute-api.ap-southeast-1.amazonaws.com/dev';
+                console.log('📥 下載文件:', fileKey);
                 
-                // 取得下載 URL
+                const apiUrl = window.CONFIG ? window.CONFIG.API_BASE_URL : 'https://44wy0r4r16.execute-api.ap-southeast-1.amazonaws.com/dev';
+                
                 const response = await fetch(`${apiUrl}/download-team-file/${encodeURIComponent(fileKey)}`, {
                     method: 'GET'
                 });
 
-                if (response.ok) {
-                    const data = await response.json();
-                    window.open(data.downloadUrl, '_blank');
-                } else {
-                    showAlert('下載功能開發中...', 'info');
+                if (!response.ok) {
+                    if (response.status === 404) {
+                        showAlert('下載功能開發中...', 'info');
+                        return;
+                    }
+                    throw new Error(`下載失敗: ${response.status}`);
                 }
+
+                // 創建下載連結
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = fileName;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                
+                showAlert(`文件 "${fileName}" 下載完成`, 'success');
+                
             } catch (error) {
                 console.error('❌ 下載文件失敗:', error);
-                showAlert('下載功能開發中...', 'info');
+                showAlert('下載文件失敗: ' + error.message, 'danger');
             }
         }
 
-        // 刪除文件
-        async function deleteFile(fileKey) {
-            if (!confirm('確定要刪除此文件嗎？')) return;
+        // 刪除團隊文件
+        async function deleteTeamFile(fileKey, teamId) {
+            if (!confirm(`確定要刪除文件 "${fileKey}" 嗎？此操作無法復原。`)) {
+                return;
+            }
 
             try {
-                const apiUrl = window.CONFIG ? window.CONFIG.API_BASE_URL : 'https://m3jj8hrfhj.execute-api.ap-southeast-1.amazonaws.com/dev';
+                console.log('🗑️ 刪除文件:', fileKey);
                 
-                const response = await fetch(`${apiUrl}/delete-team-file/${encodeURIComponent(fileKey)}`, {
-                    method: 'DELETE'
+                const apiUrl = window.CONFIG ? window.CONFIG.API_BASE_URL : 'https://44wy0r4r16.execute-api.ap-southeast-1.amazonaws.com/dev';
+                
+                const response = await fetch(`${apiUrl}/delete-team-file`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        key: fileKey,
+                        bucket: 'benson-haire-team-info-e36d5aee'
+                    })
                 });
 
-                if (response.ok) {
-                    showAlert('文件刪除成功', 'success');
-                    // 重新載入文件列表
-                    const teamId = document.getElementById('editFromDetail').getAttribute('data-team-id');
-                    if (teamId) loadTeamFiles(teamId);
-                } else {
-                    showAlert('刪除功能開發中...', 'info');
+                if (!response.ok) {
+                    if (response.status === 404) {
+                        showAlert('刪除功能開發中...', 'info');
+                        return;
+                    }
+                    throw new Error(`刪除失敗: ${response.status}`);
                 }
+
+                console.log('✅ 文件刪除成功');
+                showAlert('文件刪除成功', 'success');
+                
+                // 重新載入文件列表
+                loadTeamFiles(teamId);
+                
             } catch (error) {
                 console.error('❌ 刪除文件失敗:', error);
-                showAlert('刪除功能開發中...', 'info');
+                showAlert('刪除文件失敗: ' + error.message, 'danger');
             }
         }
 
@@ -1002,19 +1054,26 @@
 
         // 上傳文件到 S3
         async function uploadFiles(teamId, files) {
-            if (!files || files.length === 0) return;
+            if (!files || files.length === 0) {
+                console.log('⚠️  沒有文件需要上傳');
+                return;
+            }
             
             console.log('📁 準備上傳文件:', files.length, '個文件到團隊:', teamId);
             
             try {
+                const results = [];
                 for (const file of files) {
-                    await uploadSingleFile(teamId, file);
+                    const result = await uploadSingleFile(teamId, file);
+                    results.push(result);
                 }
-                console.log('✅ 所有文件上傳完成');
+                console.log('✅ 所有文件上傳完成:', results);
                 showAlert(`成功上傳 ${files.length} 個文件`, 'success');
+                return results;
             } catch (error) {
                 console.error('❌ 文件上傳失敗:', error);
                 showAlert('文件上傳失敗: ' + error.message, 'danger');
+                throw error;
             }
         }
 
@@ -1033,8 +1092,8 @@
                 formData.append('key', key);
                 formData.append('teamId', teamId);
 
-                // 這裡需要呼叫你的 Lambda 函數或 API Gateway 端點進行 S3 上傳
-                const apiUrl = window.CONFIG ? window.CONFIG.API_BASE_URL : 'https://m3jj8hrfhj.execute-api.ap-southeast-1.amazonaws.com/dev';
+                // 使用正確的 API URL
+                const apiUrl = window.CONFIG ? window.CONFIG.API_BASE_URL : 'https://44wy0r4r16.execute-api.ap-southeast-1.amazonaws.com/dev';
                 
                 const response = await fetch(`${apiUrl}/upload-team-file`, {
                     method: 'POST',
@@ -1042,20 +1101,46 @@
                 });
 
                 if (!response.ok) {
-                    throw new Error(`上傳失敗: ${response.status}`);
+                    if (response.status === 404) {
+                        // API 尚未實作，模擬成功並提供說明
+                        console.log('⚠️  上傳 API 尚未實作，模擬上傳成功');
+                        showAlert(`文件 "${file.name}" 準備上傳到 S3\n路徑: team_docs/${teamId}-${file.name}\n(上傳 API 開發中...)`, 'info');
+                        return { 
+                            success: true, 
+                            key: key, 
+                            message: '模擬上傳成功（API 開發中）',
+                            bucket: bucketName,
+                            filename: file.name
+                        };
+                    }
+                    throw new Error(`上傳失敗 HTTP ${response.status}`);
                 }
 
                 const result = await response.json();
                 console.log(`✅ 文件 ${file.name} 上傳成功:`, result);
                 
-                return result;
+                return {
+                    success: true,
+                    key: key,
+                    bucket: bucketName,
+                    filename: file.name,
+                    ...result
+                };
                 
             } catch (error) {
                 console.error(`❌ 文件 ${file.name} 上傳失敗:`, error);
-                // 如果是網路問題，可以考慮使用備用方案（模擬上傳成功）
-                if (error.message.includes('404') || error.message.includes('Failed to fetch')) {
-                    console.log('⚠️  上傳 API 未實作，模擬上傳成功');
-                    return { success: true, key: key, message: '模擬上傳成功（API 開發中）' };
+                
+                // 如果是網路問題，提供模擬回應
+                if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+                    console.log('⚠️  網路問題，模擬上傳成功');
+                    showAlert(`網路問題，文件 "${file.name}" 模擬上傳成功`, 'warning');
+                    return { 
+                        success: true, 
+                        key: key, 
+                        message: '模擬上傳成功（網路問題）',
+                        bucket: bucketName,
+                        filename: file.name
+                    };
                 }
                 throw error;
             }

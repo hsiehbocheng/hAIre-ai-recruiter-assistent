@@ -1041,7 +1041,7 @@
                             <small>
                                 <i class="fas fa-info-circle me-1"></i>
                                 現有文件功能開發中，上傳的文件將存放在：<br>
-                                <code>s3://benson-haire-team-info-e36d5aee/team_docs/${teamId}-文件名稱</code>
+                                <code>s3://benson-haire-team-info-e36d5aee/team_info_docs/${teamId}_文件名稱</code>
                             </small>
                         </div>
                     `;
@@ -1079,41 +1079,24 @@
 
         // 上傳單個文件到 S3
         async function uploadSingleFile(teamId, file) {
-            const bucketName = 'benson-haire-team-info-e36d5aee';
-            const key = `team_docs/${teamId}-${file.name}`;
-            
-            console.log(`📤 上傳文件: ${file.name} 到 s3://${bucketName}/${key}`);
+            console.log(`📤 上傳文件: ${file.name} 到團隊 ${teamId}`);
             
             try {
                 // 創建 FormData 進行文件上傳
                 const formData = new FormData();
                 formData.append('file', file);
-                formData.append('bucket', bucketName);
-                formData.append('key', key);
-                formData.append('teamId', teamId);
 
                 // 使用正確的 API URL
                 const apiUrl = window.CONFIG ? window.CONFIG.API_BASE_URL : 'https://44wy0r4r16.execute-api.ap-southeast-1.amazonaws.com/dev';
                 
-                const response = await fetch(`${apiUrl}/upload-team-file`, {
+                const response = await fetch(`${apiUrl}/upload-team-file?teamId=${encodeURIComponent(teamId)}`, {
                     method: 'POST',
                     body: formData
                 });
 
                 if (!response.ok) {
-                    if (response.status === 404) {
-                        // API 尚未實作，模擬成功並提供說明
-                        console.log('⚠️  上傳 API 尚未實作，模擬上傳成功');
-                        showAlert(`文件 "${file.name}" 準備上傳到 S3\n路徑: team_docs/${teamId}-${file.name}\n(上傳 API 開發中...)`, 'info');
-                        return { 
-                            success: true, 
-                            key: key, 
-                            message: '模擬上傳成功（API 開發中）',
-                            bucket: bucketName,
-                            filename: file.name
-                        };
-                    }
-                    throw new Error(`上傳失敗 HTTP ${response.status}`);
+                    const errorText = await response.text();
+                    throw new Error(`上傳失敗 HTTP ${response.status}: ${errorText}`);
                 }
 
                 const result = await response.json();
@@ -1121,27 +1104,12 @@
                 
                 return {
                     success: true,
-                    key: key,
-                    bucket: bucketName,
                     filename: file.name,
                     ...result
                 };
                 
             } catch (error) {
                 console.error(`❌ 文件 ${file.name} 上傳失敗:`, error);
-                
-                // 如果是網路問題，提供模擬回應
-                if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
-                    console.log('⚠️  網路問題，模擬上傳成功');
-                    showAlert(`網路問題，文件 "${file.name}" 模擬上傳成功`, 'warning');
-                    return { 
-                        success: true, 
-                        key: key, 
-                        message: '模擬上傳成功（網路問題）',
-                        bucket: bucketName,
-                        filename: file.name
-                    };
-                }
                 throw error;
             }
         }

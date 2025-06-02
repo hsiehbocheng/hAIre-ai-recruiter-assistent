@@ -3,9 +3,16 @@ import boto3
 import base64
 from datetime import datetime
 from typing import Dict, Any
+import cgi # 用於解析 multipart/form-data
+import io # 用於處理字節流
+import os # 用於讀取環境變數
 
 # 初始化 S3 客戶端
 s3_client = boto3.client('s3')
+
+# S3 儲存桶設定 - 從環境變數讀取
+S3_BUCKET_NAME = os.environ.get('S3_BUCKET_NAME', 'benson-haire-team-info-e36d5aee')
+S3_FOLDER_PREFIX = 'team_info_docs/'
 
 def lambda_handler(event: Dict[str, Any], context) -> Dict[str, Any]:
     """
@@ -17,7 +24,7 @@ def lambda_handler(event: Dict[str, Any], context) -> Dict[str, Any]:
     headers = {
         'Access-Control-Allow-Origin': '*',
         'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+        'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Amz-Date, X-Api-Key, X-Amz-Security-Token', # 確保 Content-Type 被允許
         'Content-Type': 'application/json'
     }
     
@@ -35,7 +42,7 @@ def lambda_handler(event: Dict[str, Any], context) -> Dict[str, Any]:
         path = event.get('path', '')
         
         print(f"📨 收到請求: {method} {path}")
-        print(f"📨 事件詳情: {json.dumps(event, default=str)}")
+        # print(f"📨 事件詳情: {json.dumps(event, default=str)}") # 包含文件內容，可能會很長
         
         # 路由處理
         if method == 'POST' and '/upload-team-file' in path:
@@ -59,6 +66,8 @@ def lambda_handler(event: Dict[str, Any], context) -> Dict[str, Any]:
             
     except Exception as e:
         print(f"❌ Lambda 函數執行錯誤: {str(e)}")
+        import traceback
+        print(traceback.format_exc())
         return {
             'statusCode': 500,
             'headers': headers,
@@ -71,67 +80,110 @@ def lambda_handler(event: Dict[str, Any], context) -> Dict[str, Any]:
 def handle_file_upload(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str, Any]:
     """處理文件上傳"""
     try:
-        # 解析 multipart/form-data
-        content_type = event.get('headers', {}).get('content-type', '') or event.get('headers', {}).get('Content-Type', '')
+        content_type_header = event.get('headers', {}).get('content-type', event.get('headers', {}).get('Content-Type', ''))
         
-        if 'multipart/form-data' not in content_type:
+        if not content_type_header or 'multipart/form-data' not in content_type_header:
+            print(f"⚠️ 錯誤的 Content-Type: {content_type_header}")
             return {
                 'statusCode': 400,
                 'headers': headers,
                 'body': json.dumps({'error': '需要 multipart/form-data 格式'})
             }
-        
-        # 取得請求體 (base64 編碼)
-        body = event.get('body', '')
-        is_base64 = event.get('isBase64Encoded', False)
-        
-        if is_base64:
-            body = base64.b64decode(body)
-        else:
-            body = body.encode('utf-8')
-        
-        # 解析 multipart 數據 (簡化版本，實際應使用專門的解析器)
-        # 這裡假設已經解析出了必要的字段
-        boundary = content_type.split('boundary=')[1] if 'boundary=' in content_type else None
-        
-        if not boundary:
+
+        team_id = event.get('queryStringParameters', {}).get('teamId', '')
+        if not team_id:
+            print("⚠️ 缺少 teamId 查詢參數")
             return {
                 'statusCode': 400,
                 'headers': headers,
-                'body': json.dumps({'error': '無法找到 boundary'})
+                'body': json.dumps({'error': '缺少 teamId 查詢參數'})
             }
+
+        # 解碼 base64 主體
+        body_bytes = base64.b64decode(event['body']) if event.get('isBase64Encoded', False) else event['body'].encode('utf-8')
         
-        # 從查詢參數或請求體中取得文件資訊
-        team_id = event.get('queryStringParameters', {}).get('teamId', '') if event.get('queryStringParameters') else ''
-        bucket_name = 'benson-haire-team-info-e36d5aee'
+        # 使用 cgi.FieldStorage 解析 multipart/form-data
+        # FieldStorage 需要 file-like object 和 headers
+        fp = io.BytesIO(body_bytes)
         
-        # 模擬文件上傳成功 (實際實作需要完整的 multipart 解析)
-        file_key = f"team_docs/{team_id}-example_file.txt"
+        # 準備 cgi.FieldStorage 所需的環境變數
+        environ = {'REQUEST_METHOD': 'POST'}
         
-        # 實際上傳到 S3 的邏輯會在這裡
-        # s3_client.put_object(
-        #     Bucket=bucket_name,
-        #     Key=file_key,
-        #     Body=file_content,
-        #     ContentType=file_content_type
-        # )
+        # 確保 content_type_header 是字串
+        if isinstance(content_type_header, bytes):
+            content_type_header = content_type_header.decode('utf-8')
+
+        # cgi.FieldStorage 解析需要 boundary，它在 content_type_header 中
+        # Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
         
-        print(f"✅ 模擬文件上傳成功: {file_key}")
+        form = cgi.FieldStorage(fp=fp, environ=environ, headers={'content-type': content_type_header})
+
+        uploaded_files_info = []
+
+        if 'file' in form:
+            file_item = form['file']
+            if isinstance(file_item, list): # 如果上傳多個同名文件
+                file_items = file_item
+            else:
+                file_items = [file_item]
+
+            for item in file_items:
+                if item.filename:
+                    original_filename = item.filename
+                    file_content = item.file.read() # 讀取文件內容 (bytes)
+                    
+                    # 建構 S3 物件金鑰
+                    # 使用原始檔案名稱，但進行一些清理以避免 S3 金鑰問題
+                    safe_original_filename = "".join(c if c.isalnum() or c in ('.', '_', '-') else '_' for c in original_filename)
+                    file_key = f"{S3_FOLDER_PREFIX}{team_id}_{safe_original_filename}"
+                    
+                    # 上傳到 S3
+                    s3_client.put_object(
+                        Bucket=S3_BUCKET_NAME,
+                        Key=file_key,
+                        Body=file_content,
+                        # ContentType 可以從 item.type 獲取，但前端可能未正確設定
+                        # 如果需要，可以根據文件擴展名推斷，或讓瀏覽器/S3自行處理
+                    )
+                    
+                    print(f"✅ 文件上傳成功: s3://{S3_BUCKET_NAME}/{file_key}")
+                    uploaded_files_info.append({
+                        'key': file_key,
+                        'filename': original_filename,
+                        'size': len(file_content)
+                    })
+                else:
+                    print("⚠️ 收到一個沒有檔案名稱的 file item")
+        else:
+            print("⚠️ multipart/form-data 中沒有找到 'file' 欄位")
+            return {
+                'statusCode': 400,
+                'headers': headers,
+                'body': json.dumps({'error': "multipart/form-data 中沒有找到 'file' 欄位"})
+            }
+
+        if not uploaded_files_info:
+             print("⚠️ 沒有成功上傳任何文件")
+             return {
+                'statusCode': 400,
+                'headers': headers,
+                'body': json.dumps({'error': '沒有成功上傳任何文件'})
+            }
         
         return {
             'statusCode': 200,
             'headers': headers,
             'body': json.dumps({
                 'success': True,
-                'message': '文件上傳成功',
-                'key': file_key,
-                'bucket': bucket_name,
-                'uploaded_at': datetime.utcnow().isoformat()
+                'message': f'{len(uploaded_files_info)} 個文件上傳成功',
+                'uploaded_files': uploaded_files_info
             })
         }
         
     except Exception as e:
         print(f"❌ 文件上傳失敗: {str(e)}")
+        import traceback
+        print(traceback.format_exc())
         return {
             'statusCode': 500,
             'headers': headers,
@@ -144,40 +196,44 @@ def handle_file_upload(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[s
 def handle_list_files(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str, Any]:
     """列出團隊文件"""
     try:
-        # 從路徑參數中取得團隊 ID
         path_params = event.get('pathParameters', {})
         team_id = path_params.get('team_id', '') if path_params else ''
         
         if not team_id:
+            print("⚠️ 缺少 team_id 路徑參數")
             return {
                 'statusCode': 400,
                 'headers': headers,
                 'body': json.dumps({'error': '缺少團隊 ID'})
             }
         
-        bucket_name = 'benson-haire-team-info-e36d5aee'
-        prefix = f'team_docs/{team_id}-'
+        # 更新 S3 前綴以符合新的資料夾結構和命名規則
+        s3_prefix_for_team = f'{S3_FOLDER_PREFIX}{team_id}_'
         
-        print(f"📂 列出文件: bucket={bucket_name}, prefix={prefix}")
+        print(f"📂 列出文件: bucket={S3_BUCKET_NAME}, prefix={s3_prefix_for_team}")
         
-        # 列出 S3 文件
         response = s3_client.list_objects_v2(
-            Bucket=bucket_name,
-            Prefix=prefix
+            Bucket=S3_BUCKET_NAME,
+            Prefix=s3_prefix_for_team
         )
         
         files = []
         if 'Contents' in response:
             for obj in response['Contents']:
+                # 從完整的 S3 Key 中提取原始檔案名稱
+                # Key 格式: team_info_docs/TEAM_ID_原始檔案名稱.pdf
+                # 我們需要移除 team_info_docs/TEAM_ID_ 這部分
+                original_filename = obj['Key'].replace(s3_prefix_for_team, '', 1)
+                
                 files.append({
-                    'key': obj['Key'],
-                    'name': obj['Key'].replace(prefix, ''),
+                    'key': obj['Key'], # 完整的 S3 Object Key
+                    'name': original_filename, # 原始檔案名稱
                     'size': obj['Size'],
                     'lastModified': obj['LastModified'].isoformat(),
                     'etag': obj['ETag'].strip('"')
                 })
         
-        print(f"✅ 找到 {len(files)} 個文件")
+        print(f"✅ 找到 {len(files)} 個文件，team_id: {team_id}")
         
         return {
             'statusCode': 200,
@@ -191,6 +247,8 @@ def handle_list_files(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[st
         
     except Exception as e:
         print(f"❌ 列出文件失敗: {str(e)}")
+        import traceback
+        print(traceback.format_exc())
         return {
             'statusCode': 500,
             'headers': headers,
@@ -203,42 +261,46 @@ def handle_list_files(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[st
 def handle_file_download(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str, Any]:
     """處理文件下載"""
     try:
-        # 從路徑參數中取得文件 key
         path_params = event.get('pathParameters', {})
-        file_key = path_params.get('file_key', '') if path_params else ''
-        
-        if not file_key:
+        # 前端傳送的 file_key 應該是 URL 編碼過的，API Gateway 會自動解碼
+        file_key_from_path = path_params.get('file_key', '') if path_params else ''
+
+        if not file_key_from_path:
+            print("⚠️ 缺少 file_key 路徑參數")
             return {
                 'statusCode': 400,
                 'headers': headers,
                 'body': json.dumps({'error': '缺少文件 key'})
             }
         
-        bucket_name = 'benson-haire-team-info-e36d5aee'
+        # 確保 file_key 是我們期望的格式，例如 team_info_docs/some_team_id_file.pdf
+        # 前端傳來的應該已經是完整的 S3 key
+        s3_object_key = file_key_from_path
         
-        print(f"📥 下載文件: bucket={bucket_name}, key={file_key}")
+        print(f"📥 下載文件: bucket={S3_BUCKET_NAME}, key={s3_object_key}")
         
         # 生成預簽名 URL 用於下載
         download_url = s3_client.generate_presigned_url(
             'get_object',
-            Params={'Bucket': bucket_name, 'Key': file_key},
+            Params={'Bucket': S3_BUCKET_NAME, 'Key': s3_object_key},
             ExpiresIn=3600  # 1小時有效期
         )
         
-        print(f"✅ 生成下載 URL 成功")
+        print(f"✅ 生成下載 URL 成功: {download_url}")
         
         return {
             'statusCode': 200,
             'headers': headers,
             'body': json.dumps({
                 'downloadUrl': download_url,
-                'expiresIn': 3600,
-                'key': file_key
+                'key': s3_object_key # 回傳原始的 key
             })
         }
         
     except Exception as e:
         print(f"❌ 文件下載失敗: {str(e)}")
+        import traceback
+        print(traceback.format_exc())
         return {
             'statusCode': 500,
             'headers': headers,
@@ -251,41 +313,38 @@ def handle_file_download(event: Dict[str, Any], headers: Dict[str, str]) -> Dict
 def handle_file_delete(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str, Any]:
     """處理文件刪除"""
     try:
-        # 解析請求體
+        # 前端應該在請求體中傳送 {'key': '完整S3物件金鑰'}
         body = json.loads(event.get('body', '{}'))
-        file_key = body.get('key', '')
-        bucket_name = body.get('bucket', 'benson-haire-team-info-e36d5aee')
-        
-        if not file_key:
+        s3_object_key = body.get('key')
+
+        if not s3_object_key:
+            print("⚠️ 請求體中缺少 'key'")
             return {
                 'statusCode': 400,
                 'headers': headers,
-                'body': json.dumps({'error': '缺少文件 key'})
+                'body': json.dumps({'error': "請求體中缺少 'key'"})
             }
-        
-        print(f"🗑️ 刪除文件: bucket={bucket_name}, key={file_key}")
-        
-        # 刪除 S3 文件
-        s3_client.delete_object(
-            Bucket=bucket_name,
-            Key=file_key
-        )
-        
-        print(f"✅ 文件刪除成功")
-        
+
+        print(f"🗑️ 刪除文件: bucket={S3_BUCKET_NAME}, key={s3_object_key}")
+
+        s3_client.delete_object(Bucket=S3_BUCKET_NAME, Key=s3_object_key)
+
+        print(f"✅ 文件刪除成功: {s3_object_key}")
+
         return {
             'statusCode': 200,
             'headers': headers,
             'body': json.dumps({
                 'success': True,
                 'message': '文件刪除成功',
-                'key': file_key,
-                'deleted_at': datetime.utcnow().isoformat()
+                'key': s3_object_key
             })
         }
-        
+
     except Exception as e:
         print(f"❌ 文件刪除失敗: {str(e)}")
+        import traceback
+        print(traceback.format_exc())
         return {
             'statusCode': 500,
             'headers': headers,

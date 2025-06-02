@@ -61,14 +61,29 @@ resource "aws_iam_role_policy" "lambda_exec_bedrock_policy" {
         ]
         Resource = "arn:aws:logs:ap-southeast-1:*:*"
       },
-      # S3 完整權限 - 可以對所有 S3 buckets 進行任何操作
+      # S3 權限 - 限制只能存取專案相關的 buckets（移除危險的 s3:*）
       {
         Effect = "Allow"
         Action = [
-          "s3:*",
-          "s3-object-lambda:*"
+          "s3:GetObject",
+          "s3:PutObject",
+          "s3:DeleteObject",
+          "s3:ListBucket"
         ]
-        Resource = "*"
+        Resource = [
+          aws_s3_bucket.raw_resume.arn,
+          "${aws_s3_bucket.raw_resume.arn}/*",
+          aws_s3_bucket.parsed_resume.arn,
+          "${aws_s3_bucket.parsed_resume.arn}/*",
+          aws_s3_bucket.job_posting.arn,
+          "${aws_s3_bucket.job_posting.arn}/*",
+          aws_s3_bucket.team_info.arn,
+          "${aws_s3_bucket.team_info.arn}/*",
+          aws_s3_bucket.job_requirement.arn,
+          "${aws_s3_bucket.job_requirement.arn}/*",
+          aws_s3_bucket.static_site.arn,
+          "${aws_s3_bucket.static_site.arn}/*"
+        ]
       },
       # DynamoDB 權限 - 讀寫履歷和職缺資料
       {
@@ -77,6 +92,7 @@ resource "aws_iam_role_policy" "lambda_exec_bedrock_policy" {
           "dynamodb:PutItem",
           "dynamodb:GetItem",
           "dynamodb:UpdateItem",
+          "dynamodb:DeleteItem",
           "dynamodb:Query",
           "dynamodb:Scan"
         ]
@@ -90,13 +106,21 @@ resource "aws_iam_role_policy" "lambda_exec_bedrock_policy" {
           "${module.jobs_table.table_arn}/index/*"
         ]
       },
-      # Bedrock 完整權限 - 可以呼叫任何 Bedrock 服務
+      # Bedrock 權限 - 限制特定模型，增加成本控制（移除危險的 bedrock:*）
       {
         Effect = "Allow"
         Action = [
-          "bedrock:*"
+          "bedrock:InvokeModel"
         ]
-        Resource = "*"
+        Resource = [
+          "arn:aws:bedrock:ap-southeast-1::foundation-model/anthropic.claude-3-haiku-20240307-v1:0",
+          "arn:aws:bedrock:ap-southeast-1::foundation-model/anthropic.claude-3-sonnet-20240229-v1:0"
+        ]
+        Condition = {
+          NumericLessThan = {
+            "bedrock:MaxTokens" = "8000"  # 限制最大 token 數量
+          }
+        }
       }
     ]
   })
@@ -314,6 +338,24 @@ module "team_management_lambda" {
   environment_variables = {
     TEAMS_TABLE_NAME = module.teams_table.table_name
     BACKUP_S3_BUCKET = aws_s3_bucket.team_info.bucket
+  }
+  
+  common_tags = local.common_tags
+}
+
+# Team File Management Lambda
+module "team_file_management_lambda" {
+  source = "./modules/lambda_function"
+
+  function_name       = "benson-haire-team-file-management"
+  lambda_package_path = "${path.module}/lambdas/team_file_management/team_file_management.zip"
+  iam_role_arn        = aws_iam_role.lambda_exec_bedrock_role.arn
+  handler             = "lambda_function.lambda_handler"
+  runtime             = "python3.11"
+  timeout             = 30
+  
+  environment_variables = {
+    S3_BUCKET_NAME = aws_s3_bucket.team_info.bucket
   }
   
   common_tags = local.common_tags
@@ -553,18 +595,50 @@ resource "aws_api_gateway_deployment" "haire_api_deployment" {
   }
 }
 
-# API Gateway Stage
+# API Gateway Stage 加上速率限制
 resource "aws_api_gateway_stage" "haire_api_stage" {
   deployment_id = aws_api_gateway_deployment.haire_api_deployment.id
   rest_api_id   = aws_api_gateway_rest_api.haire_api.id
   stage_name    = "dev"
+  
+  tags = merge(local.common_tags, { Name = "haire-api-dev-stage" })
+}
 
-  # 重要：確保階段總是使用最新的部署
-  lifecycle {
-    replace_triggered_by = [
-      aws_api_gateway_deployment.haire_api_deployment
-    ]
+# 添加使用計劃和 API Key 用於更嚴格的控制
+resource "aws_api_gateway_usage_plan" "haire_usage_plan" {
+  name         = "benson-haire-usage-plan"
+  description  = "Usage plan for hAIre API"
+
+  api_stages {
+    api_id = aws_api_gateway_rest_api.haire_api.id
+    stage  = aws_api_gateway_stage.haire_api_stage.stage_name
   }
+
+  quota_settings {
+    limit  = 10000  # 每日最多 10,000 次請求
+    period = "DAY"
+  }
+  
+  throttle_settings {
+    rate_limit  = 50   # 每秒 50 次請求
+    burst_limit = 100  # 突發 100 次請求
+  }
+}
+
+# 創建 API Key（可選用於管理 API）
+resource "aws_api_gateway_api_key" "haire_api_key" {
+  name        = "benson-haire-api-key"
+  description = "API key for hAIre application"
+  enabled     = true
+  
+  tags = merge(local.common_tags, { Name = "haire-api-key" })
+}
+
+# 將 API Key 與使用計劃關聯
+resource "aws_api_gateway_usage_plan_key" "haire_usage_plan_key" {
+  key_id        = aws_api_gateway_api_key.haire_api_key.id
+  key_type      = "API_KEY"
+  usage_plan_id = aws_api_gateway_usage_plan.haire_usage_plan.id
 }
 
 # 輸出 API Gateway URL
@@ -1058,7 +1132,7 @@ resource "aws_api_gateway_integration" "upload_team_file_integration" {
   
   integration_http_method = "POST"
   type                   = "AWS_PROXY"
-  uri                    = module.team_management_lambda.invoke_arn
+  uri                    = module.team_file_management_lambda.invoke_arn
 }
 
 resource "aws_api_gateway_integration" "team_files_get_integration" {
@@ -1068,7 +1142,7 @@ resource "aws_api_gateway_integration" "team_files_get_integration" {
   
   integration_http_method = "POST"
   type                   = "AWS_PROXY"
-  uri                    = module.team_management_lambda.invoke_arn
+  uri                    = module.team_file_management_lambda.invoke_arn
 }
 
 resource "aws_api_gateway_integration" "download_team_file_integration" {
@@ -1078,7 +1152,7 @@ resource "aws_api_gateway_integration" "download_team_file_integration" {
   
   integration_http_method = "POST"
   type                   = "AWS_PROXY"
-  uri                    = module.team_management_lambda.invoke_arn
+  uri                    = module.team_file_management_lambda.invoke_arn
 }
 
 resource "aws_api_gateway_integration" "delete_team_file_integration" {
@@ -1088,7 +1162,7 @@ resource "aws_api_gateway_integration" "delete_team_file_integration" {
   
   integration_http_method = "POST"
   type                   = "AWS_PROXY"
-  uri                    = module.team_management_lambda.invoke_arn
+  uri                    = module.team_file_management_lambda.invoke_arn
 }
 
 # CORS 整合 - 文件管理
@@ -1256,4 +1330,52 @@ resource "aws_api_gateway_integration_response" "delete_team_file_options_integr
   }
 
   depends_on = [aws_api_gateway_method_response.delete_team_file_options_method_response]
+}
+
+# Lambda 權限 - 讓 API Gateway 可以呼叫 team_file_management
+resource "aws_lambda_permission" "allow_api_gateway_team_files" {
+  statement_id  = "AllowExecutionFromAPIGateway"
+  action        = "lambda:InvokeFunction"
+  function_name = module.team_file_management_lambda.function_name
+  principal     = "apigateway.amazonaws.com"
+  source_arn    = "${aws_api_gateway_rest_api.haire_api.execution_arn}/*/*"
+}
+
+# 成本控制和監控
+resource "aws_cloudwatch_metric_alarm" "high_cost_alarm" {
+  alarm_name          = "benson-haire-high-cost-alarm"
+  comparison_operator = "GreaterThanThreshold"
+  evaluation_periods  = "1"
+  metric_name         = "EstimatedCharges"
+  namespace           = "AWS/Billing"
+  period              = "86400"  # 24 hours
+  statistic           = "Maximum"
+  threshold           = "50"     # 當月花費超過 $50 USD 時警報
+  alarm_description   = "This metric monitors AWS bill"
+  alarm_actions       = [aws_sns_topic.cost_alerts.arn]
+  
+  dimensions = {
+    Currency = "USD"
+  }
+  
+  tags = merge(local.common_tags, { Name = "high-cost-alarm" })
+}
+
+# SNS 主題用於成本警報
+resource "aws_sns_topic" "cost_alerts" {
+  name = "benson-haire-cost-alerts"
+  
+  tags = merge(local.common_tags, { Name = "cost-alerts" })
+}
+
+# 輸出 API Key 以供前端使用（如果需要的話）
+output "api_key_id" {
+  value = aws_api_gateway_api_key.haire_api_key.id
+  description = "API Gateway API Key ID"
+  sensitive = true
+}
+
+output "usage_plan_id" {
+  value = aws_api_gateway_usage_plan.haire_usage_plan.id
+  description = "API Gateway Usage Plan ID"
 }

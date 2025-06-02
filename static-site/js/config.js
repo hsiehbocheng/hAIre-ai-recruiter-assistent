@@ -2,7 +2,7 @@
 window.CONFIG = {
     API_BASE_URL: 'https://44wy0r4r16.execute-api.ap-southeast-1.amazonaws.com/dev',
     CLOUDFRONT_URL: 'https://d34pb6c7ehwsy2.cloudfront.net',
-    GENERATED_AT: '2025-06-02T05:51:58Z'
+    GENERATED_AT: '2025-06-02T10:32:47Z'
 };
 
 console.log('✅ 系統配置載入:', window.CONFIG); 

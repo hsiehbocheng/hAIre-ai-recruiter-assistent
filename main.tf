@@ -1379,3 +1379,8 @@ output "usage_plan_id" {
   value = aws_api_gateway_usage_plan.haire_usage_plan.id
   description = "API Gateway Usage Plan ID"
 }
+
+output "cloudfront_url" {
+  value = module.static_site_distribution.cloudfront_url
+  description = "CloudFront URL"
+}

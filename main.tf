@@ -118,7 +118,7 @@ resource "aws_iam_role_policy" "lambda_exec_bedrock_policy" {
         ]
         Condition = {
           NumericLessThan = {
-            "bedrock:MaxTokens" = "8000"  # 限制最大 token 數量
+            "bedrock:MaxTokens" = "8192"  # 限制最大 token 數量
           }
         }
       }

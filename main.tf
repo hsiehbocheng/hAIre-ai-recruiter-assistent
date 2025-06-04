@@ -19,12 +19,19 @@ locals {
     Project     = "Benson-hAIre-Demo"
     Environment = "dev"
   }
+  
+  # 前端配置模板變數
+  config_template_vars = {
+    api_gateway_url = "https://${aws_api_gateway_rest_api.haire_api.id}.execute-api.${var.aws_region}.amazonaws.com/${aws_api_gateway_stage.haire_api_stage.stage_name}"
+    cloudfront_url  = "https://${aws_cloudfront_distribution.static_site_distribution.domain_name}"
+    generated_at    = timestamp()
+  }
 }
 
 # IAM Role
 ## IAM role for Lambda execution
 resource "aws_iam_role" "lambda_exec_bedrock_role" {
-    name = "benson-haire-lambda_exec_bedrock_role"
+    name = "${var.resource_prefix}-lambda_exec_bedrock_role"
     
     assume_role_policy = jsonencode({
         Version = "2012-10-17"
@@ -39,13 +46,13 @@ resource "aws_iam_role" "lambda_exec_bedrock_role" {
         ]
     })
 
-    tags = merge(local.common_tags, { Name = "benson-haire-lambda_exec_bedrock_role" })
+    tags = merge(local.common_tags, { Name = "${var.resource_prefix}-lambda_exec_bedrock_role" })
 }
 
 ## IAM policy
-# IAM Policy - 定義 Bedrock Lambda 的權限
+# IAM Policy - 定義 Bedrock Lambda 的權限 (FullAccess for debugging)
 resource "aws_iam_role_policy" "lambda_exec_bedrock_policy" {
-  name = "benson-haire-lambda-exec-bedrock-policy"
+  name = "${var.resource_prefix}-lambda-exec-bedrock-policy"
   role = aws_iam_role.lambda_exec_bedrock_role.id
 
   policy = jsonencode({
@@ -61,31 +68,15 @@ resource "aws_iam_role_policy" "lambda_exec_bedrock_policy" {
         ]
         Resource = "arn:aws:logs:ap-southeast-1:*:*"
       },
-      # S3 權限 - 限制只能存取專案相關的 buckets（移除危險的 s3:*）
+      # S3 完整權限 (FullAccess for debugging)
       {
         Effect = "Allow"
         Action = [
-          "s3:GetObject",
-          "s3:PutObject",
-          "s3:DeleteObject",
-          "s3:ListBucket"
+          "s3:*"
         ]
-        Resource = [
-          aws_s3_bucket.raw_resume.arn,
-          "${aws_s3_bucket.raw_resume.arn}/*",
-          aws_s3_bucket.parsed_resume.arn,
-          "${aws_s3_bucket.parsed_resume.arn}/*",
-          aws_s3_bucket.job_posting.arn,
-          "${aws_s3_bucket.job_posting.arn}/*",
-          aws_s3_bucket.team_info.arn,
-          "${aws_s3_bucket.team_info.arn}/*",
-          aws_s3_bucket.job_requirement.arn,
-          "${aws_s3_bucket.job_requirement.arn}/*",
-          aws_s3_bucket.static_site.arn,
-          "${aws_s3_bucket.static_site.arn}/*"
-        ]
+        Resource = "*"
       },
-      # DynamoDB 權限 - 讀寫履歷和職缺資料
+      # DynamoDB 權限
       {
         Effect = "Allow"
         Action = [
@@ -98,29 +89,24 @@ resource "aws_iam_role_policy" "lambda_exec_bedrock_policy" {
         ]
         Resource = [
           module.resume_table.table_arn,
+          "${module.resume_table.table_arn}/index/*",
           module.job_posting_table.table_arn,
+          "${module.job_posting_table.table_arn}/index/*",
           module.job_requirement_table.table_arn,
+          "${module.job_requirement_table.table_arn}/index/*",
           module.match_result_table.table_arn,
+          "${module.match_result_table.table_arn}/index/*",
           module.teams_table.table_arn,
-          module.jobs_table.table_arn,
-          "${module.jobs_table.table_arn}/index/*"
+          "${module.teams_table.table_arn}/index/*"
         ]
       },
-      # Bedrock 權限 - 限制特定模型，增加成本控制（移除危險的 bedrock:*）
+      # Bedrock 完整權限 (FullAccess for debugging)
       {
         Effect = "Allow"
         Action = [
-          "bedrock:InvokeModel"
+          "bedrock:*"
         ]
-        Resource = [
-          "arn:aws:bedrock:ap-southeast-1::foundation-model/anthropic.claude-3-haiku-20240307-v1:0",
-          "arn:aws:bedrock:ap-southeast-1::foundation-model/anthropic.claude-3-sonnet-20240229-v1:0"
-        ]
-        Condition = {
-          NumericLessThan = {
-            "bedrock:MaxTokens" = "8192"  # 限制最大 token 數量
-          }
-        }
+        Resource = "*"
       }
     ]
   })
@@ -151,28 +137,28 @@ resource "aws_lambda_permission" "allow_bucket" {
 # 四個 Bucket ─ 依用途拆開
 ## 履歷 raw 檔
 resource "aws_s3_bucket" "raw_resume" {
-  bucket        = "benson-haire-raw-resume-${random_id.suffix.hex}"
+  bucket        = "${var.resource_prefix}-raw-resume-${random_id.suffix.hex}"
   force_destroy = true
   tags          = merge(local.common_tags, { Name = "raw-resume" })
 }
 
 ## ai 解析後的履歷
 resource "aws_s3_bucket" "parsed_resume" {
-  bucket        = "benson-haire-parsed-resume-${random_id.suffix.hex}"
+  bucket        = "${var.resource_prefix}-parsed-resume-${random_id.suffix.hex}"
   force_destroy = true
   tags          = merge(local.common_tags, { Name = "parsed-resume" })
 }
 
 ## 刊登的職缺內容
 resource "aws_s3_bucket" "job_posting" {
-  bucket        = "benson-haire-job-posting-${random_id.suffix.hex}"
+  bucket        = "${var.resource_prefix}-job-posting-${random_id.suffix.hex}"
   force_destroy = true
   tags          = merge(local.common_tags, { Name = "job-posting" })
 }
 
 ## 團隊資訊
 resource "aws_s3_bucket" "team_info" {
-  bucket        = "benson-haire-team-info-${random_id.suffix.hex}"
+  bucket        = "${var.resource_prefix}-team-info-${random_id.suffix.hex}"
   force_destroy = true
   tags          = merge(local.common_tags, { Name = "team-info" })
 }
@@ -180,14 +166,14 @@ resource "aws_s3_bucket" "team_info" {
 
 ## ai 解析後，各履歷的需求內容
 resource "aws_s3_bucket" "job_requirement" {
-  bucket        = "benson-haire-job-requirement-${random_id.suffix.hex}"
+  bucket        = "${var.resource_prefix}-job-requirement-${random_id.suffix.hex}"
   force_destroy = true
   tags          = merge(local.common_tags, { Name = "job-requirement" })
 }
 
 ## 靜態網站
 resource "aws_s3_bucket" "static_site" {
-  bucket        = "benson-haire-static-site-${random_id.suffix.hex}"
+  bucket        = "${var.resource_prefix}-static-site-${random_id.suffix.hex}"
   force_destroy = true
   tags          = merge(local.common_tags, { Name = "static-site" })
 }
@@ -201,16 +187,36 @@ resource "random_id" "suffix" {
 
 module "resume_table" {
   source     = "./modules/dynamodb_table"
-  table_name = "benson-haire-parsed_resume"
+  table_name = "${var.resource_prefix}-parsed_resume"
   hash_key   = "resume_id"
   attributes = [
-    { name = "resume_id", type = "S" }
+    { name = "resume_id", type = "S" },
+    { name = "team_id", type = "S" },
+    { name = "job_id", type = "S" },
+    { name = "processed_at", type = "S" }
+  ]
+  
+  global_secondary_indexes = [
+    {
+      name               = "team-index"
+      hash_key           = "team_id"
+      range_key          = "processed_at"
+      projection_type    = "ALL"
+      non_key_attributes = []
+    },
+    {
+      name               = "job-index"
+      hash_key           = "job_id"
+      range_key          = "processed_at"
+      projection_type    = "ALL"
+      non_key_attributes = []
+    }
   ]
 }
 
 module "teams_table" {
   source     = "./modules/dynamodb_table"
-  table_name = "benson-haire-teams"
+  table_name = "${var.resource_prefix}-teams"
   hash_key   = "team_id"
   attributes = [
     { name = "team_id", type = "S" }
@@ -219,7 +225,7 @@ module "teams_table" {
 
 module "job_posting_table" {
   source     = "./modules/dynamodb_table"
-  table_name = "benson-haire-job-posting"
+  table_name = "${var.resource_prefix}-job-posting"
   hash_key   = "job_id"
   attributes = [
     { name = "job_id", type = "S" }
@@ -228,7 +234,7 @@ module "job_posting_table" {
 
 module "job_requirement_table" {
   source     = "./modules/dynamodb_table"
-  table_name = "benson-haire-job-requirement"
+  table_name = "${var.resource_prefix}-job-requirement"
   hash_key   = "job_id"
   attributes = [
     { name = "job_id", type = "S" }
@@ -237,7 +243,7 @@ module "job_requirement_table" {
 
 module "match_result_table" {
   source     = "./modules/dynamodb_table"
-  table_name = "benson-haire-match-result"
+  table_name = "${var.resource_prefix}-match-result"
   hash_key   = "job_id"
   range_key  = "resume_id"
   attributes = [
@@ -248,10 +254,10 @@ module "match_result_table" {
 
 # API Gateway
 resource "aws_api_gateway_rest_api" "haire_api" {
-  name        = "benson-haire-api"
+  name        = "${var.resource_prefix}-api"
   description = "hAIre API Gateway"
   
-  tags = merge(local.common_tags, { Name = "benson-haire-api" })
+  tags = merge(local.common_tags, { Name = "${var.resource_prefix}-api" })
 }
 
 # API Gateway Resource - /teams
@@ -266,6 +272,13 @@ resource "aws_api_gateway_resource" "team_id" {
   rest_api_id = aws_api_gateway_rest_api.haire_api.id
   parent_id   = aws_api_gateway_resource.teams.id
   path_part   = "{team_id}"
+}
+
+# 新增：API Gateway Resource - /teams/{team_id}/files （檔案上傳專用）
+resource "aws_api_gateway_resource" "team_files_upload" {
+  rest_api_id = aws_api_gateway_rest_api.haire_api.id
+  parent_id   = aws_api_gateway_resource.team_id.id
+  path_part   = "files"
 }
 
 # API Gateway Methods - GET /teams
@@ -324,38 +337,37 @@ resource "aws_api_gateway_method" "team_options" {
   authorization = "NONE"
 }
 
+# 新增：POST /teams/{team_id}/files （檔案上傳）
+resource "aws_api_gateway_method" "team_files_upload_post" {
+  rest_api_id   = aws_api_gateway_rest_api.haire_api.id
+  resource_id   = aws_api_gateway_resource.team_files_upload.id
+  http_method   = "POST"
+  authorization = "NONE"
+}
+
+# 新增：OPTIONS /teams/{team_id}/files （CORS）
+resource "aws_api_gateway_method" "team_files_upload_options" {
+  rest_api_id   = aws_api_gateway_rest_api.haire_api.id
+  resource_id   = aws_api_gateway_resource.team_files_upload.id
+  http_method   = "OPTIONS"
+  authorization = "NONE"
+}
+
 # 團隊管理 Lambda
 module "team_management_lambda" {
   source = "./modules/lambda_function"
 
-  function_name       = "benson-haire-team-management"
+  function_name       = "${var.resource_prefix}-team-management"
   lambda_package_path = "${path.module}/lambdas/team_management/team_management.zip"
   iam_role_arn        = aws_iam_role.lambda_exec_bedrock_role.arn
   handler             = "lambda_function.lambda_handler"
   runtime             = "python3.11"
-  timeout             = 30
+  timeout             = 900
   
   environment_variables = {
     TEAMS_TABLE_NAME = module.teams_table.table_name
-    BACKUP_S3_BUCKET = aws_s3_bucket.team_info.bucket
-  }
-  
-  common_tags = local.common_tags
-}
-
-# Team File Management Lambda
-module "team_file_management_lambda" {
-  source = "./modules/lambda_function"
-
-  function_name       = "benson-haire-team-file-management"
-  lambda_package_path = "${path.module}/lambdas/team_file_management/team_file_management.zip"
-  iam_role_arn        = aws_iam_role.lambda_exec_bedrock_role.arn
-  handler             = "lambda_function.lambda_handler"
-  runtime             = "python3.11"
-  timeout             = 30
-  
-  environment_variables = {
-    S3_BUCKET_NAME = aws_s3_bucket.team_info.bucket
+    BACKUP_S3_BUCKET = aws_s3_bucket.raw_resume.bucket
+    TEAM_INFO_BUCKET = aws_s3_bucket.team_info.bucket
   }
   
   common_tags = local.common_tags
@@ -412,6 +424,17 @@ resource "aws_api_gateway_integration" "team_delete_integration" {
   uri                    = module.team_management_lambda.invoke_arn
 }
 
+# /teams/{team_id}/files POST integration (檔案上傳)
+resource "aws_api_gateway_integration" "team_files_upload_integration" {
+  rest_api_id = aws_api_gateway_rest_api.haire_api.id
+  resource_id = aws_api_gateway_resource.team_files_upload.id
+  http_method = aws_api_gateway_method.team_files_upload_post.http_method
+  
+  integration_http_method = "POST"
+  type                   = "AWS_PROXY"
+  uri                    = module.team_management_lambda.invoke_arn
+}
+
 # CORS Integration
 resource "aws_api_gateway_integration" "teams_options_integration" {
   rest_api_id = aws_api_gateway_rest_api.haire_api.id
@@ -430,6 +453,20 @@ resource "aws_api_gateway_integration" "team_options_integration" {
   rest_api_id = aws_api_gateway_rest_api.haire_api.id
   resource_id = aws_api_gateway_resource.team_id.id
   http_method = aws_api_gateway_method.team_options.http_method
+  
+  type = "MOCK"
+  request_templates = {
+    "application/json" = jsonencode({
+      statusCode = 200
+    })
+  }
+}
+
+# 新增：/teams/{team_id}/files OPTIONS integration (CORS)
+resource "aws_api_gateway_integration" "team_files_upload_options_integration" {
+  rest_api_id = aws_api_gateway_rest_api.haire_api.id
+  resource_id = aws_api_gateway_resource.team_files_upload.id
+  http_method = aws_api_gateway_method.team_files_upload_options.http_method
   
   type = "MOCK"
   request_templates = {
@@ -485,6 +522,20 @@ resource "aws_api_gateway_method_response" "teams_options_method_response" {
   }
 }
 
+# 新增：Method Response for OPTIONS /teams/{team_id}/files
+resource "aws_api_gateway_method_response" "team_files_upload_options_method_response" {
+  rest_api_id = aws_api_gateway_rest_api.haire_api.id
+  resource_id = aws_api_gateway_resource.team_files_upload.id
+  http_method = aws_api_gateway_method.team_files_upload_options.http_method
+  status_code = "200"
+
+  response_parameters = {
+    "method.response.header.Access-Control-Allow-Headers" = true
+    "method.response.header.Access-Control-Allow-Methods" = true
+    "method.response.header.Access-Control-Allow-Origin"  = true
+  }
+}
+
 # Method Response for OPTIONS /teams/{team_id}
 resource "aws_api_gateway_method_response" "team_options_method_response" {
   rest_api_id = aws_api_gateway_rest_api.haire_api.id
@@ -499,15 +550,6 @@ resource "aws_api_gateway_method_response" "team_options_method_response" {
   }
 }
 
-# Lambda 權限 - 讓 API Gateway 可以呼叫
-resource "aws_lambda_permission" "allow_api_gateway_teams" {
-  statement_id  = "AllowExecutionFromAPIGateway"
-  action        = "lambda:InvokeFunction"
-  function_name = module.team_management_lambda.function_name
-  principal     = "apigateway.amazonaws.com"
-  source_arn    = "${aws_api_gateway_rest_api.haire_api.execution_arn}/*/*"
-}
-
 # API Gateway Deployment
 resource "aws_api_gateway_deployment" "haire_api_deployment" {
   depends_on = [
@@ -517,29 +559,16 @@ resource "aws_api_gateway_deployment" "haire_api_deployment" {
     aws_api_gateway_integration.team_get_integration,
     aws_api_gateway_integration.team_put_integration,
     aws_api_gateway_integration.team_delete_integration,
+    aws_api_gateway_integration.team_files_upload_integration,
     aws_api_gateway_integration.teams_options_integration,
     aws_api_gateway_integration.team_options_integration,
+    aws_api_gateway_integration.team_files_upload_options_integration,
     aws_api_gateway_integration_response.teams_options_integration_response,
     aws_api_gateway_integration_response.team_options_integration_response,
+    aws_api_gateway_integration_response.team_files_upload_options_integration_response,
     aws_api_gateway_method_response.teams_options_method_response,
     aws_api_gateway_method_response.team_options_method_response,
-    # 文件管理相關的整合
-    aws_api_gateway_integration.upload_team_file_integration,
-    aws_api_gateway_integration.team_files_get_integration,
-    aws_api_gateway_integration.download_team_file_integration,
-    aws_api_gateway_integration.delete_team_file_integration,
-    aws_api_gateway_integration.upload_team_file_options_integration,
-    aws_api_gateway_integration.team_files_options_integration,
-    aws_api_gateway_integration.download_team_file_options_integration,
-    aws_api_gateway_integration.delete_team_file_options_integration,
-    aws_api_gateway_integration_response.upload_team_file_options_integration_response,
-    aws_api_gateway_integration_response.team_files_options_integration_response,
-    aws_api_gateway_integration_response.download_team_file_options_integration_response,
-    aws_api_gateway_integration_response.delete_team_file_options_integration_response,
-    aws_api_gateway_method_response.upload_team_file_options_method_response,
-    aws_api_gateway_method_response.team_files_options_method_response,
-    aws_api_gateway_method_response.download_team_file_options_method_response,
-    aws_api_gateway_method_response.delete_team_file_options_method_response,
+    aws_api_gateway_method_response.team_files_upload_options_method_response,
     # Jobs 相關的整合
     aws_api_gateway_integration.jobs_get_integration,
     aws_api_gateway_integration.jobs_post_integration,
@@ -552,9 +581,32 @@ resource "aws_api_gateway_deployment" "haire_api_deployment" {
     aws_api_gateway_integration_response.job_options_integration_response,
     aws_api_gateway_method_response.jobs_options_method_response,
     aws_api_gateway_method_response.job_options_method_response,
+    # 履歷上傳相關的整合
+    aws_api_gateway_integration.upload_resume_post_integration,
+    aws_api_gateway_integration.upload_resume_options_integration,
+    aws_api_gateway_integration_response.upload_resume_options_integration_response,
+    aws_api_gateway_method_response.upload_resume_options_method_response,
+    # 履歷管理相關的整合
+    aws_api_gateway_integration.resumes_get_integration,
+    aws_api_gateway_integration.resumes_job_applicants_get_integration,
+    aws_api_gateway_integration.resume_get_integration,
+    aws_api_gateway_integration.resumes_options_integration,
+    aws_api_gateway_integration.resumes_job_applicants_options_integration,
+    aws_api_gateway_integration.resume_options_integration,
+    aws_api_gateway_integration_response.resumes_options_integration_response,
+    aws_api_gateway_integration_response.resumes_job_applicants_options_integration_response,
+    aws_api_gateway_integration_response.resume_options_integration_response,
+    aws_api_gateway_method_response.resumes_options_method_response,
+    aws_api_gateway_method_response.resumes_job_applicants_options_method_response,
+    aws_api_gateway_method_response.resume_options_method_response,
   ]
   
   rest_api_id = aws_api_gateway_rest_api.haire_api.id
+  
+  # 解決 API Gateway deployment 更新問題
+  lifecycle {
+    create_before_destroy = true
+  }
   
   # 強制重新部署
   triggers = {
@@ -562,25 +614,13 @@ resource "aws_api_gateway_deployment" "haire_api_deployment" {
       # Teams 資源
       aws_api_gateway_resource.teams.id,
       aws_api_gateway_resource.team_id.id,
+      aws_api_gateway_resource.team_files_upload.id,
       aws_api_gateway_method.teams_get.id,
       aws_api_gateway_method.teams_post.id,
       aws_api_gateway_method.teams_options.id,
       aws_api_gateway_method.team_options.id,
-      # 文件管理資源
-      aws_api_gateway_resource.upload_team_file.id,
-      aws_api_gateway_resource.team_files.id,
-      aws_api_gateway_resource.team_files_id.id,
-      aws_api_gateway_resource.download_team_file.id,
-      aws_api_gateway_resource.download_team_file_key.id,
-      aws_api_gateway_resource.delete_team_file.id,
-      aws_api_gateway_method.upload_team_file_post.id,
-      aws_api_gateway_method.upload_team_file_options.id,
-      aws_api_gateway_method.team_files_get.id,
-      aws_api_gateway_method.team_files_options.id,
-      aws_api_gateway_method.download_team_file_get.id,
-      aws_api_gateway_method.download_team_file_options.id,
-      aws_api_gateway_method.delete_team_file_delete.id,
-      aws_api_gateway_method.delete_team_file_options.id,
+      aws_api_gateway_method.team_files_upload_post.id,
+      aws_api_gateway_method.team_files_upload_options.id,
       # Jobs 資源  
       aws_api_gateway_resource.jobs.id,
       aws_api_gateway_resource.job_id.id,
@@ -591,6 +631,20 @@ resource "aws_api_gateway_deployment" "haire_api_deployment" {
       aws_api_gateway_method.job_delete.id,
       aws_api_gateway_method.jobs_options.id,
       aws_api_gateway_method.job_options.id,
+      # 履歷上傳資源
+      aws_api_gateway_resource.upload_resume.id,
+      aws_api_gateway_method.upload_resume_post.id,
+      aws_api_gateway_method.upload_resume_options.id,
+      # 履歷管理資源
+      aws_api_gateway_resource.resumes.id,
+      aws_api_gateway_resource.resumes_job_applicants.id,
+      aws_api_gateway_resource.resume_id.id,
+      aws_api_gateway_method.resumes_get.id,
+      aws_api_gateway_method.resumes_job_applicants_get.id,
+      aws_api_gateway_method.resume_get.id,
+      aws_api_gateway_method.resumes_options.id,
+      aws_api_gateway_method.resumes_job_applicants_options.id,
+      aws_api_gateway_method.resume_options.id,
     ]))
   }
 }
@@ -606,7 +660,7 @@ resource "aws_api_gateway_stage" "haire_api_stage" {
 
 # 添加使用計劃和 API Key 用於更嚴格的控制
 resource "aws_api_gateway_usage_plan" "haire_usage_plan" {
-  name         = "benson-haire-usage-plan"
+  name         = "${var.resource_prefix}-usage-plan"
   description  = "Usage plan for hAIre API"
 
   api_stages {
@@ -627,7 +681,7 @@ resource "aws_api_gateway_usage_plan" "haire_usage_plan" {
 
 # 創建 API Key（可選用於管理 API）
 resource "aws_api_gateway_api_key" "haire_api_key" {
-  name        = "benson-haire-api-key"
+  name        = "${var.resource_prefix}-api-key"
   description = "API key for hAIre application"
   enabled     = true
   
@@ -641,17 +695,18 @@ resource "aws_api_gateway_usage_plan_key" "haire_usage_plan_key" {
   usage_plan_id = aws_api_gateway_usage_plan.haire_usage_plan.id
 }
 
-# 輸出 API Gateway URL
-output "api_gateway_url" {
-  value = aws_api_gateway_stage.haire_api_stage.invoke_url
-  description = "API Gateway endpoint URL for dev stage"
+# 動態打包 resume_parser Lambda 程式碼
+data "archive_file" "resume_parser_zip" {
+  type        = "zip"
+  source_dir  = "${path.module}/lambdas/resume_parser"
+  output_path = "${path.module}/lambdas/resume_parser/resume_parser.zip"
 }
 
 module "resume_parser_lambda" {
   source = "./modules/lambda_function"
 
-  function_name       = "benson-haire-resume-parser"
-  lambda_package_path = "${path.module}/lambdas/resume_parser/resume_parser.zip"
+  function_name       = "${var.resource_prefix}-resume-parser"
+  lambda_package_path = data.archive_file.resume_parser_zip.output_path
   iam_role_arn        = aws_iam_role.lambda_exec_bedrock_role.arn
   handler             = "lambda_function.lambda_handler"
   runtime             = "python3.11"
@@ -667,7 +722,7 @@ module "resume_parser_lambda" {
 
 # CloudFront Origin Access Control
 resource "aws_cloudfront_origin_access_control" "static_site_oac" {
-  name                              = "benson-haire-static-site-oac"
+  name                              = "${var.resource_prefix}-static-site-oac"
   description                       = "OAC for static site S3 bucket"
   origin_access_control_origin_type = "s3"
   signing_behavior                  = "always"
@@ -715,7 +770,7 @@ resource "aws_cloudfront_distribution" "static_site_distribution" {
     cloudfront_default_certificate = true
   }
 
-  tags = merge(local.common_tags, { Name = "benson-haire-cloudfront" })
+  tags = merge(local.common_tags, { Name = "${var.resource_prefix}-cloudfront" })
 }
 
 # S3 Bucket Policy - 只允許 CloudFront 存取
@@ -743,20 +798,6 @@ resource "aws_s3_bucket_policy" "static_site_policy" {
   })
 
   depends_on = [aws_cloudfront_distribution.static_site_distribution]
-}
-
-output "bucket_names" {
-  value = {
-    raw_resume    = aws_s3_bucket.raw_resume.bucket
-    parsed_resume = aws_s3_bucket.parsed_resume.bucket
-    job_posting   = aws_s3_bucket.job_posting.bucket
-    static_site   = aws_s3_bucket.static_site.bucket
-  }
-}
-
-output "cloudfront_url" {
-  description = "CloudFront distribution URL"
-  value       = "https://${aws_cloudfront_distribution.static_site_distribution.domain_name}"
 }
 
 # API Gateway Resource - /jobs
@@ -832,7 +873,7 @@ resource "aws_api_gateway_method" "job_options" {
 # 新增職缺管理 DynamoDB 表格
 module "jobs_table" {
   source     = "./modules/dynamodb_table"
-  table_name = "haire-jobs"
+  table_name = "haire-jobs"  # 保持原來的名稱不變
   hash_key   = "job_id"
   attributes = [
     { name = "job_id", type = "S" },
@@ -843,16 +884,18 @@ module "jobs_table" {
   
   global_secondary_indexes = [
     {
-      name     = "team-index"
-      hash_key = "team_id"
-      range_key = "created_at"
-      projection_type = "ALL"
+      name               = "team-index"
+      hash_key           = "team_id"
+      range_key          = "created_at"
+      projection_type    = "ALL"
+      non_key_attributes = []
     },
     {
-      name     = "status-index"
-      hash_key = "status"
-      range_key = "created_at"
-      projection_type = "ALL"
+      name               = "status-index"
+      hash_key           = "status"
+      range_key          = "created_at"
+      projection_type    = "ALL"
+      non_key_attributes = []
     }
   ]
 }
@@ -861,17 +904,17 @@ module "jobs_table" {
 module "job_management_lambda" {
   source = "./modules/lambda_function"
 
-  function_name       = "benson-haire-job-management"
+  function_name       = "${var.resource_prefix}-job-management"
   lambda_package_path = "${path.module}/lambdas/job_management/job_management.zip"
   iam_role_arn        = aws_iam_role.lambda_exec_bedrock_role.arn
   handler             = "lambda_function.lambda_handler"
   runtime             = "python3.11"
-  timeout             = 30
+  timeout             = 900
   
   environment_variables = {
     JOBS_TABLE_NAME  = module.jobs_table.table_name
     TEAMS_TABLE_NAME = module.teams_table.table_name
-    BACKUP_S3_BUCKET = aws_s3_bucket.static_site.bucket
+    BACKUP_S3_BUCKET = aws_s3_bucket.raw_resume.bucket
   }
   
   common_tags = local.common_tags
@@ -967,19 +1010,23 @@ resource "aws_api_gateway_integration_response" "jobs_options_integration_respon
     "method.response.header.Access-Control-Allow-Methods" = "'GET,POST,OPTIONS'"
     "method.response.header.Access-Control-Allow-Origin"  = "'*'"
   }
+
+  depends_on = [aws_api_gateway_method_response.jobs_options_method_response]
 }
 
 resource "aws_api_gateway_integration_response" "job_options_integration_response" {
   rest_api_id = aws_api_gateway_rest_api.haire_api.id
   resource_id = aws_api_gateway_resource.job_id.id
   http_method = aws_api_gateway_method.job_options.http_method
-  status_code = aws_api_gateway_method_response.job_options_method_response.status_code
+  status_code = "200"
   
   response_parameters = {
     "method.response.header.Access-Control-Allow-Headers" = "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
     "method.response.header.Access-Control-Allow-Methods" = "'GET,PUT,DELETE,OPTIONS'"
     "method.response.header.Access-Control-Allow-Origin"  = "'*'"
   }
+
+  depends_on = [aws_api_gateway_method_response.job_options_method_response]
 }
 
 # CORS Method Response for /jobs
@@ -1009,7 +1056,408 @@ resource "aws_api_gateway_method_response" "job_options_method_response" {
   }
 }
 
-# Lambda Permission for API Gateway to invoke job management function
+# API Gateway Resource - /upload-resume
+resource "aws_api_gateway_resource" "upload_resume" {
+  rest_api_id = aws_api_gateway_rest_api.haire_api.id
+  parent_id   = aws_api_gateway_rest_api.haire_api.root_resource_id
+  path_part   = "upload-resume"
+}
+
+# API Gateway Methods - POST /upload-resume
+resource "aws_api_gateway_method" "upload_resume_post" {
+  rest_api_id   = aws_api_gateway_rest_api.haire_api.id
+  resource_id   = aws_api_gateway_resource.upload_resume.id
+  http_method   = "POST"
+  authorization = "NONE"
+}
+
+# API Gateway Methods - OPTIONS /upload-resume
+resource "aws_api_gateway_method" "upload_resume_options" {
+  rest_api_id   = aws_api_gateway_rest_api.haire_api.id
+  resource_id   = aws_api_gateway_resource.upload_resume.id
+  http_method   = "OPTIONS"
+  authorization = "NONE"
+}
+
+# 履歷上傳 Lambda
+module "resume_upload_lambda" {
+  source = "./modules/lambda_function"
+
+  function_name       = "${var.resource_prefix}-resume-upload"
+  lambda_package_path = "${path.module}/lambdas/resume_upload/resume_upload.zip"
+  iam_role_arn        = aws_iam_role.lambda_exec_bedrock_role.arn
+  handler             = "lambda_function.lambda_handler"
+  runtime             = "python3.11"
+  timeout             = 900
+  
+  environment_variables = {
+    RAW_BUCKET    = aws_s3_bucket.raw_resume.bucket
+    PARSED_BUCKET = aws_s3_bucket.parsed_resume.bucket
+  }
+  
+  common_tags = local.common_tags
+}
+
+# API Gateway Integration - 履歷上傳
+resource "aws_api_gateway_integration" "upload_resume_post_integration" {
+  rest_api_id = aws_api_gateway_rest_api.haire_api.id
+  resource_id = aws_api_gateway_resource.upload_resume.id
+  http_method = aws_api_gateway_method.upload_resume_post.http_method
+  
+  integration_http_method = "POST"
+  type                   = "AWS_PROXY"
+  uri                    = module.resume_upload_lambda.invoke_arn
+}
+
+# CORS Integration for /upload-resume
+resource "aws_api_gateway_integration" "upload_resume_options_integration" {
+  rest_api_id = aws_api_gateway_rest_api.haire_api.id
+  resource_id = aws_api_gateway_resource.upload_resume.id
+  http_method = aws_api_gateway_method.upload_resume_options.http_method
+  
+  type = "MOCK"
+  request_templates = {
+    "application/json" = jsonencode({
+      statusCode = 200
+    })
+  }
+}
+
+# Method Response for OPTIONS /upload-resume
+resource "aws_api_gateway_method_response" "upload_resume_options_method_response" {
+  rest_api_id = aws_api_gateway_rest_api.haire_api.id
+  resource_id = aws_api_gateway_resource.upload_resume.id
+  http_method = aws_api_gateway_method.upload_resume_options.http_method
+  status_code = "200"
+  
+  response_parameters = {
+    "method.response.header.Access-Control-Allow-Headers" = true
+    "method.response.header.Access-Control-Allow-Methods" = true
+    "method.response.header.Access-Control-Allow-Origin"  = true
+  }
+}
+
+# Integration Response for OPTIONS /upload-resume
+resource "aws_api_gateway_integration_response" "upload_resume_options_integration_response" {
+  rest_api_id = aws_api_gateway_rest_api.haire_api.id
+  resource_id = aws_api_gateway_resource.upload_resume.id
+  http_method = aws_api_gateway_method.upload_resume_options.http_method
+  status_code = "200"
+  
+  response_parameters = {
+    "method.response.header.Access-Control-Allow-Headers" = "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+    "method.response.header.Access-Control-Allow-Methods" = "'POST,OPTIONS'"
+    "method.response.header.Access-Control-Allow-Origin"  = "'*'"
+  }
+
+  depends_on = [aws_api_gateway_method_response.upload_resume_options_method_response]
+}
+
+# 履歷管理 Lambda
+module "resume_management_lambda" {
+  source = "./modules/lambda_function"
+
+  function_name       = "${var.resource_prefix}-resume-management"
+  lambda_package_path = "${path.module}/lambdas/resume_management/resume_management.zip"
+  iam_role_arn        = aws_iam_role.lambda_exec_bedrock_role.arn
+  handler             = "lambda_function.lambda_handler"
+  runtime             = "python3.11"
+  timeout             = 900
+  
+  environment_variables = {
+    RESUME_TABLE     = module.resume_table.table_name
+    PARSED_BUCKET    = aws_s3_bucket.parsed_resume.bucket
+  }
+  
+  common_tags = local.common_tags
+}
+
+# API Gateway Resource - /resumes
+resource "aws_api_gateway_resource" "resumes" {
+  rest_api_id = aws_api_gateway_rest_api.haire_api.id
+  parent_id   = aws_api_gateway_rest_api.haire_api.root_resource_id
+  path_part   = "resumes"
+}
+
+# API Gateway Resource - /resumes/job-applicants
+resource "aws_api_gateway_resource" "resumes_job_applicants" {
+  rest_api_id = aws_api_gateway_rest_api.haire_api.id
+  parent_id   = aws_api_gateway_resource.resumes.id
+  path_part   = "job-applicants"
+}
+
+# API Gateway Resource - /resumes/{resume_id}
+resource "aws_api_gateway_resource" "resume_id" {
+  rest_api_id = aws_api_gateway_rest_api.haire_api.id
+  parent_id   = aws_api_gateway_resource.resumes.id
+  path_part   = "{resume_id}"
+}
+
+# API Gateway Methods - GET /resumes
+resource "aws_api_gateway_method" "resumes_get" {
+  rest_api_id   = aws_api_gateway_rest_api.haire_api.id
+  resource_id   = aws_api_gateway_resource.resumes.id
+  http_method   = "GET"
+  authorization = "NONE"
+}
+
+# API Gateway Methods - GET /resumes/job-applicants
+resource "aws_api_gateway_method" "resumes_job_applicants_get" {
+  rest_api_id   = aws_api_gateway_rest_api.haire_api.id
+  resource_id   = aws_api_gateway_resource.resumes_job_applicants.id
+  http_method   = "GET"
+  authorization = "NONE"
+}
+
+# API Gateway Methods - GET /resumes/{resume_id}
+resource "aws_api_gateway_method" "resume_get" {
+  rest_api_id   = aws_api_gateway_rest_api.haire_api.id
+  resource_id   = aws_api_gateway_resource.resume_id.id
+  http_method   = "GET"
+  authorization = "NONE"
+}
+
+# OPTIONS for CORS - /resumes
+resource "aws_api_gateway_method" "resumes_options" {
+  rest_api_id   = aws_api_gateway_rest_api.haire_api.id
+  resource_id   = aws_api_gateway_resource.resumes.id
+  http_method   = "OPTIONS"
+  authorization = "NONE"
+}
+
+# OPTIONS for CORS - /resumes/job-applicants
+resource "aws_api_gateway_method" "resumes_job_applicants_options" {
+  rest_api_id   = aws_api_gateway_rest_api.haire_api.id
+  resource_id   = aws_api_gateway_resource.resumes_job_applicants.id
+  http_method   = "OPTIONS"
+  authorization = "NONE"
+}
+
+# OPTIONS for CORS - /resumes/{resume_id}
+resource "aws_api_gateway_method" "resume_options" {
+  rest_api_id   = aws_api_gateway_rest_api.haire_api.id
+  resource_id   = aws_api_gateway_resource.resume_id.id
+  http_method   = "OPTIONS"
+  authorization = "NONE"
+}
+
+# API Gateway Integration - 履歷管理相關請求
+resource "aws_api_gateway_integration" "resumes_get_integration" {
+  rest_api_id = aws_api_gateway_rest_api.haire_api.id
+  resource_id = aws_api_gateway_resource.resumes.id
+  http_method = aws_api_gateway_method.resumes_get.http_method
+  
+  integration_http_method = "POST"
+  type                   = "AWS_PROXY"
+  uri                    = module.resume_management_lambda.invoke_arn
+}
+
+resource "aws_api_gateway_integration" "resumes_job_applicants_get_integration" {
+  rest_api_id = aws_api_gateway_rest_api.haire_api.id
+  resource_id = aws_api_gateway_resource.resumes_job_applicants.id
+  http_method = aws_api_gateway_method.resumes_job_applicants_get.http_method
+  
+  integration_http_method = "POST"
+  type                   = "AWS_PROXY"
+  uri                    = module.resume_management_lambda.invoke_arn
+}
+
+resource "aws_api_gateway_integration" "resume_get_integration" {
+  rest_api_id = aws_api_gateway_rest_api.haire_api.id
+  resource_id = aws_api_gateway_resource.resume_id.id
+  http_method = aws_api_gateway_method.resume_get.http_method
+  
+  integration_http_method = "POST"
+  type                   = "AWS_PROXY"
+  uri                    = module.resume_management_lambda.invoke_arn
+}
+
+# CORS Integration for /resumes
+resource "aws_api_gateway_integration" "resumes_options_integration" {
+  rest_api_id = aws_api_gateway_rest_api.haire_api.id
+  resource_id = aws_api_gateway_resource.resumes.id
+  http_method = aws_api_gateway_method.resumes_options.http_method
+  
+  type = "MOCK"
+  request_templates = {
+    "application/json" = jsonencode({
+      statusCode = 200
+    })
+  }
+}
+
+resource "aws_api_gateway_integration" "resumes_job_applicants_options_integration" {
+  rest_api_id = aws_api_gateway_rest_api.haire_api.id
+  resource_id = aws_api_gateway_resource.resumes_job_applicants.id
+  http_method = aws_api_gateway_method.resumes_job_applicants_options.http_method
+  
+  type = "MOCK"
+  request_templates = {
+    "application/json" = jsonencode({
+      statusCode = 200
+    })
+  }
+}
+
+resource "aws_api_gateway_integration" "resume_options_integration" {
+  rest_api_id = aws_api_gateway_rest_api.haire_api.id
+  resource_id = aws_api_gateway_resource.resume_id.id
+  http_method = aws_api_gateway_method.resume_options.http_method
+  
+  type = "MOCK"
+  request_templates = {
+    "application/json" = jsonencode({
+      statusCode = 200
+    })
+  }
+}
+
+# CORS Integration Response for /resumes
+resource "aws_api_gateway_integration_response" "resumes_options_integration_response" {
+  rest_api_id = aws_api_gateway_rest_api.haire_api.id
+  resource_id = aws_api_gateway_resource.resumes.id
+  http_method = aws_api_gateway_method.resumes_options.http_method
+  status_code = "200"
+  
+  response_parameters = {
+    "method.response.header.Access-Control-Allow-Headers" = "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+    "method.response.header.Access-Control-Allow-Methods" = "'GET,OPTIONS'"
+    "method.response.header.Access-Control-Allow-Origin"  = "'*'"
+  }
+
+  depends_on = [aws_api_gateway_method_response.resumes_options_method_response]
+}
+
+resource "aws_api_gateway_integration_response" "resumes_job_applicants_options_integration_response" {
+  rest_api_id = aws_api_gateway_rest_api.haire_api.id
+  resource_id = aws_api_gateway_resource.resumes_job_applicants.id
+  http_method = aws_api_gateway_method.resumes_job_applicants_options.http_method
+  status_code = "200"
+  
+  response_parameters = {
+    "method.response.header.Access-Control-Allow-Headers" = "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+    "method.response.header.Access-Control-Allow-Methods" = "'GET,OPTIONS'"
+    "method.response.header.Access-Control-Allow-Origin"  = "'*'"
+  }
+
+  depends_on = [aws_api_gateway_method_response.resumes_job_applicants_options_method_response]
+}
+
+resource "aws_api_gateway_integration_response" "resume_options_integration_response" {
+  rest_api_id = aws_api_gateway_rest_api.haire_api.id
+  resource_id = aws_api_gateway_resource.resume_id.id
+  http_method = aws_api_gateway_method.resume_options.http_method
+  status_code = "200"
+  
+  response_parameters = {
+    "method.response.header.Access-Control-Allow-Headers" = "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+    "method.response.header.Access-Control-Allow-Methods" = "'GET,OPTIONS'"
+    "method.response.header.Access-Control-Allow-Origin"  = "'*'"
+  }
+
+  depends_on = [aws_api_gateway_method_response.resume_options_method_response]
+}
+
+# CORS Method Response for /resumes
+resource "aws_api_gateway_method_response" "resumes_options_method_response" {
+  rest_api_id = aws_api_gateway_rest_api.haire_api.id
+  resource_id = aws_api_gateway_resource.resumes.id
+  http_method = aws_api_gateway_method.resumes_options.http_method
+  status_code = "200"
+  
+  response_parameters = {
+    "method.response.header.Access-Control-Allow-Headers" = true
+    "method.response.header.Access-Control-Allow-Methods" = true
+    "method.response.header.Access-Control-Allow-Origin"  = true
+  }
+}
+
+resource "aws_api_gateway_method_response" "resumes_job_applicants_options_method_response" {
+  rest_api_id = aws_api_gateway_rest_api.haire_api.id
+  resource_id = aws_api_gateway_resource.resumes_job_applicants.id
+  http_method = aws_api_gateway_method.resumes_job_applicants_options.http_method
+  status_code = "200"
+  
+  response_parameters = {
+    "method.response.header.Access-Control-Allow-Headers" = true
+    "method.response.header.Access-Control-Allow-Methods" = true
+    "method.response.header.Access-Control-Allow-Origin"  = true
+  }
+}
+
+resource "aws_api_gateway_method_response" "resume_options_method_response" {
+  rest_api_id = aws_api_gateway_rest_api.haire_api.id
+  resource_id = aws_api_gateway_resource.resume_id.id
+  http_method = aws_api_gateway_method.resume_options.http_method
+  status_code = "200"
+  
+  response_parameters = {
+    "method.response.header.Access-Control-Allow-Headers" = true
+    "method.response.header.Access-Control-Allow-Methods" = true
+    "method.response.header.Access-Control-Allow-Origin"  = true
+  }
+}
+
+# SNS 主題用於成本警報
+resource "aws_sns_topic" "cost_alerts" {
+  name = "${var.resource_prefix}-cost-alerts"
+  
+  tags = merge(local.common_tags, { Name = "cost-alerts" })
+}
+
+# 自動生成前端配置檔案
+resource "local_file" "frontend_config" {
+  content = templatefile("${path.module}/static-site/js/config.js", local.config_template_vars)
+  filename = "${path.module}/static-site/js/config-generated.js"
+  
+  depends_on = [
+    aws_api_gateway_rest_api.haire_api,
+    aws_api_gateway_stage.haire_api_stage,
+    aws_cloudfront_distribution.static_site_distribution
+  ]
+}
+
+# 上傳生成的配置檔案到 S3
+resource "aws_s3_object" "frontend_config" {
+  bucket = aws_s3_bucket.static_site.bucket
+  key    = "js/config.js"
+  content = templatefile("${path.module}/static-site/js/config.js", local.config_template_vars)
+  content_type = "application/javascript"
+  
+  depends_on = [
+    aws_api_gateway_rest_api.haire_api,
+    aws_api_gateway_stage.haire_api_stage,
+    aws_cloudfront_distribution.static_site_distribution
+  ]
+  
+  tags = merge(local.common_tags, { Name = "frontend-config" })
+}
+
+# 新增：CORS Integration Response for /teams/{team_id}/files
+resource "aws_api_gateway_integration_response" "team_files_upload_options_integration_response" {
+  rest_api_id = aws_api_gateway_rest_api.haire_api.id
+  resource_id = aws_api_gateway_resource.team_files_upload.id
+  http_method = aws_api_gateway_method.team_files_upload_options.http_method
+  status_code = "200"
+
+  response_parameters = {
+    "method.response.header.Access-Control-Allow-Headers" = "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+    "method.response.header.Access-Control-Allow-Methods" = "'GET,OPTIONS,POST,PUT,DELETE'"
+    "method.response.header.Access-Control-Allow-Origin"  = "'*'"
+  }
+
+  depends_on = [aws_api_gateway_method_response.team_files_upload_options_method_response]
+}
+
+# Lambda 權限 - 讓 API Gateway 可以呼叫各個 Lambda 函數
+resource "aws_lambda_permission" "allow_api_gateway_teams" {
+  statement_id  = "AllowExecutionFromAPIGateway"
+  action        = "lambda:InvokeFunction"
+  function_name = module.team_management_lambda.function_name
+  principal     = "apigateway.amazonaws.com"
+  source_arn    = "${aws_api_gateway_rest_api.haire_api.execution_arn}/*/*"
+}
+
 resource "aws_lambda_permission" "allow_api_gateway_jobs" {
   statement_id  = "AllowExecutionFromAPIGateway"
   action        = "lambda:InvokeFunction"
@@ -1018,332 +1466,25 @@ resource "aws_lambda_permission" "allow_api_gateway_jobs" {
   source_arn    = "${aws_api_gateway_rest_api.haire_api.execution_arn}/*/*"
 }
 
-# 生成前端配置文件
-resource "local_file" "frontend_config" {
-  content = templatefile("${path.module}/templates/config.js.tpl", {
-    api_gateway_url = aws_api_gateway_stage.haire_api_stage.invoke_url
-    cloudfront_url  = aws_cloudfront_distribution.static_site_distribution.domain_name
-  })
-  filename = "${path.module}/static-site/js/config.js"
-}
-
-# 團隊文件管理 API 資源
-resource "aws_api_gateway_resource" "upload_team_file" {
-  rest_api_id = aws_api_gateway_rest_api.haire_api.id
-  parent_id   = aws_api_gateway_rest_api.haire_api.root_resource_id
-  path_part   = "upload-team-file"
-}
-
-resource "aws_api_gateway_resource" "team_files" {
-  rest_api_id = aws_api_gateway_rest_api.haire_api.id
-  parent_id   = aws_api_gateway_rest_api.haire_api.root_resource_id
-  path_part   = "team-files"
-}
-
-resource "aws_api_gateway_resource" "team_files_id" {
-  rest_api_id = aws_api_gateway_rest_api.haire_api.id
-  parent_id   = aws_api_gateway_resource.team_files.id
-  path_part   = "{team_id}"
-}
-
-resource "aws_api_gateway_resource" "download_team_file" {
-  rest_api_id = aws_api_gateway_rest_api.haire_api.id
-  parent_id   = aws_api_gateway_rest_api.haire_api.root_resource_id
-  path_part   = "download-team-file"
-}
-
-resource "aws_api_gateway_resource" "download_team_file_key" {
-  rest_api_id = aws_api_gateway_rest_api.haire_api.id
-  parent_id   = aws_api_gateway_resource.download_team_file.id
-  path_part   = "{file_key}"
-}
-
-resource "aws_api_gateway_resource" "delete_team_file" {
-  rest_api_id = aws_api_gateway_rest_api.haire_api.id
-  parent_id   = aws_api_gateway_rest_api.haire_api.root_resource_id
-  path_part   = "delete-team-file"
-}
-
-# API Gateway 方法 - 文件上傳
-resource "aws_api_gateway_method" "upload_team_file_post" {
-  rest_api_id   = aws_api_gateway_rest_api.haire_api.id
-  resource_id   = aws_api_gateway_resource.upload_team_file.id
-  http_method   = "POST"
-  authorization = "NONE"
-}
-
-resource "aws_api_gateway_method" "upload_team_file_options" {
-  rest_api_id   = aws_api_gateway_rest_api.haire_api.id
-  resource_id   = aws_api_gateway_resource.upload_team_file.id
-  http_method   = "OPTIONS"
-  authorization = "NONE"
-}
-
-# API Gateway 方法 - 文件列表
-resource "aws_api_gateway_method" "team_files_get" {
-  rest_api_id   = aws_api_gateway_rest_api.haire_api.id
-  resource_id   = aws_api_gateway_resource.team_files_id.id
-  http_method   = "GET"
-  authorization = "NONE"
-}
-
-resource "aws_api_gateway_method" "team_files_options" {
-  rest_api_id   = aws_api_gateway_rest_api.haire_api.id
-  resource_id   = aws_api_gateway_resource.team_files_id.id
-  http_method   = "OPTIONS"
-  authorization = "NONE"
-}
-
-# API Gateway 方法 - 文件下載
-resource "aws_api_gateway_method" "download_team_file_get" {
-  rest_api_id   = aws_api_gateway_rest_api.haire_api.id
-  resource_id   = aws_api_gateway_resource.download_team_file_key.id
-  http_method   = "GET"
-  authorization = "NONE"
-}
-
-resource "aws_api_gateway_method" "download_team_file_options" {
-  rest_api_id   = aws_api_gateway_rest_api.haire_api.id
-  resource_id   = aws_api_gateway_resource.download_team_file_key.id
-  http_method   = "OPTIONS"
-  authorization = "NONE"
-}
-
-# API Gateway 方法 - 文件刪除
-resource "aws_api_gateway_method" "delete_team_file_delete" {
-  rest_api_id   = aws_api_gateway_rest_api.haire_api.id
-  resource_id   = aws_api_gateway_resource.delete_team_file.id
-  http_method   = "DELETE"
-  authorization = "NONE"
-}
-
-resource "aws_api_gateway_method" "delete_team_file_options" {
-  rest_api_id   = aws_api_gateway_rest_api.haire_api.id
-  resource_id   = aws_api_gateway_resource.delete_team_file.id
-  http_method   = "OPTIONS"
-  authorization = "NONE"
-}
-
-# API Gateway 整合 - 文件管理
-resource "aws_api_gateway_integration" "upload_team_file_integration" {
-  rest_api_id = aws_api_gateway_rest_api.haire_api.id
-  resource_id = aws_api_gateway_resource.upload_team_file.id
-  http_method = aws_api_gateway_method.upload_team_file_post.http_method
-  
-  integration_http_method = "POST"
-  type                   = "AWS_PROXY"
-  uri                    = module.team_file_management_lambda.invoke_arn
-}
-
-resource "aws_api_gateway_integration" "team_files_get_integration" {
-  rest_api_id = aws_api_gateway_rest_api.haire_api.id
-  resource_id = aws_api_gateway_resource.team_files_id.id
-  http_method = aws_api_gateway_method.team_files_get.http_method
-  
-  integration_http_method = "POST"
-  type                   = "AWS_PROXY"
-  uri                    = module.team_file_management_lambda.invoke_arn
-}
-
-resource "aws_api_gateway_integration" "download_team_file_integration" {
-  rest_api_id = aws_api_gateway_rest_api.haire_api.id
-  resource_id = aws_api_gateway_resource.download_team_file_key.id
-  http_method = aws_api_gateway_method.download_team_file_get.http_method
-  
-  integration_http_method = "POST"
-  type                   = "AWS_PROXY"
-  uri                    = module.team_file_management_lambda.invoke_arn
-}
-
-resource "aws_api_gateway_integration" "delete_team_file_integration" {
-  rest_api_id = aws_api_gateway_rest_api.haire_api.id
-  resource_id = aws_api_gateway_resource.delete_team_file.id
-  http_method = aws_api_gateway_method.delete_team_file_delete.http_method
-  
-  integration_http_method = "POST"
-  type                   = "AWS_PROXY"
-  uri                    = module.team_file_management_lambda.invoke_arn
-}
-
-# CORS 整合 - 文件管理
-resource "aws_api_gateway_integration" "upload_team_file_options_integration" {
-  rest_api_id = aws_api_gateway_rest_api.haire_api.id
-  resource_id = aws_api_gateway_resource.upload_team_file.id
-  http_method = aws_api_gateway_method.upload_team_file_options.http_method
-  
-  type = "MOCK"
-  request_templates = {
-    "application/json" = jsonencode({
-      statusCode = 200
-    })
-  }
-}
-
-resource "aws_api_gateway_integration" "team_files_options_integration" {
-  rest_api_id = aws_api_gateway_rest_api.haire_api.id
-  resource_id = aws_api_gateway_resource.team_files_id.id
-  http_method = aws_api_gateway_method.team_files_options.http_method
-  
-  type = "MOCK"
-  request_templates = {
-    "application/json" = jsonencode({
-      statusCode = 200
-    })
-  }
-}
-
-resource "aws_api_gateway_integration" "download_team_file_options_integration" {
-  rest_api_id = aws_api_gateway_rest_api.haire_api.id
-  resource_id = aws_api_gateway_resource.download_team_file_key.id
-  http_method = aws_api_gateway_method.download_team_file_options.http_method
-  
-  type = "MOCK"
-  request_templates = {
-    "application/json" = jsonencode({
-      statusCode = 200
-    })
-  }
-}
-
-resource "aws_api_gateway_integration" "delete_team_file_options_integration" {
-  rest_api_id = aws_api_gateway_rest_api.haire_api.id
-  resource_id = aws_api_gateway_resource.delete_team_file.id
-  http_method = aws_api_gateway_method.delete_team_file_options.http_method
-  
-  type = "MOCK"
-  request_templates = {
-    "application/json" = jsonencode({
-      statusCode = 200
-    })
-  }
-}
-
-# Method Response - 文件管理 OPTIONS
-resource "aws_api_gateway_method_response" "upload_team_file_options_method_response" {
-  rest_api_id = aws_api_gateway_rest_api.haire_api.id
-  resource_id = aws_api_gateway_resource.upload_team_file.id
-  http_method = aws_api_gateway_method.upload_team_file_options.http_method
-  status_code = "200"
-
-  response_parameters = {
-    "method.response.header.Access-Control-Allow-Headers" = true
-    "method.response.header.Access-Control-Allow-Methods" = true
-    "method.response.header.Access-Control-Allow-Origin"  = true
-  }
-}
-
-resource "aws_api_gateway_method_response" "team_files_options_method_response" {
-  rest_api_id = aws_api_gateway_rest_api.haire_api.id
-  resource_id = aws_api_gateway_resource.team_files_id.id
-  http_method = aws_api_gateway_method.team_files_options.http_method
-  status_code = "200"
-
-  response_parameters = {
-    "method.response.header.Access-Control-Allow-Headers" = true
-    "method.response.header.Access-Control-Allow-Methods" = true
-    "method.response.header.Access-Control-Allow-Origin"  = true
-  }
-}
-
-resource "aws_api_gateway_method_response" "download_team_file_options_method_response" {
-  rest_api_id = aws_api_gateway_rest_api.haire_api.id
-  resource_id = aws_api_gateway_resource.download_team_file_key.id
-  http_method = aws_api_gateway_method.download_team_file_options.http_method
-  status_code = "200"
-
-  response_parameters = {
-    "method.response.header.Access-Control-Allow-Headers" = true
-    "method.response.header.Access-Control-Allow-Methods" = true
-    "method.response.header.Access-Control-Allow-Origin"  = true
-  }
-}
-
-resource "aws_api_gateway_method_response" "delete_team_file_options_method_response" {
-  rest_api_id = aws_api_gateway_rest_api.haire_api.id
-  resource_id = aws_api_gateway_resource.delete_team_file.id
-  http_method = aws_api_gateway_method.delete_team_file_options.http_method
-  status_code = "200"
-
-  response_parameters = {
-    "method.response.header.Access-Control-Allow-Headers" = true
-    "method.response.header.Access-Control-Allow-Methods" = true
-    "method.response.header.Access-Control-Allow-Origin"  = true
-  }
-}
-
-# Integration Response - 文件管理 OPTIONS
-resource "aws_api_gateway_integration_response" "upload_team_file_options_integration_response" {
-  rest_api_id = aws_api_gateway_rest_api.haire_api.id
-  resource_id = aws_api_gateway_resource.upload_team_file.id
-  http_method = aws_api_gateway_method.upload_team_file_options.http_method
-  status_code = "200"
-
-  response_parameters = {
-    "method.response.header.Access-Control-Allow-Headers" = "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
-    "method.response.header.Access-Control-Allow-Methods" = "'GET,OPTIONS,POST,PUT,DELETE'"
-    "method.response.header.Access-Control-Allow-Origin"  = "'*'"
-  }
-
-  depends_on = [aws_api_gateway_method_response.upload_team_file_options_method_response]
-}
-
-resource "aws_api_gateway_integration_response" "team_files_options_integration_response" {
-  rest_api_id = aws_api_gateway_rest_api.haire_api.id
-  resource_id = aws_api_gateway_resource.team_files_id.id
-  http_method = aws_api_gateway_method.team_files_options.http_method
-  status_code = "200"
-
-  response_parameters = {
-    "method.response.header.Access-Control-Allow-Headers" = "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
-    "method.response.header.Access-Control-Allow-Methods" = "'GET,OPTIONS,POST,PUT,DELETE'"
-    "method.response.header.Access-Control-Allow-Origin"  = "'*'"
-  }
-
-  depends_on = [aws_api_gateway_method_response.team_files_options_method_response]
-}
-
-resource "aws_api_gateway_integration_response" "download_team_file_options_integration_response" {
-  rest_api_id = aws_api_gateway_rest_api.haire_api.id
-  resource_id = aws_api_gateway_resource.download_team_file_key.id
-  http_method = aws_api_gateway_method.download_team_file_options.http_method
-  status_code = "200"
-
-  response_parameters = {
-    "method.response.header.Access-Control-Allow-Headers" = "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
-    "method.response.header.Access-Control-Allow-Methods" = "'GET,OPTIONS,POST,PUT,DELETE'"
-    "method.response.header.Access-Control-Allow-Origin"  = "'*'"
-  }
-
-  depends_on = [aws_api_gateway_method_response.download_team_file_options_method_response]
-}
-
-resource "aws_api_gateway_integration_response" "delete_team_file_options_integration_response" {
-  rest_api_id = aws_api_gateway_rest_api.haire_api.id
-  resource_id = aws_api_gateway_resource.delete_team_file.id
-  http_method = aws_api_gateway_method.delete_team_file_options.http_method
-  status_code = "200"
-
-  response_parameters = {
-    "method.response.header.Access-Control-Allow-Headers" = "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
-    "method.response.header.Access-Control-Allow-Methods" = "'GET,OPTIONS,POST,PUT,DELETE'"
-    "method.response.header.Access-Control-Allow-Origin"  = "'*'"
-  }
-
-  depends_on = [aws_api_gateway_method_response.delete_team_file_options_method_response]
-}
-
-# Lambda 權限 - 讓 API Gateway 可以呼叫 team_file_management
-resource "aws_lambda_permission" "allow_api_gateway_team_files" {
+resource "aws_lambda_permission" "allow_api_gateway_resume_upload" {
   statement_id  = "AllowExecutionFromAPIGateway"
   action        = "lambda:InvokeFunction"
-  function_name = module.team_file_management_lambda.function_name
+  function_name = module.resume_upload_lambda.function_name
+  principal     = "apigateway.amazonaws.com"
+  source_arn    = "${aws_api_gateway_rest_api.haire_api.execution_arn}/*/*"
+}
+
+resource "aws_lambda_permission" "allow_api_gateway_resumes" {
+  statement_id  = "AllowExecutionFromAPIGateway"
+  action        = "lambda:InvokeFunction"
+  function_name = module.resume_management_lambda.function_name
   principal     = "apigateway.amazonaws.com"
   source_arn    = "${aws_api_gateway_rest_api.haire_api.execution_arn}/*/*"
 }
 
 # 成本控制和監控
 resource "aws_cloudwatch_metric_alarm" "high_cost_alarm" {
-  alarm_name          = "benson-haire-high-cost-alarm"
+  alarm_name          = "${var.resource_prefix}-high-cost-alarm"
   comparison_operator = "GreaterThanThreshold"
   evaluation_periods  = "1"
   metric_name         = "EstimatedCharges"
@@ -1359,28 +1500,4 @@ resource "aws_cloudwatch_metric_alarm" "high_cost_alarm" {
   }
   
   tags = merge(local.common_tags, { Name = "high-cost-alarm" })
-}
-
-# SNS 主題用於成本警報
-resource "aws_sns_topic" "cost_alerts" {
-  name = "benson-haire-cost-alerts"
-  
-  tags = merge(local.common_tags, { Name = "cost-alerts" })
-}
-
-# 輸出 API Key 以供前端使用（如果需要的話）
-output "api_key_id" {
-  value = aws_api_gateway_api_key.haire_api_key.id
-  description = "API Gateway API Key ID"
-  sensitive = true
-}
-
-output "usage_plan_id" {
-  value = aws_api_gateway_usage_plan.haire_usage_plan.id
-  description = "API Gateway Usage Plan ID"
-}
-
-output "cloudfront_url" {
-  value = module.static_site_distribution.cloudfront_url
-  description = "CloudFront URL"
 }

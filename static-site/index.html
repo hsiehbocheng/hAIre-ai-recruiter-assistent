@@ -36,6 +36,7 @@
             padding: 2rem 0;
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
             margin-bottom: 2rem;
+            position: relative;
         }
 
         .nav-container {
@@ -43,6 +44,43 @@
             margin: 0 auto;
             padding: 0 1rem;
             text-align: center;
+            position: relative;
+        }
+
+        /* 使用者切換器 */
+        .user-switcher {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 25px;
+            padding: 0.5rem;
+            display: flex;
+            gap: 0.5rem;
+            backdrop-filter: blur(10px);
+        }
+
+        .user-role-btn {
+            background: transparent;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .user-role-btn.active {
+            background: white;
+            color: #0047AB;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .user-role-btn:hover:not(.active) {
+            background: rgba(255, 255, 255, 0.2);
         }
 
         .nav-brand {
@@ -147,6 +185,14 @@
             box-shadow: 0 4px 12px rgba(108, 117, 125, 0.3);
         }
 
+        .feature-btn.green {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        }
+
+        .feature-btn.green:hover {
+            box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+        }
+
         /* 統計區塊 */
         .stats-section {
             background-color: #fff;
@@ -199,10 +245,222 @@
             font-size: 0.9rem;
         }
 
+        /* 求職者內容樣式 */
+        .applicant-content {
+            display: none;
+        }
+
+        .admin-content {
+            display: block;
+        }
+
+        .job-listing {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+            border-left: 4px solid #0047AB;
+        }
+
+        .job-header {
+            display: flex;
+            justify-content: between;
+            align-items: start;
+            margin-bottom: 1rem;
+        }
+
+        .job-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #0047AB;
+            margin-bottom: 0.5rem;
+        }
+
+        .job-company {
+            color: #666;
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .job-location {
+            color: #888;
+            font-size: 0.85rem;
+        }
+
+        .job-apply-btn {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .job-apply-btn:hover {
+            box-shadow: 0 2px 8px rgba(40, 167, 69, 0.3);
+        }
+
+        /* 上傳模態框 */
+        .upload-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+        }
+
+        .upload-modal.show {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .upload-modal-content {
+            background: white;
+            border-radius: 12px;
+            padding: 2rem;
+            max-width: 500px;
+            width: 90%;
+            max-height: 80%;
+            overflow-y: auto;
+        }
+
+        .upload-modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .upload-modal-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: #0047AB;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #666;
+        }
+
+        .upload-area {
+            border: 2px dashed #ddd;
+            border-radius: 8px;
+            padding: 2rem;
+            text-align: center;
+            margin-bottom: 1rem;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .upload-area:hover, .upload-area.dragover {
+            border-color: #0047AB;
+            background-color: #f8f9ff;
+        }
+
+        .upload-icon {
+            font-size: 3rem;
+            color: #ddd;
+            margin-bottom: 1rem;
+        }
+
+        .upload-text {
+            color: #666;
+            margin-bottom: 0.5rem;
+        }
+
+        .upload-hint {
+            color: #999;
+            font-size: 0.9rem;
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .selected-file {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 1rem;
+            margin: 1rem 0;
+            display: none;
+        }
+
+        .file-info {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .file-icon {
+            color: #0047AB;
+        }
+
+        .file-details {
+            flex: 1;
+        }
+
+        .file-name {
+            font-weight: 500;
+            margin-bottom: 0.25rem;
+        }
+
+        .file-size {
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .remove-file-btn {
+            background: none;
+            border: none;
+            color: #dc3545;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+
+        .submit-btn {
+            width: 100%;
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white;
+            border: none;
+            padding: 0.75rem;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .submit-btn:hover:not(:disabled) {
+            box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+        }
+
+        .submit-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
         /* 響應式設計 */
         @media (max-width: 768px) {
             .top-nav {
                 padding: 1.5rem 0;
+            }
+
+            .user-switcher {
+                position: relative;
+                top: auto;
+                right: auto;
+                margin-bottom: 1rem;
+                justify-content: center;
             }
 
             .nav-brand {
@@ -269,12 +527,22 @@
     <!-- 頂部導航 -->
     <div class="top-nav">
         <div class="nav-container">
+            <!-- 使用者角色切換器 -->
+            <div class="user-switcher">
+                <button class="user-role-btn active" data-role="admin">
+                    <i class="fas fa-cog"></i> 管理員
+                </button>
+                <button class="user-role-btn" data-role="applicant">
+                    <i class="fas fa-user"></i> 求職者
+                </button>
+            </div>
+
             <div class="nav-brand">
                 <i class="fas fa-brain"></i>
                 hAIre 招募管理系統
             </div>
-            <div class="nav-subtitle">AI 驅動的智能招募解決方案</div>
-            <div class="nav-description">
+            <div class="nav-subtitle" id="navSubtitle">AI 驅動的智能招募解決方案</div>
+            <div class="nav-description" id="navDescription">
                 整合團隊管理、職缺發布、履歷篩選與人才配對，打造高效的招募流程
             </div>
         </div>
@@ -282,92 +550,177 @@
 
     <!-- 主要內容 -->
     <div class="main-container">
-        <!-- 系統統計 -->
-        <div class="stats-section">
-            <div class="section-title">
-                <span class="line"></span>系統概覽
+        <!-- 管理員內容 -->
+        <div class="admin-content">
+            <!-- 系統統計 -->
+            <div class="stats-section">
+                <div class="section-title">
+                    <span class="line"></span>系統概覽
+                </div>
+                <div class="stats-grid">
+                    <div class="stat-item">
+                        <div class="stat-number" id="teamsCount">-</div>
+                        <div class="stat-label">團隊數量</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number" id="jobsCount">-</div>
+                        <div class="stat-label">活躍職缺</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number" id="resumesCount">-</div>
+                        <div class="stat-label">履歷總數</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number" id="matchesCount">-</div>
+                        <div class="stat-label">成功配對</div>
+                    </div>
+                </div>
             </div>
-            <div class="stats-grid">
-                <div class="stat-item">
-                    <div class="stat-number" id="teamsCount">-</div>
-                    <div class="stat-label">團隊數量</div>
+
+            <!-- 功能模組 -->
+            <div class="features-grid">
+                <!-- 團隊管理 -->
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-users-cog"></i>
+                    </div>
+                    <div class="feature-title">團隊管理</div>
+                    <div class="feature-description">
+                        瀏覽所有團隊，查看團隊詳情和職缺發布狀況。點擊團隊卡片可進入詳細頁面管理團隊職缺。
+                    </div>
+                    <a href="admin-teams.html" class="feature-btn">
+                        <i class="fas fa-arrow-right"></i> 瀏覽團隊
+                    </a>
                 </div>
-                <div class="stat-item">
-                    <div class="stat-number" id="jobsCount">-</div>
-                    <div class="stat-label">活躍職缺</div>
+
+                <!-- 職缺管理 -->
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-briefcase"></i>
+                    </div>
+                    <div class="feature-title">職缺管理</div>
+                    <div class="feature-description">
+                        統一管理所有職缺，進行批次操作和進階篩選。完整的職缺生命週期管理工具。
+                    </div>
+                    <a href="admin-jobs.html" class="feature-btn">
+                        <i class="fas fa-arrow-right"></i> 管理職缺
+                    </a>
                 </div>
-                <div class="stat-item">
-                    <div class="stat-number" id="resumesCount">-</div>
-                    <div class="stat-label">履歷總數</div>
+
+                <!-- 履歷管理 -->
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-file-alt"></i>
+                    </div>
+                    <div class="feature-title">履歷管理</div>
+                    <div class="feature-description">
+                        自動接收和解析履歷，AI 提取關鍵資訊，建立人才資料庫供快速搜尋配對。
+                    </div>
+                    <a href="#" class="feature-btn secondary">
+                        <i class="fas fa-clock"></i> 即將推出
+                    </a>
                 </div>
-                <div class="stat-item">
-                    <div class="stat-number" id="matchesCount">-</div>
-                    <div class="stat-label">成功配對</div>
+
+                <!-- 數據儀表板 -->
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-chart-pie"></i>
+                    </div>
+                    <div class="feature-title">數據儀表板</div>
+                    <div class="feature-description">
+                        招募效率分析、人才流向追蹤、團隊招募狀況，提供決策所需的關鍵數據洞察。
+                    </div>
+                    <a href="#" class="feature-btn secondary">
+                        <i class="fas fa-clock"></i> 即將推出
+                    </a>
                 </div>
             </div>
         </div>
 
-        <!-- 功能模組 -->
-        <div class="features-grid">
-            <!-- 團隊管理 -->
-            <div class="feature-card">
-                <div class="feature-icon">
-                    <i class="fas fa-users-cog"></i>
+        <!-- 求職者內容 -->
+        <div class="applicant-content">
+            <!-- 歡迎區塊 -->
+            <div class="stats-section">
+                <div class="section-title">
+                    <span class="line"></span>歡迎來到 hAIre
                 </div>
-                <div class="feature-title">團隊管理</div>
-                <div class="feature-description">
-                    瀏覽所有團隊，查看團隊詳情和職缺發布狀況。點擊團隊卡片可進入詳細頁面管理團隊職缺。
+                <div style="text-align: center; padding: 2rem 0;">
+                    <div style="font-size: 1.2rem; color: #666; margin-bottom: 1rem;">
+                        發現您的理想工作機會，上傳履歷開始您的職業旅程
+                    </div>
+                    <div style="color: #999;">
+                        支援 PDF 和 JSON 格式履歷，AI 智能分析為您推薦最適合的職位
+                    </div>
                 </div>
-                <a href="admin-teams.html" class="feature-btn">
-                    <i class="fas fa-arrow-right"></i> 瀏覽團隊
-                </a>
             </div>
 
-            <!-- 職缺管理 -->
-            <div class="feature-card">
-                <div class="feature-icon">
-                    <i class="fas fa-briefcase"></i>
+            <!-- 職缺列表 -->
+            <div class="stats-section">
+                <div class="section-title">
+                    <span class="line"></span>熱門職缺
                 </div>
-                <div class="feature-title">職缺管理</div>
-                <div class="feature-description">
-                    統一管理所有職缺，進行批次操作和進階篩選。完整的職缺生命週期管理工具。
+                <div id="jobListings">
+                    <div style="text-align: center; padding: 2rem; color: #666;">
+                        <i class="fas fa-spinner fa-spin"></i> 載入職缺中...
+                    </div>
                 </div>
-                <a href="admin-jobs.html" class="feature-btn">
-                    <i class="fas fa-arrow-right"></i> 管理職缺
-                </a>
-            </div>
-
-            <!-- 履歷管理 -->
-            <div class="feature-card">
-                <div class="feature-icon">
-                    <i class="fas fa-file-alt"></i>
-                </div>
-                <div class="feature-title">履歷管理</div>
-                <div class="feature-description">
-                    自動接收和解析履歷，AI 提取關鍵資訊，建立人才資料庫供快速搜尋配對。
-                </div>
-                <a href="#" class="feature-btn secondary">
-                    <i class="fas fa-clock"></i> 即將推出
-                </a>
-            </div>
-
-            <!-- 數據儀表板 -->
-            <div class="feature-card">
-                <div class="feature-icon">
-                    <i class="fas fa-chart-pie"></i>
-                </div>
-                <div class="feature-title">數據儀表板</div>
-                <div class="feature-description">
-                    招募效率分析、人才流向追蹤、團隊招募狀況，提供決策所需的關鍵數據洞察。
-                </div>
-                <a href="#" class="feature-btn secondary">
-                    <i class="fas fa-clock"></i> 即將推出
-                </a>
             </div>
         </div>
     </div>
 
+    <!-- 履歷上傳模態框 -->
+    <div class="upload-modal" id="uploadModal">
+        <div class="upload-modal-content">
+            <div class="upload-modal-header">
+                <div class="upload-modal-title">
+                    <i class="fas fa-upload"></i> 上傳履歷
+                </div>
+                <button class="close-btn" onclick="closeUploadModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <div class="job-info" id="selectedJobInfo" style="background: #f8f9fa; border-radius: 8px; padding: 1rem; margin-bottom: 1.5rem;">
+                <!-- 選中的職缺資訊會在這裡顯示 -->
+            </div>
+
+            <div class="upload-area" onclick="document.getElementById('resumeFile').click()" 
+                 ondrop="handleDrop(event)" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)">
+                <div class="upload-icon">
+                    <i class="fas fa-cloud-upload-alt"></i>
+                </div>
+                <div class="upload-text">點擊或拖拽上傳履歷</div>
+                <div class="upload-hint">支援 PDF 和 JSON 格式，最大 10MB</div>
+            </div>
+
+            <input type="file" id="resumeFile" class="file-input" accept=".pdf,.json" onchange="handleFileSelect(event)">
+            
+            <div class="selected-file" id="selectedFile">
+                <div class="file-info">
+                    <div class="file-icon">
+                        <i class="fas fa-file"></i>
+                    </div>
+                    <div class="file-details">
+                        <div class="file-name" id="fileName"></div>
+                        <div class="file-size" id="fileSize"></div>
+                    </div>
+                    <button class="remove-file-btn" onclick="removeFile()">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            </div>
+
+            <button class="submit-btn" id="submitBtn" onclick="uploadResume()" disabled>
+                <i class="fas fa-paper-plane"></i> 提交履歷
+            </button>
+        </div>
+    </div>
+
     <script>
+        let currentRole = 'admin';
+        let selectedFile = null;
+        let selectedJob = null;
+
         // 載入系統統計數據
         async function loadSystemStats() {
             try {
@@ -390,9 +743,300 @@
             }
         }
 
-        // 頁面載入完成後執行
+        // 切換使用者角色
+        function switchRole(role) {
+            currentRole = role;
+            
+            // 更新按鈕狀態
+            document.querySelectorAll('.user-role-btn').forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.dataset.role === role) {
+                    btn.classList.add('active');
+                }
+            });
+
+            // 切換內容顯示
+            const adminContent = document.querySelector('.admin-content');
+            const applicantContent = document.querySelector('.applicant-content');
+            
+            if (role === 'admin') {
+                adminContent.style.display = 'block';
+                applicantContent.style.display = 'none';
+                document.getElementById('navSubtitle').textContent = 'AI 驅動的智能招募解決方案';
+                document.getElementById('navDescription').textContent = '整合團隊管理、職缺發布、履歷篩選與人才配對，打造高效的招募流程';
+            } else {
+                adminContent.style.display = 'none';
+                applicantContent.style.display = 'block';
+                document.getElementById('navSubtitle').textContent = '探索職業新機會';
+                document.getElementById('navDescription').textContent = '上傳您的履歷，讓 AI 智能分析為您推薦最適合的職位';
+                loadJobListings();
+            }
+        }
+
+        // 載入職缺列表
+        async function loadJobListings() {
+            try {
+                const response = await fetch(`${window.CONFIG.API_BASE_URL}/jobs`);
+                const data = await response.json();
+                
+                const jobListings = document.getElementById('jobListings');
+                
+                if (data.success && data.jobs && data.jobs.length > 0) {
+                    jobListings.innerHTML = data.jobs.map(job => {
+                        // 構建完整的公司部門資訊
+                        let companyInfo = '';
+                        if (job.company) {
+                            companyInfo = job.company;
+                            if (job.department) {
+                                companyInfo += ` - ${job.department}`;
+                                if (job.team_name) {
+                                    companyInfo += ` - ${job.team_name}`;
+                                }
+                            }
+                        } else {
+                            // 如果沒有完整資訊，顯示 team_id
+                            companyInfo = job.team_id || '未指定公司';
+                        }
+                        
+                        // 構建薪資資訊
+                        let salaryInfo = '';
+                        if (job.salary_min && job.salary_max) {
+                            salaryInfo = `薪資範圍: $${job.salary_min.toLocaleString()} - $${job.salary_max.toLocaleString()}`;
+                        } else if (job.salary_min) {
+                            salaryInfo = `薪資: $${job.salary_min.toLocaleString()} 起`;
+                        } else if (job.salary_max) {
+                            salaryInfo = `薪資: 最高 $${job.salary_max.toLocaleString()}`;
+                        }
+                        
+                        return `
+                            <div class="job-listing">
+                                <div class="job-header">
+                                    <div style="flex: 1;">
+                                        <div class="job-title">${job.title || job.job_title}</div>
+                                        <div class="job-company">${companyInfo}</div>
+                                        <div class="job-location">
+                                            <i class="fas fa-map-marker-alt"></i> ${job.location || '台灣'}
+                                            ${salaryInfo ? ` | ${salaryInfo}` : ''}
+                                        </div>
+                                        ${job.employment_type ? `<div style="margin-top: 0.25rem; color: #888; font-size: 0.8rem;"><i class="fas fa-clock"></i> ${job.employment_type}</div>` : ''}
+                                    </div>
+                                    <button class="job-apply-btn" onclick="openUploadModal('${job.job_id}', '${job.title || job.job_title}', '${companyInfo}')">
+                                        <i class="fas fa-paper-plane"></i> 投遞履歷
+                                    </button>
+                                </div>
+                                <div style="color: #666; font-size: 0.9rem; margin-top: 1rem;">
+                                    ${job.description || '職位描述暫無詳細資訊'}
+                                </div>
+                                ${job.required_skills && job.required_skills.length > 0 ? `
+                                    <div style="margin-top: 1rem;">
+                                        <div style="color: #666; font-size: 0.85rem; margin-bottom: 0.5rem;">
+                                            <i class="fas fa-tools"></i> 技能要求：
+                                        </div>
+                                        <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
+                                            ${job.required_skills.map(skill => `
+                                                <span style="background: #e3f2fd; color: #1565c0; padding: 0.25rem 0.5rem; border-radius: 12px; font-size: 0.8rem;">
+                                                    ${skill}
+                                                </span>
+                                            `).join('')}
+                                        </div>
+                                    </div>
+                                ` : ''}
+                            </div>
+                        `;
+                    }).join('');
+                } else {
+                    jobListings.innerHTML = `
+                        <div style="text-align: center; padding: 3rem; color: #666;">
+                            <i class="fas fa-briefcase" style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.3;"></i>
+                            <div style="font-size: 1.1rem; margin-bottom: 0.5rem;">目前沒有開放的職缺</div>
+                            <div style="font-size: 0.9rem; opacity: 0.8;">請稍後再來查看最新的工作機會</div>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                console.error('載入職缺失敗:', error);
+                document.getElementById('jobListings').innerHTML = `
+                    <div style="text-align: center; padding: 2rem; color: #dc3545;">
+                        <i class="fas fa-exclamation-triangle"></i> 載入職缺失敗
+                    </div>
+                `;
+            }
+        }
+
+        // 開啟上傳模態框
+        function openUploadModal(jobId, jobTitle, company) {
+            selectedJob = { jobId, jobTitle, company };
+            
+            document.getElementById('selectedJobInfo').innerHTML = `
+                <div style="font-weight: 600; color: #0047AB; margin-bottom: 0.5rem;">${jobTitle}</div>
+                <div style="color: #666; font-size: 0.9rem;">${company}</div>
+            `;
+            
+            document.getElementById('uploadModal').classList.add('show');
+        }
+
+        // 關閉上傳模態框
+        function closeUploadModal() {
+            document.getElementById('uploadModal').classList.remove('show');
+            resetUploadForm();
+        }
+
+        // 重置上傳表單
+        function resetUploadForm() {
+            selectedFile = null;
+            selectedJob = null;
+            document.getElementById('resumeFile').value = '';
+            document.getElementById('selectedFile').style.display = 'none';
+            document.getElementById('submitBtn').disabled = true;
+        }
+
+        // 處理檔案選擇
+        function handleFileSelect(event) {
+            const file = event.target.files[0];
+            if (file) {
+                validateAndSetFile(file);
+            }
+        }
+
+        // 處理拖放
+        function handleDrop(event) {
+            event.preventDefault();
+            event.stopPropagation();
+            
+            const uploadArea = event.currentTarget;
+            uploadArea.classList.remove('dragover');
+            
+            const files = event.dataTransfer.files;
+            if (files.length > 0) {
+                validateAndSetFile(files[0]);
+            }
+        }
+
+        function handleDragOver(event) {
+            event.preventDefault();
+            event.stopPropagation();
+            event.currentTarget.classList.add('dragover');
+        }
+
+        function handleDragLeave(event) {
+            event.preventDefault();
+            event.stopPropagation();
+            event.currentTarget.classList.remove('dragover');
+        }
+
+        // 驗證並設置檔案
+        function validateAndSetFile(file) {
+            const validTypes = ['application/pdf', 'application/json'];
+            const maxSize = 10 * 1024 * 1024; // 10MB
+
+            if (!validTypes.includes(file.type) && !file.name.toLowerCase().endsWith('.json')) {
+                alert('請選擇 PDF 或 JSON 格式的檔案');
+                return;
+            }
+
+            if (file.size > maxSize) {
+                alert('檔案大小不能超過 10MB');
+                return;
+            }
+
+            selectedFile = file;
+            
+            // 顯示選中的檔案
+            document.getElementById('fileName').textContent = file.name;
+            document.getElementById('fileSize').textContent = formatFileSize(file.size);
+            document.getElementById('selectedFile').style.display = 'block';
+            document.getElementById('submitBtn').disabled = false;
+
+            // 設置檔案圖示
+            const fileIcon = document.querySelector('#selectedFile .file-icon i');
+            if (file.type === 'application/pdf') {
+                fileIcon.className = 'fas fa-file-pdf';
+                fileIcon.style.color = '#dc3545';
+            } else {
+                fileIcon.className = 'fas fa-file-code';
+                fileIcon.style.color = '#28a745';
+            }
+        }
+
+        // 格式化檔案大小
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        // 移除檔案
+        function removeFile() {
+            resetUploadForm();
+        }
+
+        // 上傳履歷
+        async function uploadResume() {
+            if (!selectedFile || !selectedJob) {
+                alert('請選擇檔案和職缺');
+                return;
+            }
+
+            const submitBtn = document.getElementById('submitBtn');
+            const originalText = submitBtn.innerHTML;
+            
+            try {
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 上傳中...';
+
+                // 生成唯一的檔案名稱
+                const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+                const fileName = `resume_${selectedJob.jobId}_${timestamp}_${selectedFile.name}`;
+                
+                // 上傳到 S3
+                const formData = new FormData();
+                formData.append('file', selectedFile, fileName);
+                formData.append('job_id', selectedJob.jobId);
+                formData.append('job_title', selectedJob.jobTitle);
+                formData.append('company', selectedJob.company);
+
+                // 直接上傳到 S3 raw_resume bucket
+                const response = await fetch(`${window.CONFIG.API_BASE_URL}/upload-resume`, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (response.ok) {
+                    alert('履歷上傳成功！我們會盡快審核您的申請。');
+                    closeUploadModal();
+                } else {
+                    const error = await response.json();
+                    throw new Error(error.message || '上傳失敗');
+                }
+
+            } catch (error) {
+                console.error('上傳失敗:', error);
+                alert('上傳失敗：' + error.message);
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalText;
+            }
+        }
+
+        // 事件監聽器
         document.addEventListener('DOMContentLoaded', () => {
             loadSystemStats();
+            
+            // 使用者角色切換
+            document.querySelectorAll('.user-role-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    switchRole(btn.dataset.role);
+                });
+            });
+
+            // 點擊模態框外部關閉
+            document.getElementById('uploadModal').addEventListener('click', (e) => {
+                if (e.target === e.currentTarget) {
+                    closeUploadModal();
+                }
+            });
         });
     </script>
 </body>

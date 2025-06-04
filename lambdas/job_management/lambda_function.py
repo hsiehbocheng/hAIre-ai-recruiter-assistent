@@ -2,6 +2,7 @@ import json
 import boto3
 import uuid
 import re
+import os
 from datetime import datetime, timedelta
 from decimal import Decimal
 from typing import Dict, List, Optional, Any
@@ -11,13 +12,13 @@ dynamodb = boto3.resource('dynamodb')
 s3 = boto3.client('s3')
 
 # 環境變數
-JOBS_TABLE = 'benson-haire-job-posting'
-TEAMS_TABLE = 'benson-haire-teams'
-S3_BUCKET = 'benson-haire-static-site-e36d5aee'
+JOBS_TABLE_NAME = os.environ.get('JOBS_TABLE_NAME', 'benson-haire-job-posting')
+TEAMS_TABLE_NAME = os.environ.get('TEAMS_TABLE_NAME', 'benson-haire-teams')
+S3_BUCKET = os.environ.get('BACKUP_S3_BUCKET', 'benson-haire-static-site-e36d5aee')
 
 # DynamoDB 表格
-jobs_table = dynamodb.Table(JOBS_TABLE)
-teams_table = dynamodb.Table(TEAMS_TABLE)
+jobs_table = dynamodb.Table(JOBS_TABLE_NAME)
+teams_table = dynamodb.Table(TEAMS_TABLE_NAME)
 
 class DecimalEncoder(json.JSONEncoder):
     """處理 DynamoDB Decimal 類型的 JSON 編碼器"""
@@ -149,9 +150,18 @@ def create_job(data: Dict[str, Any]) -> Dict[str, Any]:
         'job_id': job_id,
         'team_id': data['team_id'],
         # 基本資訊
-        'job_title': data['job_title'],
+        'title': data['job_title'],  # 修正欄位名稱為 title
+        'job_title': data['job_title'],  # 保留相容性
         'employment_type': data['employment_type'],
         'location': data['location'],
+        'description': data.get('description', ''),  # 新增描述欄位
+        # 從團隊資料中取得公司資訊（確保使用中文名稱）
+        'company': team_data.get('company', ''),
+        'company_code': team_data.get('company_code', ''),
+        'department': team_data.get('department', ''),
+        'dept_code': team_data.get('dept_code', ''),  # 統一使用 dept_code
+        'team_name': team_data.get('team_name', ''),
+        'team_code': team_data.get('team_code', ''),  # 統一使用 team_code
         # 薪資資訊
         'salary_min': int(data['salary_min']) if data.get('salary_min') else None,
         'salary_max': int(data['salary_max']) if data.get('salary_max') else None,
@@ -203,9 +213,10 @@ def get_job(job_id: str) -> Dict[str, Any]:
         if 'Item' not in response_data:
             return response(404, {'error': '職缺不存在'})
         
+        job_data = response_data['Item']
         return response(200, {
             'message': '職缺取得成功',
-            'data': response_data['Item']
+            'data': job_data
         })
         
     except Exception as e:
@@ -231,12 +242,13 @@ def list_jobs(query_params: Dict[str, str]) -> Dict[str, Any]:
         scan_kwargs = {}
         filter_expressions = []
         expression_values = {}
+        expression_names = {}
         
-        # 狀態篩選
+        # 狀態篩選 - 只顯示啟用的職缺給求職者
         if status:
             filter_expressions.append('#status = :status')
             expression_values[':status'] = status
-            scan_kwargs['ExpressionAttributeNames'] = {'#status': 'status'}
+            expression_names['#status'] = 'status'
         
         # 團隊篩選
         if team_id:
@@ -262,6 +274,8 @@ def list_jobs(query_params: Dict[str, str]) -> Dict[str, Any]:
         if filter_expressions:
             scan_kwargs['FilterExpression'] = ' AND '.join(filter_expressions)
             scan_kwargs['ExpressionAttributeValues'] = expression_values
+            if expression_names:
+                scan_kwargs['ExpressionAttributeNames'] = expression_names
         
         # 執行掃描
         response_data = jobs_table.scan(**scan_kwargs)
@@ -271,7 +285,7 @@ def list_jobs(query_params: Dict[str, str]) -> Dict[str, Any]:
         if search:
             filtered_items = []
             for item in items:
-                searchable_text = f"{item.get('job_title', '')} {item.get('job_description', '')} {item.get('company', '')} {item.get('team_name', '')}".lower()
+                searchable_text = f"{item.get('job_title', '')} {item.get('title', '')} {item.get('description', '')} {item.get('company', '')} {item.get('team_name', '')} {' '.join(item.get('responsibilities', []))} {' '.join(item.get('required_skills', []))}".lower()
                 if search in searchable_text:
                     filtered_items.append(item)
             items = filtered_items
@@ -285,12 +299,26 @@ def list_jobs(query_params: Dict[str, str]) -> Dict[str, Any]:
         end = start + limit
         paginated_items = items[start:end]
         
+        # 確保每個職缺都有必要的欄位給前端顯示
+        for item in paginated_items:
+            # 確保有 title 欄位
+            if 'title' not in item and 'job_title' in item:
+                item['title'] = item['job_title']
+            # 確保有基本的描述
+            if 'description' not in item or not item['description']:
+                if 'responsibilities' in item and item['responsibilities']:
+                    item['description'] = '主要職責: ' + '; '.join(item['responsibilities'][:2])
+                else:
+                    item['description'] = '詳細職缺資訊請洽詢人資部門'
+        
         return response(200, {
+            'success': True,
             'message': '職缺列表取得成功',
-            'data': paginated_items,
+            'jobs': paginated_items,  # 前端期望的欄位名稱
+            'data': paginated_items,   # 保留相容性
             'pagination': {
                 'current_page': page,
-                'total_pages': (total + limit - 1) // limit,
+                'total_pages': (total + limit - 1) // limit if total > 0 else 1,
                 'total_items': total,
                 'items_per_page': limit
             }
@@ -298,7 +326,9 @@ def list_jobs(query_params: Dict[str, str]) -> Dict[str, Any]:
         
     except Exception as e:
         print(f"列出職缺失敗: {str(e)}")
-        return response(500, {'error': '列出職缺失敗'})
+        import traceback
+        print(traceback.format_exc())
+        return response(500, {'error': '列出職缺失敗', 'message': str(e)})
 
 def update_job(job_id: str, data: Dict[str, Any]) -> Dict[str, Any]:
     """更新職缺"""
@@ -420,6 +450,83 @@ def delete_job(job_id: str) -> Dict[str, Any]:
         print(f"刪除職缺失敗: {str(e)}")
         return response(500, {'error': '刪除職缺失敗'})
 
+def fix_existing_jobs_team_info() -> Dict[str, Any]:
+    """修正現有職缺的團隊資訊，補充缺失的中文名稱"""
+    try:
+        # 取得所有職缺
+        jobs_response = jobs_table.scan()
+        jobs = jobs_response['Items']
+        
+        # 取得所有團隊資料
+        teams_response = teams_table.scan()
+        teams = {team['team_id']: team for team in teams_response['Items']}
+        
+        updated_count = 0
+        
+        for job in jobs:
+            job_id = job['job_id']
+            team_id = job['team_id']
+            
+            # 檢查是否需要更新團隊資訊
+            needs_update = False
+            update_data = {}
+            
+            if team_id in teams:
+                team_data = teams[team_id]
+                
+                # 檢查並更新缺失的欄位
+                if not job.get('company') and team_data.get('company'):
+                    update_data['company'] = team_data['company']
+                    needs_update = True
+                
+                if not job.get('department') and team_data.get('department'):
+                    update_data['department'] = team_data['department']
+                    needs_update = True
+                
+                if not job.get('team_name') and team_data.get('team_name'):
+                    update_data['team_name'] = team_data['team_name']
+                    needs_update = True
+                
+                # 補充代碼欄位
+                if not job.get('company_code') and team_data.get('company_code'):
+                    update_data['company_code'] = team_data['company_code']
+                    needs_update = True
+                
+                if not job.get('dept_code') and team_data.get('dept_code'):
+                    update_data['dept_code'] = team_data['dept_code']
+                    needs_update = True
+                
+                if not job.get('team_code') and team_data.get('team_code'):
+                    update_data['team_code'] = team_data['team_code']
+                    needs_update = True
+            
+            # 如果需要更新，執行更新
+            if needs_update:
+                update_expression = 'SET updated_at = :updated_at'
+                expression_values = {':updated_at': datetime.utcnow().isoformat()}
+                
+                for field, value in update_data.items():
+                    update_expression += f', {field} = :{field}'
+                    expression_values[f':{field}'] = value
+                
+                jobs_table.update_item(
+                    Key={'job_id': job_id},
+                    UpdateExpression=update_expression,
+                    ExpressionAttributeValues=expression_values
+                )
+                
+                updated_count += 1
+                print(f"已更新職缺 {job_id} 的團隊資訊")
+        
+        return response(200, {
+            'message': f'已修正 {updated_count} 個職缺的團隊資訊',
+            'updated_count': updated_count
+        })
+        
+    except Exception as e:
+        print(f"修正職缺團隊資訊失敗: {str(e)}")
+        return response(500, {'error': '修正職缺團隊資訊失敗'})
+
 def lambda_handler(event, context):
     """Lambda 主函數"""
     try:
@@ -463,6 +570,10 @@ def lambda_handler(event, context):
             # 刪除職缺
             job_id = path.split('/')[-1]
             return delete_job(job_id)
+        
+        elif method == 'POST' and path == '/jobs/fix-team-info':
+            # 修正現有職缺的團隊資訊
+            return fix_existing_jobs_team_info()
         
         else:
             return response(404, {'error': '找不到指定的路由'})

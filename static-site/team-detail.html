@@ -584,7 +584,7 @@
             document.getElementById('teamCode').textContent = team.team_id;
             document.getElementById('teamCreated').textContent = new Date(team.created_at).toLocaleDateString('zh-TW');
             
-            const description = team.team_description || '尚未提供團隊描述。';
+            const description = team.description || '尚未提供團隊描述。';
             document.getElementById('teamDescription').textContent = description;
             
             // 設定團隊 ID 到隱藏欄位
@@ -805,7 +805,8 @@
 
             const apiUrl = window.CONFIG ? window.CONFIG.API_BASE_URL : 'https://44wy0r4r16.execute-api.ap-southeast-1.amazonaws.com/dev';
             
-            const response = await fetch(`${apiUrl}/upload-team-file?teamId=${encodeURIComponent(currentTeamId)}`, {
+            // 使用正確的檔案上傳路由：/teams/{team_id}/files
+            const response = await fetch(`${apiUrl}/teams/${encodeURIComponent(currentTeamId)}/files`, {
                 method: 'POST',
                 body: formData
             });
@@ -824,7 +825,8 @@
             try {
                 const apiUrl = window.CONFIG ? window.CONFIG.API_BASE_URL : 'https://44wy0r4r16.execute-api.ap-southeast-1.amazonaws.com/dev';
                 
-                const response = await fetch(`${apiUrl}/team-files/${encodeURIComponent(currentTeamId)}`);
+                // 使用正確的檔案列表路由：/teams/{team_id}?action=files
+                const response = await fetch(`${apiUrl}/teams/${encodeURIComponent(currentTeamId)}?action=files`);
                 
                 if (!response.ok) {
                     throw new Error(`載入文件失敗 HTTP ${response.status}`);
@@ -842,22 +844,18 @@
         function displayTeamFiles(files) {
             const container = document.getElementById('teamFilesList');
             
-            if (files.length === 0) {
-                container.innerHTML = `
-                    <div class="text-center text-muted py-3">
-                        <i class="fas fa-folder-open" style="font-size: 2rem; margin-bottom: 1rem; opacity: 0.3;"></i>
-                        <div>尚無上傳文件</div>
-                        <div style="font-size: 0.9rem; margin-top: 0.5rem;">點擊上方按鈕上傳第一個文件</div>
-                    </div>
-                `;
+            if (!files || files.length === 0) {
+                container.innerHTML = '<div class="text-center text-muted">尚無上傳文件</div>';
                 return;
             }
 
             container.innerHTML = files.map(file => {
-                const fileExt = file.name.split('.').pop().toLowerCase();
+                // 從 S3 key 中提取檔案名稱 (移除 team_info_docs/{teamId}/ 前綴)
+                const fileName = file.key ? file.key.replace(`team_info_docs/${currentTeamId}/`, '') : file.name || '未知文件';
+                const fileSize = formatFileSize(file.size || 0);
+                const fileDate = file.lastModified ? new Date(file.lastModified).toLocaleDateString('zh-TW') : '未知';
+                const fileExt = fileName.split('.').pop()?.toLowerCase() || '';
                 const fileIcon = getFileIcon(fileExt);
-                const fileSize = formatFileSize(file.size);
-                const fileDate = new Date(file.lastModified).toLocaleDateString('zh-TW');
 
                 return `
                     <div class="file-item">
@@ -866,15 +864,15 @@
                                 <i class="${fileIcon}"></i>
                             </div>
                             <div class="file-details">
-                                <h6>${file.name}</h6>
+                                <h6>${fileName}</h6>
                                 <small>${fileSize} • ${fileDate}</small>
                             </div>
                         </div>
                         <div class="file-actions">
-                            <button class="btn btn-outline-primary btn-sm" onclick="downloadTeamFile('${file.key}', '${file.name}')">
+                            <button class="btn btn-outline-primary btn-sm" onclick="downloadTeamFile('${file.key}', '${fileName}')">
                                 <i class="fas fa-download"></i> 下載
                             </button>
-                            <button class="btn btn-outline-danger btn-sm" onclick="deleteTeamFile('${file.key}', '${file.name}')">
+                            <button class="btn btn-outline-danger btn-sm" onclick="deleteTeamFile('${file.key}', '${fileName}')">
                                 <i class="fas fa-trash"></i> 刪除
                             </button>
                         </div>
@@ -887,7 +885,9 @@
             try {
                 const apiUrl = window.CONFIG ? window.CONFIG.API_BASE_URL : 'https://44wy0r4r16.execute-api.ap-southeast-1.amazonaws.com/dev';
                 
-                const response = await fetch(`${apiUrl}/download-team-file/${encodeURIComponent(fileKey)}`);
+                // 使用完整的 fileKey 進行下載
+                const encodedFileKey = encodeURIComponent(fileKey);
+                const response = await fetch(`${apiUrl}/download-team-file/${encodedFileKey}`);
                 
                 if (!response.ok) {
                     throw new Error(`下載失敗 HTTP ${response.status}`);

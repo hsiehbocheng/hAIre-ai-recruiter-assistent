@@ -122,6 +122,161 @@
             border-color: #0047AB;
             background-color: #e3f2fd;
         }
+        
+        /* 團隊卡片樣式 */
+        .team-card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            transition: all 0.3s ease;
+            border: 1px solid #e9ecef;
+        }
+        
+        .team-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0,71,171,0.15);
+        }
+        
+        .team-card-header {
+            display: flex;
+            justify-content: between;
+            align-items: flex-start;
+            margin-bottom: 1rem;
+        }
+        
+        .team-id {
+            background: #f8f9fa;
+            color: #0047AB;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            flex: 1;
+        }
+        
+        .team-actions {
+            display: flex;
+            gap: 0.5rem;
+            margin-left: 1rem;
+            flex-wrap: wrap;
+        }
+        
+        .btn-view, .btn-edit, .btn-delete {
+            padding: 0.4rem 0.8rem;
+            border: none;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+        }
+        
+        .btn-view {
+            background: #28a745;
+            color: white;
+        }
+        
+        .btn-view:hover {
+            background: #218838;
+            transform: translateY(-1px);
+        }
+        
+        .btn-edit {
+            background: #17a2b8;
+            color: white;
+        }
+        
+        .btn-edit:hover {
+            background: #138496;
+            transform: translateY(-1px);
+        }
+        
+        .btn-delete {
+            background: #dc3545;
+            color: white;
+        }
+        
+        .btn-delete:hover {
+            background: #c82333;
+            transform: translateY(-1px);
+        }
+        
+        .team-info h3 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: #212529;
+        }
+        
+        .team-info .company {
+            color: #0047AB;
+            font-weight: 500;
+            margin-bottom: 0.25rem;
+        }
+        
+        .team-info .department {
+            color: #6c757d;
+            margin-bottom: 0.5rem;
+        }
+        
+        .team-info .codes {
+            font-size: 0.9rem;
+            color: #6c757d;
+            margin-bottom: 0.5rem;
+        }
+        
+        .team-info .description {
+            color: #495057;
+            margin-bottom: 0.75rem;
+            font-style: italic;
+        }
+        
+        .team-info .created-at {
+            font-size: 0.8rem;
+            color: #adb5bd;
+        }
+        
+        /* Toast 通知樣式 */
+        .toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+        }
+        
+        .toast {
+            min-width: 300px;
+            border-left: 4px solid #0047AB;
+        }
+        
+        .toast.success {
+            border-left-color: #28a745;
+        }
+        
+        .toast.error {
+            border-left-color: #dc3545;
+        }
+        
+        .toast.info {
+            border-left-color: #17a2b8;
+        }
+        
+        .toast-header {
+            background-color: #f8f9fa;
+        }
+        
+        /* 文件列表樣式 */
+        .file-icon {
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: rgba(0, 71, 171, 0.1);
+            border-radius: 8px;
+        }
     </style>
 </head>
 <body>
@@ -148,7 +303,44 @@
                     </button>
                 </div>
                 
-                <table class="table table-striped table-hover" id="teamsTable">
+                <!-- 搜尋和篩選區域 -->
+                <div class="mb-4">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <input type="text" id="searchInput" class="form-control" placeholder="搜尋團隊名稱、公司、部門...">
+                        </div>
+                        <div class="col-md-4">
+                            <select id="companyFilter" class="form-select">
+                                <option value="">所有公司</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 載入狀態 -->
+                <div id="loadingSpinner" class="text-center py-5">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">載入中...</span>
+                    </div>
+                    <div class="mt-2">載入團隊資料中...</div>
+                </div>
+                
+                <!-- 團隊列表容器 -->
+                <div id="teamsContainer" style="display: none;">
+                    <div id="teamsGrid" class="row">
+                        <!-- 團隊卡片將由 JavaScript 動態生成 -->
+                    </div>
+                </div>
+                
+                <!-- 空狀態 -->
+                <div id="emptyState" class="text-center py-5" style="display: none;">
+                    <i class="fas fa-users text-muted" style="font-size: 4rem;"></i>
+                    <h4 class="mt-3 text-muted">尚無團隊資料</h4>
+                    <p class="text-muted">點擊上方「新增團隊」按鈕來建立第一個團隊</p>
+                </div>
+                
+                <!-- 舊的表格結構保留作為備用 -->
+                <table class="table table-striped table-hover d-none" id="teamsTable">
                     <thead>
                         <tr>
                             <th>公司</th>
@@ -298,9 +490,9 @@
                             <div class="col-md-6">
                                 <div class="mb-3">
                                     <label for="editCompanyCode" class="form-label">公司代碼 *</label>
-                                    <input type="text" class="form-control" id="editCompanyCode" required 
-                                           placeholder="例如：CXI, CATHAY, FUBON" maxlength="8" style="text-transform: uppercase;">
-                                    <div class="form-text">2-8個英數字，例如：CXI（國泰產險）、CATHAY（國泰金控）</div>
+                                    <input type="text" class="form-control" id="editCompanyCode" readonly
+                                           placeholder="例如：CXI, CATHAY, FUBON" maxlength="8" style="text-transform: uppercase; background-color: #f8f9fa;">
+                                    <div class="form-text text-warning">⚠️ 公司代碼不可修改（會影響團隊ID）</div>
                                 </div>
                             </div>
                         </div>
@@ -314,9 +506,9 @@
                             <div class="col-md-6">
                                 <div class="mb-3">
                                     <label for="editDeptCode" class="form-label">部門代碼 *</label>
-                                    <input type="text" class="form-control" id="editDeptCode" required 
-                                           placeholder="例如：DATAAI, IT, HR, FINANCE" maxlength="10" style="text-transform: uppercase;">
-                                    <div class="form-text">2-10個英數字，例如：DATAAI（數據AI部）、IT（資訊部）</div>
+                                    <input type="text" class="form-control" id="editDeptCode" readonly
+                                           placeholder="例如：DATAAI, IT, HR, FINANCE" maxlength="10" style="text-transform: uppercase; background-color: #f8f9fa;">
+                                    <div class="form-text text-warning">⚠️ 部門代碼不可修改（會影響團隊ID）</div>
                                 </div>
                             </div>
                         </div>
@@ -330,9 +522,9 @@
                             <div class="col-md-6">
                                 <div class="mb-3">
                                     <label for="editTeamCode" class="form-label">科別代碼 *</label>
-                                    <input type="text" class="form-control" id="editTeamCode" required 
-                                           placeholder="例如：CI, CT, DEV, QA" maxlength="8" style="text-transform: uppercase;">
-                                    <div class="form-text">2-8個英數字，例如：CI（企業智能科）、CT（客戶科技科）</div>
+                                    <input type="text" class="form-control" id="editTeamCode" readonly
+                                           placeholder="例如：CI, CT, DEV, QA" maxlength="8" style="text-transform: uppercase; background-color: #f8f9fa;">
+                                    <div class="form-text text-warning">⚠️ 科別代碼不可修改（會影響團隊ID）</div>
                                 </div>
                             </div>
                         </div>
@@ -384,6 +576,20 @@
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">關閉</button>
                     <button type="button" class="btn btn-primary" id="editFromDetail">編輯團隊</button>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast 訊息容器 -->
+    <div class="toast-container position-fixed top-0 end-0 p-3">
+        <div id="messageToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true" style="display: none;">
+            <div class="toast-header">
+                <div id="toastIcon" class="me-2"></div>
+                <strong id="toastTitle" class="me-auto">訊息</strong>
+                <button type="button" class="btn-close" onclick="hideToast()" aria-label="Close"></button>
+            </div>
+            <div class="toast-body">
+                <div id="toastMessage"></div>
             </div>
         </div>
     </div>
@@ -573,8 +779,8 @@
                     <td>${team.department || ''}</td>
                     <td>${team.team_name || ''}</td>
                     <td>
-                        <div class="text-truncate" style="max-width: 200px;" title="${team.team_description || ''}">
-                            ${team.team_description || ''}
+                        <div class="text-truncate" style="max-width: 200px;" title="${team.description || ''}">
+                            ${team.description || ''}
                         </div>
                     </td>
                     <td>
@@ -593,30 +799,26 @@
             });
         }
 
-        // 新增團隊
+        // 建立團隊
         async function createTeam() {
             try {
-                // 驗證表單
-                const company = document.getElementById('company').value.trim();
-                const department = document.getElementById('department').value.trim();
-                const teamName = document.getElementById('teamName').value.trim();
-                const companyCode = document.getElementById('companyCode').value.trim().toUpperCase();
-                const deptCode = document.getElementById('deptCode').value.trim().toUpperCase();
-                const teamCode = document.getElementById('teamCode').value.trim().toUpperCase();
-                
-                if (!company || !department || !teamName || !companyCode || !deptCode || !teamCode) {
-                    showAlert('請填寫所有必填欄位', 'warning');
-                    return;
+                const requiredFields = ['company', 'companyCode', 'department', 'deptCode', 'teamName', 'teamCode'];
+                for (const fieldId of requiredFields) {
+                    const value = document.getElementById(fieldId).value.trim();
+                    if (!value) {
+                        showAlert(`請填寫${fieldId}`, 'danger');
+                        return;
+                    }
                 }
 
                 const formData = {
-                    company: company,
-                    company_code: companyCode,
-                    department: department,
-                    dept_code: deptCode,
-                    team_name: teamName,
-                    team_code: teamCode,
-                    team_description: document.getElementById('teamDescription').value.trim()
+                    company: document.getElementById('company').value.trim(),
+                    company_code: document.getElementById('companyCode').value.trim(),
+                    department: document.getElementById('department').value.trim(),
+                    dept_code: document.getElementById('deptCode').value.trim(),
+                    team_name: document.getElementById('teamName').value.trim(),
+                    team_code: document.getElementById('teamCode').value.trim(),
+                    description: document.getElementById('teamDescription').value.trim()
                 };
 
                 console.log('📤 建立團隊資料:', formData);
@@ -640,10 +842,17 @@
                 const result = await response.json();
                 console.log('✅ 團隊建立成功:', result);
 
-                // 如果有檔案需要上傳
+                // 如果有檔案需要上傳，使用返回的 team_id
                 if (selectedFiles.length > 0) {
-                    const teamId = `${companyCode}-${deptCode}-${teamCode}`;
-                    await uploadFiles(teamId, selectedFiles);
+                    const teamId = result.team_id || `${formData.company_code}-${formData.department_code}-${formData.section_code}`;
+                    console.log('📁 開始上傳文件到團隊:', teamId);
+                    try {
+                        await uploadFilesWithAPI(teamId, selectedFiles);
+                        console.log('✅ 檔案上傳完成');
+                    } catch (fileError) {
+                        console.error('❌ 檔案上傳失敗:', fileError);
+                        showAlert('團隊建立成功，但檔案上傳失敗: ' + fileError.message, 'warning');
+                    }
                 }
 
                 // 關閉 modal 並重新載入資料
@@ -660,17 +869,47 @@
 
         // 顯示編輯 Modal
         function showEditModal(teamId) {
+            console.log('🔧 開始編輯團隊:', teamId);
+            
             const team = teamsData.find(t => t.team_id === teamId);
-            if (!team) return;
+            if (!team) {
+                console.error('❌ 找不到團隊資料:', teamId);
+                showAlert('找不到團隊資料', 'danger');
+                return;
+            }
+            
+            console.log('📋 載入團隊資料進行編輯:', team);
 
-            document.getElementById('editTeamId').value = team.team_id;
+            // 填入基本資訊，處理不同的欄位名稱
+            document.getElementById('editTeamId').value = team.team_id || '';
             document.getElementById('editCompany').value = team.company || '';
             document.getElementById('editCompanyCode').value = team.company_code || '';
             document.getElementById('editDepartment').value = team.department || '';
-            document.getElementById('editDeptCode').value = team.dept_code || '';
+            
+            // 處理部門代碼的不同名稱
+            const deptCode = team.department_code || team.dept_code || '';
+            document.getElementById('editDeptCode').value = deptCode;
+            
             document.getElementById('editTeamName').value = team.team_name || '';
-            document.getElementById('editTeamCode').value = team.team_code || '';
-            document.getElementById('editTeamDescription').value = team.team_description || '';
+            
+            // 處理團隊代碼的不同名稱
+            const teamCode = team.section_code || team.team_code || '';
+            document.getElementById('editTeamCode').value = teamCode;
+            
+            // 處理描述的不同名稱
+            const description = team.description || team.team_description || '';
+            document.getElementById('editTeamDescription').value = description;
+
+            console.log('✅ 編輯表單填入完成:', {
+                teamId: team.team_id,
+                company: team.company,
+                companyCode: team.company_code,
+                department: team.department,
+                deptCode: deptCode,
+                teamName: team.team_name,
+                teamCode: teamCode,
+                description: description
+            });
 
             // 清空編輯文件列表
             editSelectedFiles = [];
@@ -679,6 +918,7 @@
             // 顯示現有文件（如果有的話）
             displayExistingFiles(team.team_id);
 
+            // 顯示模態框
             new bootstrap.Modal(document.getElementById('editTeamModal')).show();
         }
 
@@ -687,17 +927,16 @@
             try {
                 const teamId = document.getElementById('editTeamId').value;
                 
+                // 只發送允許更新的欄位，不包括會影響 team_id 的 code 欄位
                 const formData = {
                     company: document.getElementById('editCompany').value.trim(),
-                    company_code: document.getElementById('editCompanyCode').value.trim().toUpperCase(),
                     department: document.getElementById('editDepartment').value.trim(),
-                    dept_code: document.getElementById('editDeptCode').value.trim().toUpperCase(),
                     team_name: document.getElementById('editTeamName').value.trim(),
-                    team_code: document.getElementById('editTeamCode').value.trim().toUpperCase(),
-                    team_description: document.getElementById('editTeamDescription').value.trim()
+                    description: document.getElementById('editTeamDescription').value.trim()
                 };
 
                 console.log('📤 更新團隊資料:', formData);
+                console.log('🔒 受保護的欄位（不會更新）: company_code, department_code, section_code');
 
                 // 使用正確的 API URL
                 const apiUrl = window.CONFIG ? window.CONFIG.API_BASE_URL : 'https://44wy0r4r16.execute-api.ap-southeast-1.amazonaws.com/dev';
@@ -715,11 +954,19 @@
                     throw new Error(`HTTP ${response.status}: ${errorData}`);
                 }
 
-                console.log('✅ 團隊更新成功');
+                const result = await response.json();
+                console.log('✅ 團隊更新成功:', result);
 
                 // 如果有新文件需要上傳
                 if (editSelectedFiles.length > 0) {
-                    await uploadFiles(teamId, editSelectedFiles);
+                    console.log('📁 開始上傳新文件到團隊:', teamId);
+                    try {
+                        await uploadFilesWithAPI(teamId, editSelectedFiles);
+                        console.log('✅ 新檔案上傳完成');
+                    } catch (fileError) {
+                        console.error('❌ 檔案上傳失敗:', fileError);
+                        showAlert('團隊更新成功，但檔案上傳失敗: ' + fileError.message, 'warning');
+                    }
                 }
 
                 // 關閉 modal 並重新載入資料
@@ -796,7 +1043,7 @@
                 </div>
                 <div class="mb-3">
                     <h6><i class="fas fa-info-circle me-2"></i>團隊描述</h6>
-                    <p class="border-bottom pb-2">${team.team_description || '未設定'}</p>
+                    <p class="border-bottom pb-2">${team.description || '未設定'}</p>
                 </div>
                 <div class="mb-3">
                     <h6><i class="fas fa-file me-2"></i>相關文件</h6>
@@ -822,137 +1069,83 @@
 
         // 載入團隊文件
         async function loadTeamFiles(teamId) {
-            const filesContainer = document.getElementById('teamFiles');
+            const container = document.getElementById(`files-${teamId}`);
+            if (!container) return;
+
             try {
                 console.log('📂 載入團隊文件:', teamId);
                 
-                // 使用正確的 API URL
                 const apiUrl = window.CONFIG ? window.CONFIG.API_BASE_URL : 'https://44wy0r4r16.execute-api.ap-southeast-1.amazonaws.com/dev';
-                
-                // 嘗試列出 S3 文件
-                const response = await fetch(`${apiUrl}/team-files/${encodeURIComponent(teamId)}`, {
-                    method: 'GET',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    }
-                });
+                const response = await fetch(`${apiUrl}/teams/${encodeURIComponent(teamId)}?action=files`);
 
-                if (response.ok) {
-                    const result = await response.json();
-                    const files = result.files || result;
-                    renderTeamFiles(files, teamId);
-                } else if (response.status === 404) {
-                    // API 未實作，顯示說明
-                    filesContainer.innerHTML = `
-                        <div class="alert alert-info">
-                            <i class="fas fa-info-circle me-2"></i>
-                            <strong>文件儲存資訊：</strong>
-                            <ul class="mb-0 mt-2">
-                                <li><strong>S3 Bucket:</strong> <code>benson-haire-team-info-e36d5aee</code></li>
-                                <li><strong>儲存路徑:</strong> <code>team_docs/</code></li>
-                                <li><strong>命名格式:</strong> <code>${teamId}-文件名稱</code></li>
-                                <li class="text-warning"><i class="fas fa-exclamation-triangle me-1"></i>文件列表 API 開發中...</li>
-                            </ul>
-                        </div>
-                    `;
-                } else {
-                    throw new Error(`載入文件失敗: ${response.status}`);
+                if (!response.ok) {
+                    container.innerHTML = '<p class="text-danger">載入文件失敗</p>';
+                    return;
                 }
-                
-            } catch (error) {
-                console.error('❌ 載入文件失敗:', error);
-                filesContainer.innerHTML = `
-                    <div class="alert alert-warning">
-                        <i class="fas fa-exclamation-triangle me-2"></i>
-                        載入文件失敗: ${error.message}
-                    </div>
-                `;
-            }
-        }
 
-        // 渲染團隊文件列表
-        function renderTeamFiles(files, teamId) {
-            const container = document.getElementById('teamFiles');
-            
-            if (!files || files.length === 0) {
-                container.innerHTML = `
-                    <p class="text-muted">
-                        <i class="fas fa-folder-open me-2"></i>
-                        尚無上傳文件
-                    </p>
-                `;
-                return;
-            }
+                const result = await response.json();
+                const files = result.files || [];
 
-            const fileList = files.map(file => {
-                // 從 S3 key 中提取文件名稱 (移除 team_docs/{teamId}- 前綴)
-                const fileName = file.key ? file.key.replace(`team_docs/${teamId}-`, '') : file.name || '未知文件';
-                const uploadDate = file.lastModified ? new Date(file.lastModified).toLocaleString('zh-TW') : '未知';
-                const fileSize = file.size ? (file.size / 1024).toFixed(1) + ' KB' : '未知';
-                
-                return `
-                    <div class="d-flex justify-content-between align-items-center border-bottom py-2">
-                        <div>
-                            <i class="fas fa-file me-2 text-primary"></i>
-                            <strong>${fileName}</strong>
-                            <div class="small text-muted">
-                                <i class="fas fa-weight-hanging me-1"></i>大小: ${fileSize}
-                                <i class="fas fa-clock ms-2 me-1"></i>上傳: ${uploadDate}
+                if (files.length === 0) {
+                    container.innerHTML = '<p class="text-muted">目前沒有任何文件</p>';
+                    return;
+                }
+
+                const fileList = files.map(file => {
+                    // 從 S3 key 中提取文件名稱 (移除 team_info_docs/{teamId}/ 前綴)
+                    const fileName = file.key ? file.key.replace(`team_info_docs/${teamId}/`, '') : file.name || '未知文件';
+                    const uploadDate = file.lastModified ? new Date(file.lastModified).toLocaleString('zh-TW') : '未知';
+                    const fileSize = file.size ? (file.size / 1024).toFixed(1) + ' KB' : '未知';
+                    
+                    return `
+                        <div class="d-flex justify-content-between align-items-center border-bottom py-2">
+                            <div>
+                                <i class="fas fa-file me-2 text-primary"></i>
+                                <strong>${fileName}</strong>
+                                <div class="small text-muted">
+                                    <i class="fas fa-weight-hanging me-1"></i>大小: ${fileSize}
+                                    <i class="fas fa-clock ms-2 me-1"></i>上傳: ${uploadDate}
+                                </div>
+                            </div>
+                            <div class="btn-group">
+                                <button class="btn btn-sm btn-outline-success" onclick="downloadTeamFile('${fileName}', '${teamId}')" title="下載文件">
+                                    <i class="fas fa-download"></i>
+                                </button>
+                                <button class="btn btn-sm btn-outline-danger" onclick="deleteTeamFile('${file.key || file.name}', '${teamId}')" title="刪除文件">
+                                    <i class="fas fa-trash"></i>
+                                </button>
                             </div>
                         </div>
-                        <div class="btn-group">
-                            <button class="btn btn-sm btn-outline-success" onclick="downloadTeamFile('${file.key || file.name}', '${fileName}')" title="下載文件">
-                                <i class="fas fa-download"></i>
-                            </button>
-                            <button class="btn btn-sm btn-outline-danger" onclick="deleteTeamFile('${file.key || file.name}', '${teamId}')" title="刪除文件">
-                                <i class="fas fa-trash"></i>
-                            </button>
-                        </div>
-                    </div>
-                `;
-            }).join('');
-            
-            container.innerHTML = `
-                <div class="mb-2">
-                    <small class="text-muted">
-                        <i class="fas fa-folder me-1"></i>
-                        共 ${files.length} 個文件
-                    </small>
-                </div>
-                ${fileList}
-            `;
+                    `;
+                }).join('');
+                
+                container.innerHTML = fileList;
+            } catch (error) {
+                console.error('❌ 載入團隊文件失敗:', error);
+                container.innerHTML = '<p class="text-danger">載入文件失敗</p>';
+            }
         }
 
         // 下載團隊文件
-        async function downloadTeamFile(fileKey, fileName) {
+        async function downloadTeamFile(fileName, teamId) {
             try {
-                console.log('📥 下載文件:', fileKey);
+                console.log('📥 下載文件:', fileName, '團隊:', teamId);
                 
                 const apiUrl = window.CONFIG ? window.CONFIG.API_BASE_URL : 'https://44wy0r4r16.execute-api.ap-southeast-1.amazonaws.com/dev';
                 
-                const response = await fetch(`${apiUrl}/download-team-file/${encodeURIComponent(fileKey)}`, {
-                    method: 'GET'
-                });
-
+                // 使用檔案名稱和 team_id 參數，避免 URL 路徑中的斜線問題
+                const encodedFileName = encodeURIComponent(fileName);
+                const response = await fetch(`${apiUrl}/download-team-file/${encodedFileName}?team_id=${encodeURIComponent(teamId)}`);
+                
                 if (!response.ok) {
-                    if (response.status === 404) {
-                        showAlert('下載功能開發中...', 'info');
-                        return;
-                    }
                     throw new Error(`下載失敗: ${response.status}`);
                 }
 
-                // 創建下載連結
-                const blob = await response.blob();
-                const url = window.URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = fileName;
-                document.body.appendChild(a);
-                a.click();
-                window.URL.revokeObjectURL(url);
+                const result = await response.json();
+                console.log('📥 下載 URL 取得成功:', result);
                 
-                showAlert(`文件 "${fileName}" 下載完成`, 'success');
+                // 開啟下載 URL
+                window.open(result.downloadUrl, '_blank');
                 
             } catch (error) {
                 console.error('❌ 下載文件失敗:', error);
@@ -977,8 +1170,7 @@
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
-                        key: fileKey,
-                        bucket: 'benson-haire-team-info-e36d5aee'
+                        key: fileKey
                     })
                 });
 
@@ -1008,14 +1200,15 @@
             try {
                 console.log('📂 載入現有文件:', teamId);
                 
-                const apiUrl = window.CONFIG ? window.CONFIG.API_BASE_URL : 'https://m3jj8hrfhj.execute-api.ap-southeast-1.amazonaws.com/dev';
+                const apiUrl = window.CONFIG ? window.CONFIG.API_BASE_URL : 'https://44wy0r4r16.execute-api.ap-southeast-1.amazonaws.com/dev';
                 
-                const response = await fetch(`${apiUrl}/team-files/${encodeURIComponent(teamId)}`, {
+                const response = await fetch(`${apiUrl}/teams/${encodeURIComponent(teamId)}?action=files`, {
                     method: 'GET'
                 });
 
                 if (response.ok) {
-                    const files = await response.json();
+                    const result = await response.json();
+                    const files = result.files || [];
                     
                     if (!files || files.length === 0) {
                         container.innerHTML = '<p class="text-muted">尚無現有文件</p>';
@@ -1023,10 +1216,19 @@
                     }
 
                     const fileList = files.map(file => {
-                        const fileName = file.key ? file.key.replace(`team_docs/${teamId}-`, '') : file.name;
+                        // 使用回傳的檔案名稱
+                        const fileName = file.name || '未知檔案';
+                        const fileSize = file.size ? (file.size / 1024).toFixed(1) + ' KB' : '未知';
+                        const uploadDate = file.lastModified ? new Date(file.lastModified).toLocaleString('zh-TW') : '未知';
+                        
                         return `
                             <div class="d-flex justify-content-between align-items-center border-bottom py-1">
-                                <span><i class="fas fa-file me-2"></i>${fileName}</span>
+                                <div>
+                                    <span><i class="fas fa-file me-2"></i>${fileName}</span>
+                                    <div class="small text-muted">
+                                        大小: ${fileSize} | 上傳: ${uploadDate}
+                                    </div>
+                                </div>
                                 <button class="btn btn-sm btn-outline-danger" onclick="deleteFile('${file.key}')">
                                     <i class="fas fa-trash"></i>
                                 </button>
@@ -1036,15 +1238,8 @@
                     
                     container.innerHTML = fileList;
                 } else {
-                    container.innerHTML = `
-                        <div class="alert alert-info">
-                            <small>
-                                <i class="fas fa-info-circle me-1"></i>
-                                現有文件功能開發中，上傳的文件將存放在：<br>
-                                <code>s3://benson-haire-team-info-e36d5aee/team_info_docs/${teamId}_文件名稱</code>
-                            </small>
-                        </div>
-                    `;
+                    console.error('❌ 載入現有文件失敗:', response.status);
+                    container.innerHTML = '<p class="text-danger">載入現有文件失敗</p>';
                 }
             } catch (error) {
                 console.error('❌ 載入現有文件失敗:', error);
@@ -1052,8 +1247,8 @@
             }
         }
 
-        // 上傳文件到 S3
-        async function uploadFiles(teamId, files) {
+        // 使用新的 API 上傳文件到團隊
+        async function uploadFilesWithAPI(teamId, files) {
             if (!files || files.length === 0) {
                 console.log('⚠️  沒有文件需要上傳');
                 return;
@@ -1064,21 +1259,19 @@
             try {
                 const results = [];
                 for (const file of files) {
-                    const result = await uploadSingleFile(teamId, file);
+                    const result = await uploadSingleFileWithAPI(teamId, file);
                     results.push(result);
                 }
                 console.log('✅ 所有文件上傳完成:', results);
-                showAlert(`成功上傳 ${files.length} 個文件`, 'success');
                 return results;
             } catch (error) {
                 console.error('❌ 文件上傳失敗:', error);
-                showAlert('文件上傳失敗: ' + error.message, 'danger');
                 throw error;
             }
         }
 
-        // 上傳單個文件到 S3
-        async function uploadSingleFile(teamId, file) {
+        // 使用新的 API 上傳單個文件
+        async function uploadSingleFileWithAPI(teamId, file) {
             console.log(`📤 上傳文件: ${file.name} 到團隊 ${teamId}`);
             
             try {
@@ -1086,10 +1279,10 @@
                 const formData = new FormData();
                 formData.append('file', file);
 
-                // 使用正確的 API URL
+                // 使用正確的 API URL - 使用新的檔案上傳路由
                 const apiUrl = window.CONFIG ? window.CONFIG.API_BASE_URL : 'https://44wy0r4r16.execute-api.ap-southeast-1.amazonaws.com/dev';
                 
-                const response = await fetch(`${apiUrl}/upload-team-file?teamId=${encodeURIComponent(teamId)}`, {
+                const response = await fetch(`${apiUrl}/teams/${encodeURIComponent(teamId)}/files`, {
                     method: 'POST',
                     body: formData
                 });
@@ -1203,6 +1396,41 @@
                 previewElement.className = 'fw-bold text-muted';
             }
         }
+    </script>
+    
+    <!-- 載入必要的 JavaScript 檔案 -->
+    <script src="js/teams-api.js"></script>
+    <script src="js/teams-ui.js"></script>
+    
+    <script>
+        // 初始化全域 API 實例
+        let teamsAPI = null;
+        let teamsUI = null;
+        
+        // 等待頁面載入完成後初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🔥 開始初始化團隊管理系統...');
+            
+            // 檢查配置
+            if (window.CONFIG) {
+                console.log('✅ 配置載入成功:', window.CONFIG);
+            } else {
+                console.error('❌ 配置載入失敗');
+            }
+            
+            // 初始化 API 客戶端
+            teamsAPI = new TeamsAPI();
+            console.log('✅ 團隊 API 客戶端初始化成功');
+            
+            // 初始化 UI 管理器
+            teamsUI = new TeamsUI();
+            teamsUI.init();
+            console.log('✅ 團隊 UI 管理器初始化成功');
+            
+            // 為了向後兼容，也執行舊的初始化邏輯
+            fetchTeams();
+            initializeEventListeners();
+        });
     </script>
 </body>
 </html>

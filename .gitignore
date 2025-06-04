@@ -1,54 +1,20 @@
-# Terraform 相關檔案
-.terraform/
+# Terraform
 *.tfstate
 *.tfstate.*
-crash.log
-*.backup
-
-# Terraform 計劃檔案
-*.tfplan
-*.tfplan.*
-
-# Terraform 變數檔案（可能包含敏感資訊）
 *.tfvars
-*.tfvars.json
+.terraform/
+.terraform.lock.hcl
+tfplan
 
-# Terraform 覆蓋檔案
-override.tf
-override.tf.json
-*_override.tf
-*_override.tf.json
+# Lambda 打包檔案
+*.zip
+lambdas/**/*.zip
 
-# Terraform CLI 配置檔案
-.terraformrc
-terraform.rc
-
-# Terraform 鎖定檔案（在某些情況下可能需要忽略）
-# .terraform.lock.hcl
-
-# Terraform 快取和臨時檔案
-.terraform.tfstate.lock.info
-
-.venv/
-.env
-
-# uv 工具相關檔案
-# Python 版本檔案（通常應該被提交，但某些情況下可能需要忽略）
-# .python-version
-
-# uv 快取和臨時檔案
-.uv_cache/
-uv.lock.tmp
-
-# Python 編譯 / 最佳化 / DLL 檔案
+# Python
 __pycache__/
 *.py[cod]
 *$py.class
-
-# C 擴展
 *.so
-
-# 發佈 / 打包
 .Python
 build/
 develop-eggs/
@@ -62,131 +28,22 @@ parts/
 sdist/
 var/
 wheels/
-share/python-wheels/
 *.egg-info/
 .installed.cfg
 *.egg
 MANIFEST
 
-# PyInstaller
-# 通常這些檔案是由 python 腳本從模板寫入的
-# 在 PyInstaller 建立 exe 之前，以便注入日期/其他資訊
-*.manifest
-*.spec
-
-# 安裝器日誌
-pip-log.txt
-pip-delete-this-directory.txt
-
-# 單元測試 / 覆蓋率報告
-htmlcov/
-.tox/
-.nox/
-.coverage
-.coverage.*
-.cache
-nosetests.xml
-coverage.xml
-*.cover
-*.py,cover
-.hypothesis/
-.pytest_cache/
-cover/
-
-# 翻譯檔案
-*.mo
-*.pot
-
-# Django 相關
-*.log
-local_settings.py
-db.sqlite3
-db.sqlite3-journal
-
-# Flask 相關
-instance/
-.webassets-cache
-
-# Scrapy 相關
-.scrapy
-
-# Sphinx 文件
-docs/_build/
-
-# PyBuilder
-.pybuilder/
-target/
-
-# Jupyter Notebook
-.ipynb_checkpoints
-
-# IPython
-profile_default/
-ipython_config.py
-
-# pyenv
-# 對於函式庫或套件，您可能想要忽略這些檔案，因為程式碼
-# 預期在多個環境中執行；否則，請檢查它們
-# .python-version
-
-# pipenv
-# 根據 pypa/pipenv#598，建議在版本控制中包含 Pipfile.lock
-# 然而，在協作的情況下，如果有平台特定的依賴項或沒有
-# 跨平台支援的依賴項，pipenv 可能會安裝不起作用的依賴項，或者不會
-# 安裝所有需要的依賴項
-Pipfile.lock
-
-# poetry
-poetry.lock
-
-# pdm
-pdm.lock
-
-# PEP 582; 例如被 github.com/David-OConnor/pyflow 使用
-__pypackages__/
-
-# Celery 相關
-celerybeat-schedule
-celerybeat.pid
-
-# SageMath 解析檔案
-*.sage.py
-
-# 環境變數檔案
-.env
-.venv
-env/
+# Virtual environments
 venv/
+env/
 ENV/
-env.bak/
-venv.bak/
 
-# Spyder 專案設定
-.spyderproject
-.spyproject
-
-# Rope 專案設定
-.ropeproject
-
-# mkdocs 文件
-/site
-
-# mypy
-.mypy_cache/
-.dmypy.json
-dmypy.json
-
-# Pyre 類型檢查器
-.pyre/
-
-# pytype 靜態類型分析器
-.pytype/
-
-# Cython 除錯符號
-cython_debug/
-
-# ruff
-.ruff_cache/
+# IDE 設定檔
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
 
 # 系統檔案
 .DS_Store
@@ -197,14 +54,34 @@ cython_debug/
 ehthumbs.db
 Thumbs.db
 
-# IDE 設定檔案
-.idea/
-.vscode/
-*.swp
-*.swo
-*~
+# 日誌檔案
+*.log
+logs/
 
-# 臨時檔案
-*.tmp
-*.temp
+# 暫存檔案
+tmp/
+temp/
+cache/
+
+# Node.js (如果有前端建置工具)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json
+yarn.lock
+
+# 備份檔案
 *.bak
+*.backup
+*.orig
+
+# 環境設定檔案
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# 自動生成的配置檔案
+static-site/js/config-generated.js

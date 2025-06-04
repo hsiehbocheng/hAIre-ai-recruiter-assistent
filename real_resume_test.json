@@ -1,0 +1,79 @@
+{
+  "basic_info": {
+    "name": "張小明",
+    "email": "ming.chang@email.com", 
+    "phone": "0912345678",
+    "location": "台北市"
+  },
+  "summary": "具有5年前端開發經驗的軟體工程師，專精於React和Vue.js，擅長建立響應式網頁應用程式。",
+  "education": [
+    {
+      "degree": "學士",
+      "major": "資訊工程",
+      "school": "國立台灣大學",
+      "start_year": 2016,
+      "end_year": 2020,
+      "gpa": "3.8/4.0"
+    }
+  ],
+  "experience": [
+    {
+      "title": "資深前端工程師",
+      "company": "科技公司A",
+      "location": "台北市",
+      "start_date": "2021-06",
+      "end_date": "2024-12",
+      "current": false,
+      "responsibilities": [
+        "負責電商平台前端開發，使用React和TypeScript",
+        "優化網站效能，提升載入速度30%",
+        "與UI/UX設計師協作，實現響應式設計",
+        "指導junior工程師，進行code review"
+      ]
+    },
+    {
+      "title": "前端工程師",
+      "company": "新創公司B",
+      "location": "台北市",
+      "start_date": "2020-03",
+      "end_date": "2021-05",
+      "current": false,
+      "responsibilities": [
+        "開發SPA應用程式，使用Vue.js和Nuxt.js",
+        "整合RESTful API和GraphQL",
+        "實作自動化測試，提升程式碼品質"
+      ]
+    }
+  ],
+  "skills": [
+    "JavaScript",
+    "TypeScript", 
+    "React",
+    "Vue.js",
+    "Node.js",
+    "HTML5",
+    "CSS3",
+    "SASS/SCSS",
+    "Webpack",
+    "Git",
+    "Jest",
+    "Cypress"
+  ],
+  "certifications": [
+    {
+      "name": "AWS Certified Developer",
+      "issuer": "Amazon Web Services",
+      "date": "2023-08"
+    }
+  ],
+  "languages": [
+    {
+      "language": "中文",
+      "proficiency": "母語"
+    },
+    {
+      "language": "英文",
+      "proficiency": "商務級"
+    }
+  ]
+} 

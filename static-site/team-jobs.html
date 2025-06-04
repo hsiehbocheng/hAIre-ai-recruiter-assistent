@@ -380,6 +380,7 @@
         let teamData = null;
         let jobsData = [];
         let currentJobId = null;
+        let isSubmitting = false; // 防止重複提交的標記變量
 
         // 頁面載入完成後執行
         document.addEventListener('DOMContentLoaded', function() {
@@ -396,14 +397,28 @@
             
             loadTeamData(teamId);
             
-            // 初始化事件監聽器
+            // 初始化事件監聽器（只初始化一次）
             initializeEventListeners();
         });
 
         // 初始化事件監聽器
         function initializeEventListeners() {
-            // 新增職缺按鈕
-            document.getElementById('createJob').addEventListener('click', createJob);
+            // 檢查是否已經綁定過，避免重複綁定
+            const createJobBtn = document.getElementById('createJob');
+            if (!createJobBtn.hasAttribute('data-listener-bound')) {
+                createJobBtn.addEventListener('click', createJob);
+                createJobBtn.setAttribute('data-listener-bound', 'true');
+            }
+            
+            // 添加 Modal 關閉事件監聽器
+            const addJobModal = document.getElementById('addJobModal');
+            if (!addJobModal.hasAttribute('data-listener-bound')) {
+                addJobModal.addEventListener('hidden.bs.modal', function() {
+                    // Modal 關閉時重置狀態
+                    resetJobForm();
+                });
+                addJobModal.setAttribute('data-listener-bound', 'true');
+            }
             
             // 設置技能 tag 輸入
             setupSkillTagInput('requiredSkills', 'requiredSkillsTags');
@@ -461,6 +476,12 @@
             document.getElementById('requiredSkillsTags').innerHTML = '';
             document.getElementById('niceToHaveSkillsTags').innerHTML = '';
             document.getElementById('majorsRequiredTags').innerHTML = '';
+            
+            // 重置提交狀態
+            isSubmitting = false;
+            const createJobBtn = document.getElementById('createJob');
+            createJobBtn.disabled = false;
+            createJobBtn.innerHTML = '建立職缺';
         }
 
         // 載入團隊資料
@@ -482,7 +503,8 @@
                     throw new Error(`載入團隊資料失敗: ${teamResponse.status}`);
                 }
 
-                teamData = await teamResponse.json();
+                const teamResult = await teamResponse.json();
+                teamData = teamResult.team || teamResult; // 支援兩種回應格式
                 console.log('✅ 團隊資料載入成功:', teamData);
                 
                 // 載入該團隊的職缺
@@ -516,14 +538,20 @@
             const titleElement = document.getElementById('teamTitle');
             const cardElement = document.getElementById('teamInfoCard');
             
-            titleElement.textContent = `${teamData.company} - ${teamData.department} - ${teamData.team_name}`;
+            // 安全地取得團隊資訊，提供預設值
+            const company = teamData.company || '未知公司';
+            const department = teamData.department || '未知部門';  
+            const teamName = teamData.team_name || '未知團隊';
+            const description = teamData.description || teamData.team_description || '暫無描述';
+            
+            titleElement.textContent = `${company} - ${department} - ${teamName}`;
             
             cardElement.innerHTML = `
                 <div class="row">
                     <div class="col-md-8">
-                        <h3>${teamData.company} - ${teamData.department}</h3>
-                        <h4 class="text-primary">${teamData.team_name}</h4>
-                        <p class="text-muted">${teamData.team_description || '暫無描述'}</p>
+                        <h3>${company} - ${department}</h3>
+                        <h4 class="text-primary">${teamName}</h4>
+                        <p class="text-muted">${description}</p>
                     </div>
                     <div class="col-md-4 text-end">
                         <div class="mb-2">
@@ -556,11 +584,11 @@
 
             container.innerHTML = jobsData.map(job => `
                 <div class="job-item" onclick="selectJob('${job.job_id}')" id="job-${job.job_id}">
-                    <div class="job-title">${job.job_title}</div>
+                    <div class="job-title">${job.job_title || '未命名職缺'}</div>
                     <div class="job-meta">
                         <div class="mb-1">
-                            <i class="fas fa-briefcase me-1"></i>${job.employment_type}
-                            <i class="fas fa-map-marker-alt ms-2 me-1"></i>${job.location}
+                            <i class="fas fa-briefcase me-1"></i>${job.employment_type || '未設定'}
+                            <i class="fas fa-map-marker-alt ms-2 me-1"></i>${job.location || '未設定'}
                         </div>
                         <div class="d-flex justify-content-between align-items-center">
                             <span class="job-status ${job.status || 'active'}">${getStatusText(job.status)}</span>
@@ -607,9 +635,9 @@
             container.innerHTML = `
                 <div class="d-flex justify-content-between align-items-start mb-4">
                     <div>
-                        <h2>${job.job_title}</h2>
+                        <h2>${job.job_title || '未命名職缺'}</h2>
                         <div class="text-muted">
-                            <i class="fas fa-building me-2"></i>${teamData.company} - ${teamData.department} - ${teamData.team_name}
+                            <i class="fas fa-building me-2"></i>${(teamData.company || '未知公司')} - ${(teamData.department || '未知部門')} - ${(teamData.team_name || '未知團隊')}
                         </div>
                     </div>
                     <div class="d-flex gap-2">
@@ -731,9 +759,15 @@
                 return;
             }
             
-            // 設置團隊資訊
-            document.getElementById('modalTeamName').textContent = `${teamData.company} - ${teamData.department} - ${teamData.team_name}`;
-            document.getElementById('jobTeam').value = `${teamData.company} - ${teamData.department} - ${teamData.team_name}`;
+            // 設置團隊資訊，提供預設值避免 undefined
+            const company = teamData.company || '未知公司';
+            const department = teamData.department || '未知部門';
+            const teamName = teamData.team_name || '未知團隊';
+            
+            const teamDisplayName = `${company} - ${department} - ${teamName}`;
+            
+            document.getElementById('modalTeamName').textContent = teamDisplayName;
+            document.getElementById('jobTeam').value = teamDisplayName;
             
             // 重置表單
             resetJobForm();
@@ -744,7 +778,21 @@
 
         // 建立職缺
         async function createJob() {
+            // 防止重複提交
+            if (isSubmitting) {
+                console.log('⚠️ 正在提交中，請勿重複點擊');
+                return;
+            }
+
+            const createJobBtn = document.getElementById('createJob');
+            const originalText = createJobBtn.innerHTML;
+            
             try {
+                // 設置提交狀態
+                isSubmitting = true;
+                createJobBtn.disabled = true;
+                createJobBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>建立中...';
+                
                 // 處理工作內容陣列
                 const responsibilitiesText = document.getElementById('responsibilities').value.trim();
                 const responsibilities = responsibilitiesText.split('\n')
@@ -826,6 +874,11 @@
             } catch (error) {
                 console.error('❌ 建立職缺失敗:', error);
                 showAlert('建立職缺失敗: ' + error.message, 'danger');
+            } finally {
+                // 恢復按鈕狀態
+                isSubmitting = false;
+                createJobBtn.disabled = false;
+                createJobBtn.innerHTML = originalText;
             }
         }
 
@@ -836,7 +889,7 @@
 
         // 檢視職缺頁面
         function viewJobPage(jobId) {
-            window.open(`job-detail.html?job_id=${encodeURIComponent(jobId)}`, '_blank');
+            window.location.href = `job-detail.html?job_id=${encodeURIComponent(jobId)}`;
         }
 
         // 顯示錯誤

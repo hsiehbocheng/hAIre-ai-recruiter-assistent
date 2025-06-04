@@ -181,7 +181,6 @@ sequenceDiagram
 | 欄位階層 | 欄位名稱 | 資料型別 | 說明 |
 |----------|----------|-----------|------|
 | 1 | `resume_id` | string | 履歷唯一識別碼 |
-| 1 | `uuid` | string | 履歷 UUID |
 | 1 | `has_applied` | boolean | 是否曾經投遞過 |
 | 1 | `profile` | object | 履歷內容主體 |
 | 2 | `profile.basics` | object | 基本資料 |

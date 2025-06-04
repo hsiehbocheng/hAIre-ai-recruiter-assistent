@@ -135,7 +135,7 @@ def handle_file_upload(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[s
                     # 建構 S3 物件金鑰
                     # 使用原始檔案名稱，但進行一些清理以避免 S3 金鑰問題
                     safe_original_filename = "".join(c if c.isalnum() or c in ('.', '_', '-') else '_' for c in original_filename)
-                    file_key = f"{S3_FOLDER_PREFIX}{team_id}_{safe_original_filename}"
+                    file_key = f"{S3_FOLDER_PREFIX}{team_id}/{safe_original_filename}"
                     
                     # 上傳到 S3
                     s3_client.put_object(

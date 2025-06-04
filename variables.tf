@@ -1,11 +1,17 @@
 variable "aws_resource_tag" {
-  description = "Value of the Name tag for the demo aws resource"
+  description = "AWS 資源標籤前綴"
   type        = string
-  default     = "Benson_hAIre_Demo"
+  default     = "benson-haire"
 }
 
 variable "aws_region" {
-  description = "AWS region for resource deployment"
+  description = "AWS 區域"
   type        = string
-  default     = "ap-southeast-1"  # 新加坡
+  default     = "ap-southeast-1"
+}
+
+variable "resource_prefix" {
+  description = "資源名稱前綴"
+  type        = string
+  default     = "benson-haire"
 }

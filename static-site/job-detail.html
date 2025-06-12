@@ -1,214 +1,389 @@
 <!DOCTYPE html>
 <html lang="zh-Hant">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>職缺詳情 - hAIre 招募系統</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+      rel="stylesheet"
+    />
+
     <!-- 載入配置文件 -->
     <script src="js/config.js"></script>
-    
+
     <style>
-        body {
-            background-color: #f8f9fa;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-        
-        .header-section {
-            background: linear-gradient(135deg, #0047AB 0%, #003d99 100%);
-            color: white;
-            padding: 1.5rem 0;
-            margin-bottom: 2rem;
-        }
-        
-        .back-btn {
-            background: rgba(255,255,255,0.2);
-            border: 1px solid rgba(255,255,255,0.3);
-            color: white;
-            padding: 0.5rem 1rem;
-            border-radius: 8px;
-            text-decoration: none;
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            transition: all 0.3s ease;
-            margin-bottom: 1rem;
-        }
-        
-        .back-btn:hover {
-            background: rgba(255,255,255,0.3);
-            color: white;
-            text-decoration: none;
-            transform: translateX(-3px);
-        }
-        
-        .job-info-panel {
-            background: white;
-            border-radius: 12px;
-            min-height: 600px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-            padding: 2rem;
-        }
-        
-        .applicants-panel {
-            background: white;
-            border-radius: 12px;
-            min-height: 600px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        }
-        
-        .panel-header {
-            background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
-            color: white;
-            padding: 1rem;
-            border-radius: 12px 12px 0 0;
-        }
-        
-        .applicant-item {
-            padding: 1rem;
-            border-bottom: 1px solid #e9ecef;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-        
-        .applicant-item:hover {
-            background-color: #f8f9ff;
-        }
-        
-        .applicant-item.active {
-            background-color: #e3f2fd;
-            border-left: 4px solid #007bff;
-        }
-        
-        .applicant-name {
-            font-weight: 600;
-            color: #333;
-            margin-bottom: 0.5rem;
-        }
-        
-        .applicant-meta {
-            font-size: 0.85rem;
-            color: #6c757d;
-        }
-        
-        .status-badge {
-            padding: 0.25rem 0.75rem;
-            border-radius: 20px;
-            font-size: 0.75rem;
-            font-weight: 500;
-        }
-        
-        .status-badge.applied {
-            background: #d1ecf1;
-            color: #0c5460;
-        }
-        
-        .status-badge.reviewed {
-            background: #fff3cd;
-            color: #856404;
-        }
-        
-        .status-badge.interview {
-            background: #d4edda;
-            color: #155724;
-        }
-        
-        .status-badge.hired {
-            background: #d4edda;
-            color: #155724;
-        }
-        
-        .status-badge.rejected {
-            background: #f8d7da;
-            color: #721c24;
-        }
-        
-        .job-status {
-            padding: 0.25rem 0.75rem;
-            border-radius: 20px;
-            font-size: 0.75rem;
-            font-weight: 500;
-        }
-        
-        .job-status.active {
-            background: #d4edda;
-            color: #155724;
-        }
-        
-        .job-status.paused {
-            background: #fff3cd;
-            color: #856404;
-        }
-        
-        .job-status.closed {
-            background: #f8d7da;
-            color: #721c24;
-        }
-        
-        .empty-state {
-            text-align: center;
-            padding: 3rem;
-            color: #6c757d;
-        }
+      body {
+        background-color: #f8f9fa;
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      }
+
+      .header-section {
+        background: linear-gradient(135deg, #0047ab 0%, #003d99 100%);
+        color: white;
+        padding: 1.5rem 0;
+        margin-bottom: 2rem;
+      }
+
+      .back-btn {
+        background: rgba(255, 255, 255, 0.2);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        color: white;
+        padding: 0.5rem 1rem;
+        border-radius: 8px;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: all 0.3s ease;
+        margin-bottom: 1rem;
+      }
+
+      .back-btn:hover {
+        background: rgba(255, 255, 255, 0.3);
+        color: white;
+        text-decoration: none;
+        transform: translateX(-3px);
+      }
+
+      .job-info-panel {
+        background: white;
+        border-radius: 12px;
+        min-height: 600px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        padding: 2rem;
+      }
+
+      .applicants-panel {
+        background: white;
+        border-radius: 12px;
+        min-height: 600px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      }
+
+      .panel-header {
+        background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+        color: white;
+        padding: 1rem;
+        border-radius: 12px 12px 0 0;
+      }
+
+      .applicant-item {
+        padding: 1rem;
+        border-bottom: 1px solid #e9ecef;
+        cursor: pointer;
+        transition: all 0.3s ease;
+      }
+
+      .applicant-item:hover {
+        background-color: #f8f9ff;
+      }
+
+      .applicant-item.active {
+        background-color: #e3f2fd;
+        border-left: 4px solid #007bff;
+      }
+
+      .applicant-name {
+        font-weight: 600;
+        color: #333;
+        margin-bottom: 0.5rem;
+      }
+
+      .applicant-meta {
+        font-size: 0.85rem;
+        color: #6c757d;
+      }
+
+      .status-badge {
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 500;
+      }
+
+      .status-badge.applied {
+        background: #d1ecf1;
+        color: #0c5460;
+      }
+
+      .status-badge.reviewed {
+        background: #fff3cd;
+        color: #856404;
+      }
+
+      .status-badge.interview {
+        background: #d4edda;
+        color: #155724;
+      }
+
+      .status-badge.hired {
+        background: #d4edda;
+        color: #155724;
+      }
+
+      .status-badge.rejected {
+        background: #f8d7da;
+        color: #721c24;
+      }
+
+      .job-status {
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 500;
+      }
+
+      .job-status.active {
+        background: #d4edda;
+        color: #155724;
+      }
+
+      .job-status.paused {
+        background: #fff3cd;
+        color: #856404;
+      }
+
+      .job-status.closed {
+        background: #f8d7da;
+        color: #721c24;
+      }
+
+      .empty-state {
+        text-align: center;
+        padding: 3rem;
+        color: #6c757d;
+      }
     </style>
-</head>
-<body>
+  </head>
+  <body>
     <div class="header-section">
-        <div class="container">
-            <a href="javascript:history.back()" class="back-btn">
-                <i class="fas fa-arrow-left"></i>
-                返回
-            </a>
-            <h1 class="page-title mb-0">
-                <i class="fas fa-briefcase me-3"></i>
-                <span id="jobTitle">職缺詳情</span>
-            </h1>
-        </div>
+      <div class="container">
+        <a href="javascript:history.back()" class="back-btn">
+          <i class="fas fa-arrow-left"></i>
+          返回
+        </a>
+        <h1 class="page-title mb-0">
+          <i class="fas fa-briefcase me-3"></i>
+          <span id="jobTitle">職缺詳情</span>
+        </h1>
+      </div>
     </div>
 
     <div class="container">
-        <div class="row">
-            <!-- 左側：職缺詳情 -->
-            <div class="col-md-7">
-                <div class="job-info-panel">
-                    <div id="jobInfoContent">
-                        <!-- 職缺詳情將在這裡載入 -->
-                        <div class="empty-state">
-                            <i class="fas fa-search fa-2x"></i>
-                            <p>載入中...</p>
-                        </div>
-                    </div>
-                </div>
+      <div class="row">
+        <!-- 左側：職缺詳情 -->
+        <div class="col-md-7">
+          <div class="job-info-panel">
+            <div id="jobInfoContent">
+              <!-- 職缺詳情將在這裡載入 -->
+              <div class="empty-state">
+                <i class="fas fa-search fa-2x"></i>
+                <p>載入中...</p>
+              </div>
             </div>
+          </div>
+        </div>
 
-            <!-- 右側：應徵者列表 -->
-            <div class="col-md-5">
-                <div class="applicants-panel">
-                    <div class="panel-header">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <h5 class="mb-0">
-                                <i class="fas fa-users me-2"></i>
-                                應徵者
-                            </h5>
-                            <span class="badge bg-light text-dark" id="applicantCount">0 人</span>
-                        </div>
+        <!-- 右側：應徵者列表 -->
+        <div class="col-md-5">
+          <div class="applicants-panel">
+            <div class="panel-header">
+              <div class="d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                  <i class="fas fa-users me-2"></i>
+                  應徵者
+                </h5>
+                <span class="badge bg-light text-dark" id="applicantCount"
+                  >0 人</span
+                >
+              </div>
+            </div>
+            <div id="applicantsList">
+              <!-- 應徵者管理 -->
+              <div class="section-content">
+                <div id="applicants-container">
+                  <!-- 應徵者列表將在這裡動態載入 -->
+                  <div class="text-center py-8">
+                    <div class="text-gray-500">
+                      <i class="fas fa-spinner fa-spin text-4xl mb-4"></i>
+                      <p class="text-lg">載入應徵者資料中...</p>
                     </div>
-                    <div id="applicantsList">
-                        <!-- 應徵者管理 -->
-                        <div class="section-content">
-                            <div id="applicants-container">
-                                <!-- 應徵者列表將在這裡動態載入 -->
-                                <div class="text-center py-8">
-                                    <div class="text-gray-500">
-                                        <i class="fas fa-spinner fa-spin text-4xl mb-4"></i>
-                                        <p class="text-lg">載入應徵者資料中...</p>
-                                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 編輯職缺 Modal -->
+    <div class="modal fade" id="editJobModal" tabindex="-1">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header" style="background: linear-gradient(135deg, #0047AB 0%, #003d99 100%); color: white;">
+                    <h5 class="modal-title">
+                        <i class="fas fa-edit me-2"></i>編輯職缺
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="關閉" style="filter: invert(1);"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="editJobForm">
+                        <!-- 系統資訊 -->
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">團隊代號</label>
+                                    <input type="text" class="form-control" id="editTeamId" readonly>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">職缺代號</label>
+                                    <input type="text" class="form-control" id="editJobId" readonly>
                                 </div>
                             </div>
                         </div>
-                    </div>
+
+                        <!-- 基本資訊 -->
+                        <div class="row mb-4">
+                            <div class="col-md-12">
+                                <div class="mb-3">
+                                    <label class="form-label">職缺名稱 <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" id="editJobTitle" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">聘用類型 <span class="text-danger">*</span></label>
+                                    <select class="form-select" id="editEmploymentType" required>
+                                        <option value="">請選擇</option>
+                                        <option value="全職">全職</option>
+                                        <option value="兼職">兼職</option>
+                                        <option value="約聘">約聘</option>
+                                        <option value="實習">實習</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">工作地點 <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" id="editLocation" required>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 條件要求 -->
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">年資要求（年）</label>
+                                    <input type="number" class="form-control" id="editMinExperienceYears" min="0">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">學歷要求</label>
+                                    <select class="form-select" id="editEducationRequired">
+                                        <option value="">不限</option>
+                                        <option value="高中以上">高中以上</option>
+                                        <option value="專科以上">專科以上</option>
+                                        <option value="大學以上">大學以上</option>
+                                        <option value="碩士以上">碩士以上</option>
+                                        <option value="博士以上">博士以上</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-12">
+                                <div class="mb-3">
+                                    <label class="form-label">語言要求</label>
+                                    <input type="text" class="form-control" id="editLanguageRequired" placeholder="以逗號分隔，例如：英文,日文">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 薪資範圍 -->
+                        <div class="row mb-4">
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label class="form-label">最低薪資</label>
+                                    <input type="number" class="form-control" id="editSalaryMin" min="0" step="10000">
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label class="form-label">最高薪資</label>
+                                    <input type="number" class="form-control" id="editSalaryMax" min="0" step="10000">
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label class="form-label">薪資備註</label>
+                                    <input type="text" class="form-control" id="editSalaryNote" placeholder="例如：面議">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 工作內容 -->
+                        <div class="mb-4">
+                            <label class="form-label">工作內容 <span class="text-danger">*</span></label>
+                            <textarea class="form-control" id="editResponsibilities" rows="5" required 
+                                placeholder="每行一項工作內容"></textarea>
+                        </div>
+
+                        <!-- 技能要求 -->
+                        <div class="row mb-4">
+                            <div class="col-md-12">
+                                <div class="mb-3">
+                                    <label class="form-label">必備技能 <span class="text-danger">*</span></label>
+                                    <div class="input-group mb-2">
+                                        <input type="text" class="form-control" id="editRequiredSkills" 
+                                            placeholder="按Enter新增技能">
+                                    </div>
+                                    <div id="editRequiredSkillsTags" class="d-flex flex-wrap gap-1"></div>
+                                </div>
+                            </div>
+                            <div class="col-md-12">
+                                <div class="mb-3">
+                                    <label class="form-label">加分技能</label>
+                                    <div class="input-group mb-2">
+                                        <input type="text" class="form-control" id="editNiceToHaveSkills" 
+                                            placeholder="按Enter新增技能">
+                                    </div>
+                                    <div id="editNiceToHaveSkillsTags" class="d-flex flex-wrap gap-1"></div>
+                                </div>
+                            </div>
+                            <div class="col-md-12">
+                                <div class="mb-3">
+                                    <label class="form-label">主修要求</label>
+                                    <div class="input-group mb-2">
+                                        <input type="text" class="form-control" id="editMajorsRequired" 
+                                            placeholder="按Enter新增主修">
+                                    </div>
+                                    <div id="editMajorsRequiredTags" class="d-flex flex-wrap gap-1"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 職缺狀態 -->
+                        <div class="mb-4">
+                            <label class="form-label">職缺狀態</label>
+                            <select class="form-select" id="editJobStatus">
+                                <option value="active">活躍中</option>
+                                <option value="paused">暫停</option>
+                                <option value="closed">關閉</option>
+                            </select>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" id="updateJob" class="btn" style="background: linear-gradient(135deg, #0047AB 0%, #003d99 100%); color: white;">更新職缺</button>
                 </div>
             </div>
         </div>
@@ -216,159 +391,177 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        // 全域變數
-        let jobData = null;
-        let applicantsData = [];
+      // 全域變數
+      let jobData = null;
+      let applicantsData = [];
 
-        // 頁面載入完成後執行
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log('職缺詳情頁面載入完成');
-            
-            // 從 URL 參數取得職缺 ID
-            const urlParams = new URLSearchParams(window.location.search);
-            const jobId = urlParams.get('job_id');
-            
-            if (!jobId) {
-                showError('未指定職缺 ID');
-                return;
-            }
-            
-            loadJobData(jobId);
-        });
+      // 頁面載入完成後執行
+      document.addEventListener("DOMContentLoaded", function () {
+        console.log("職缺詳情頁面載入完成");
 
-        // 載入職缺資料
-        async function loadJobData(jobId) {
-            try {
-                console.log('🔄 載入職缺資料:', jobId);
-                
-                const apiUrl = window.CONFIG ? window.CONFIG.API_BASE_URL : 'https://44wy0r4r16.execute-api.ap-southeast-1.amazonaws.com/dev';
-                
-                // 載入職缺資訊
-                const jobResponse = await fetch(`${apiUrl}/jobs/${encodeURIComponent(jobId)}`, {
-                    method: 'GET',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    }
-                });
+        // 從 URL 參數取得職缺 ID
+        const urlParams = new URLSearchParams(window.location.search);
+        const jobId = urlParams.get("job_id");
 
-                if (!jobResponse.ok) {
-                    throw new Error(`載入職缺資料失敗: ${jobResponse.status}`);
-                }
-
-                const jobResult = await jobResponse.json();
-                jobData = jobResult.data;
-                console.log('✅ 職缺資料載入成功:', jobData);
-                
-                // 載入應徵者資料
-                loadApplicantsData();
-                
-                // 渲染頁面
-                renderJobInfo();
-                
-            } catch (error) {
-                console.error('❌ 載入職缺資料失敗:', error);
-                showError('載入職缺資料失敗: ' + error.message);
-            }
+        if (!jobId) {
+          showError("未指定職缺 ID");
+          return;
         }
 
-        // 載入應徵者資料
-        async function loadApplicantsData() {
-            try {
-                console.log('🔄 載入應徵者資料...');
-                
-                // 從 URL 獲取 job_id  
-                const urlParams = new URLSearchParams(window.location.search);
-                const jobId = urlParams.get('job_id');
-                
-                if (!jobId) {
-                    console.error('沒有找到 job_id');
-                    document.getElementById('applicantsList').innerHTML = `
+        loadJobData(jobId);
+      });
+
+      // 載入職缺資料
+      async function loadJobData(jobId) {
+        try {
+          console.log("🔄 載入職缺資料:", jobId);
+
+          const apiUrl = window.CONFIG
+            ? window.CONFIG.API_BASE_URL
+            : "https://44wy0r4r16.execute-api.ap-southeast-1.amazonaws.com/dev";
+
+          // 載入職缺資訊
+          const jobResponse = await fetch(
+            `${apiUrl}/jobs/${encodeURIComponent(jobId)}`,
+            {
+              method: "GET",
+              headers: {
+                "Content-Type": "application/json",
+              },
+            }
+          );
+
+          if (!jobResponse.ok) {
+            throw new Error(`載入職缺資料失敗: ${jobResponse.status}`);
+          }
+
+          const jobResult = await jobResponse.json();
+          jobData = jobResult.data;
+          console.log("✅ 職缺資料載入成功:", jobData);
+
+          // 載入應徵者資料
+          loadApplicantsData();
+
+          // 渲染頁面
+          renderJobInfo();
+        } catch (error) {
+          console.error("❌ 載入職缺資料失敗:", error);
+          showError("載入職缺資料失敗: " + error.message);
+        }
+      }
+
+      // 載入應徵者資料
+      async function loadApplicantsData() {
+        try {
+          console.log("🔄 載入應徵者資料...");
+
+          // 從 URL 獲取 job_id
+          const urlParams = new URLSearchParams(window.location.search);
+          const jobId = urlParams.get("job_id");
+
+          if (!jobId) {
+            console.error("沒有找到 job_id");
+            document.getElementById("applicantsList").innerHTML = `
                         <div class="empty-state">
                             <i class="fas fa-exclamation-triangle fa-2x text-warning"></i>
                             <p>未指定職缺 ID</p>
                         </div>
                     `;
-                    return;
-                }
+            return;
+          }
 
-                const apiUrl = window.CONFIG ? window.CONFIG.API_BASE_URL : 'https://44wy0r4r16.execute-api.ap-southeast-1.amazonaws.com/dev';
-                
-                // 調用履歷管理 API 獲取特定職缺的應徵者
-                const response = await fetch(`${apiUrl}/resumes/job-applicants?job_id=${jobId}`);
-                
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                
-                const result = await response.json();
-                console.log('✅ 應徵者資料載入成功:', result);
-                
-                // 更新應徵者數量
-                document.getElementById('applicantCount').textContent = `${result.total_count || 0} 人`;
-                
-                // 檢查是否有應徵者資料
-                if (result.data && result.data.length > 0) {
-                    renderApplicants(result.data);
-                } else {
-                    // 顯示暫無應徵者的訊息
-                    document.getElementById('applicantsList').innerHTML = `
+          const apiUrl = window.CONFIG
+            ? window.CONFIG.API_BASE_URL
+            : "https://44wy0r4r16.execute-api.ap-southeast-1.amazonaws.com/dev";
+
+          // 調用履歷管理 API 獲取特定職缺的應徵者
+          const response = await fetch(
+            `${apiUrl}/resumes/job-applicants?job_id=${jobId}`
+          );
+
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+
+          const result = await response.json();
+          console.log("✅ 應徵者資料載入成功:", result);
+
+          // 更新應徵者數量
+          document.getElementById("applicantCount").textContent = `${
+            result.total_count || 0
+          } 人`;
+
+          // 檢查是否有應徵者資料
+          if (result.data && result.data.length > 0) {
+            renderApplicants(result.data);
+          } else {
+            // 顯示暫無應徵者的訊息
+            document.getElementById("applicantsList").innerHTML = `
                         <div class="empty-state">
                             <i class="fas fa-users fa-2x"></i>
                             <p>目前尚無應徵者</p>
                             <small>請等待求職者投遞履歷</small>
                         </div>
                     `;
-                }
-                
-            } catch (error) {
-                console.error('❌ 載入應徵者資料失敗:', error);
-                // 顯示錯誤訊息
-                document.getElementById('applicantsList').innerHTML = `
+          }
+        } catch (error) {
+          console.error("❌ 載入應徵者資料失敗:", error);
+          // 顯示錯誤訊息
+          document.getElementById("applicantsList").innerHTML = `
                     <div class="empty-state">
                         <i class="fas fa-exclamation-triangle fa-2x text-danger"></i>
                         <p>載入應徵者資料失敗</p>
                         <small>請稍後再試或聯繫系統管理員</small>
                     </div>
                 `;
-            }
         }
+      }
 
-        function renderApplicants(applicants) {
-            if (!applicants || applicants.length === 0) {
-                document.getElementById('applicantsList').innerHTML = `
+      function renderApplicants(applicants) {
+        if (!applicants || applicants.length === 0) {
+          document.getElementById("applicantsList").innerHTML = `
                     <div class="empty-state">
                         <i class="fas fa-users fa-2x"></i>
                         <p>目前尚無應徵者</p>
                     </div>
                 `;
-                return;
-            }
+          return;
+        }
 
-            const applicantsHTML = applicants.map(applicant => {
-                // 處理技能列表
-                const skillsHTML = applicant.skills && applicant.skills.length > 0 
-                    ? applicant.skills.slice(0, 5).map(skill => 
+        const applicantsHTML = applicants
+          .map((applicant) => {
+            // 處理技能列表
+            const skillsHTML =
+              applicant.skills && applicant.skills.length > 0
+                ? applicant.skills
+                    .slice(0, 5)
+                    .map(
+                      (skill) =>
                         `<span class="badge bg-primary me-1 mb-1">${skill}</span>`
-                    ).join('')
-                    : '<span class="text-muted small">未提供技能資訊</span>';
+                    )
+                    .join("")
+                : '<span class="text-muted small">未提供技能資訊</span>';
 
-                // 處理額外技能
-                const moreSkills = applicant.skills && applicant.skills.length > 5 
-                    ? `<span class="badge bg-secondary">+${applicant.skills.length - 5}</span>`
-                    : '';
+            // 處理額外技能
+            const moreSkills =
+              applicant.skills && applicant.skills.length > 5
+                ? `<span class="badge bg-secondary">+${
+                    applicant.skills.length - 5
+                  }</span>`
+                : "";
 
-                // 狀態映射
-                const statusMap = {
-                    'applied': { text: '已投遞', class: 'bg-info' },
-                    'reviewing': { text: '審核中', class: 'bg-warning' },
-                    'interview': { text: '面試中', class: 'bg-primary' },
-                    'rejected': { text: '已拒絕', class: 'bg-danger' },
-                    'hired': { text: '已錄取', class: 'bg-success' }
-                };
+            // 狀態映射
+            const statusMap = {
+              applied: { text: "已投遞", class: "bg-info" },
+              reviewing: { text: "審核中", class: "bg-warning" },
+              interview: { text: "面試中", class: "bg-primary" },
+              rejected: { text: "已拒絕", class: "bg-danger" },
+              hired: { text: "已錄取", class: "bg-success" },
+            };
 
-                const status = statusMap[applicant.status] || statusMap['applied'];
+            const status = statusMap[applicant.status] || statusMap["applied"];
 
-                return `
+            return `
                     <div class="applicant-item">
                         <div class="d-flex justify-content-between align-items-start mb-3">
                             <div class="d-flex align-items-center">
@@ -378,8 +571,12 @@
                                     </div>
                                 </div>
                                 <div>
-                                    <h6 class="applicant-name mb-1">${applicant.name || '未提供姓名'}</h6>
-                                    <small class="text-muted">${applicant.current_title || '職稱未提供'}</small>
+                                    <h6 class="applicant-name mb-1">${
+                                      applicant.name || "未提供姓名"
+                                    }</h6>
+                                    <small class="text-muted">${
+                                      applicant.current_title || "職稱未提供"
+                                    }</small>
                                 </div>
                             </div>
                             <span class="status-badge ${status.class}">
@@ -390,17 +587,23 @@
                         <div class="row mb-3">
                             <div class="col-6">
                                 <small class="text-muted">聯絡信箱</small>
-                                <div class="small">${applicant.email || '未提供'}</div>
+                                <div class="small">${
+                                  applicant.email || "未提供"
+                                }</div>
                             </div>
                             <div class="col-6">
                                 <small class="text-muted">工作經驗</small>
-                                <div class="small">${applicant.experience || '未知'}</div>
+                                <div class="small">${
+                                  applicant.experience || "未知"
+                                }</div>
                             </div>
                         </div>
                         
                         <div class="mb-3">
                             <small class="text-muted">學歷背景</small>
-                            <div class="small">${applicant.education || '未提供'}</div>
+                            <div class="small">${
+                              applicant.education || "未提供"
+                            }</div>
                         </div>
                         
                         <div class="mb-3">
@@ -412,13 +615,19 @@
                         </div>
                         
                         <div class="d-flex justify-content-between align-items-center small text-muted">
-                            <span>投遞時間: ${new Date(applicant.applied_at).toLocaleDateString('zh-TW')}</span>
+                            <span>投遞時間: ${new Date(
+                              applicant.applied_at
+                            ).toLocaleDateString("zh-TW")}</span>
                             <div>
-                                <button onclick="viewResume('${applicant.resume_id}')" 
+                                <button onclick="viewResume('${
+                                  applicant.resume_id
+                                }')" 
                                         class="btn btn-sm btn-outline-primary me-1">
                                     <i class="fas fa-eye"></i> 查看
                                 </button>
-                                <button onclick="contactApplicant('${applicant.email}')" 
+                                <button onclick="contactApplicant('${
+                                  applicant.email
+                                }')" 
                                         class="btn btn-sm btn-outline-success">
                                     <i class="fas fa-envelope"></i> 聯繫
                                 </button>
@@ -426,42 +635,45 @@
                         </div>
                     </div>
                 `;
-            }).join('');
+          })
+          .join("");
 
-            document.getElementById('applicantsList').innerHTML = applicantsHTML;
-        }
+        document.getElementById("applicantsList").innerHTML = applicantsHTML;
+      }
 
-        // 查看履歷詳情
-        function viewResume(resumeId) {
-            // 新增查看履歷的 modal 或新頁面
-            showResumeModal(resumeId);
-        }
+      // 查看履歷詳情
+      function viewResume(resumeId) {
+        // 新增查看履歷的 modal 或新頁面
+        showResumeModal(resumeId);
+      }
 
-        // 顯示履歷詳情 Modal
-        async function showResumeModal(resumeId) {
-            try {
-                const apiUrl = window.CONFIG ? window.CONFIG.API_BASE_URL : 'https://44wy0r4r16.execute-api.ap-southeast-1.amazonaws.com/dev';
-                
-                // 獲取履歷詳情
-                const response = await fetch(`${apiUrl}/resumes/${resumeId}`);
-                
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                
-                const result = await response.json();
-                console.log('履歷詳情:', result);
-                
-                // 創建並顯示 modal
-                const modalId = 'resumeModal';
-                let modal = document.getElementById(modalId);
-                
-                if (!modal) {
-                    // 創建 modal
-                    modal = document.createElement('div');
-                    modal.id = modalId;
-                    modal.className = 'modal fade';
-                    modal.innerHTML = `
+      // 顯示履歷詳情 Modal
+      async function showResumeModal(resumeId) {
+        try {
+          const apiUrl = window.CONFIG
+            ? window.CONFIG.API_BASE_URL
+            : "https://44wy0r4r16.execute-api.ap-southeast-1.amazonaws.com/dev";
+
+          // 獲取履歷詳情
+          const response = await fetch(`${apiUrl}/resumes/${resumeId}`);
+
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+
+          const result = await response.json();
+          console.log("履歷詳情:", result);
+
+          // 創建並顯示 modal
+          const modalId = "resumeModal";
+          let modal = document.getElementById(modalId);
+
+          if (!modal) {
+            // 創建 modal
+            modal = document.createElement("div");
+            modal.id = modalId;
+            modal.className = "modal fade";
+            modal.innerHTML = `
                         <div class="modal-dialog modal-xl">
                             <div class="modal-content">
                                 <div class="modal-header">
@@ -477,36 +689,35 @@
                             </div>
                         </div>
                     `;
-                    document.body.appendChild(modal);
-                }
-                
-                // 填入履歷內容
-                const modalBody = document.getElementById('resumeModalBody');
-                if (result.data && result.data.parsed_data && result.data.parsed_data.profile) {
-                    const profile = result.data.parsed_data.profile;
-                    modalBody.innerHTML = renderResumeContent(profile, result.data);
-                } else {
-                    modalBody.innerHTML = '<p class="text-muted">無法載入履歷詳情</p>';
-                }
-                
-                // 顯示 modal
-                new bootstrap.Modal(modal).show();
-                
-            } catch (error) {
-                console.error('載入履歷詳情失敗:', error);
-                alert('載入履歷詳情失敗，請稍後再試');
-            }
-        }
+            document.body.appendChild(modal);
+          }
 
-        // 渲染履歷內容
-        function renderResumeContent(profile, resumeData) {
-            const basics = profile.basics || {};
-            const educations = profile.educations || [];
-            const experiences = profile.professional_experiences || [];
-            const certifications = profile.trainings_and_certifications || [];
-            const awards = profile.awards || [];
-            
-            return `
+          // 填入履歷內容
+          const modalBody = document.getElementById("resumeModalBody");
+          if (result.data && result.data.profile) {
+            const profile = result.data.profile;
+            modalBody.innerHTML = renderResumeContent(profile);
+          } else {
+            modalBody.innerHTML = '<p class="text-muted">無法載入履歷詳情</p>';
+          }
+
+          // 顯示 modal
+          new bootstrap.Modal(modal).show();
+        } catch (error) {
+          console.error("載入履歷詳情失敗:", error);
+          alert("載入履歷詳情失敗，請稍後再試");
+        }
+      }
+
+      // 渲染履歷內容
+      function renderResumeContent(profile, resumeData) {
+        const basics = profile.basics || {};
+        const educations = profile.educations || [];
+        const experiences = profile.professional_experiences || [];
+        const certifications = profile.trainings_and_certifications || [];
+        const awards = profile.awards || [];
+
+        return `
                 <div class="row">
                     <div class="col-md-4">
                         <div class="card">
@@ -514,11 +725,23 @@
                                 <h6><i class="fas fa-user me-2"></i>基本資訊</h6>
                             </div>
                             <div class="card-body">
-                                <p><strong>姓名:</strong> ${basics.first_name || ''} ${basics.last_name || ''}</p>
-                                <p><strong>性別:</strong> ${basics.gender || '未提供'}</p>
-                                <p><strong>Email:</strong> ${basics.emails ? basics.emails.join(', ') : '未提供'}</p>
-                                <p><strong>工作經驗:</strong> ${basics.total_experience_in_years || '未知'}年</p>
-                                <p><strong>現職:</strong> ${basics.current_title || '未提供'}</p>
+                                <p><strong>姓名:</strong> ${
+                                  basics.first_name || ""
+                                } ${basics.last_name || ""}</p>
+                                <p><strong>性別:</strong> ${
+                                  basics.gender || "未提供"
+                                }</p>
+                                <p><strong>Email:</strong> ${
+                                  basics.emails
+                                    ? basics.emails.join(", ")
+                                    : "未提供"
+                                }</p>
+                                <p><strong>工作經驗:</strong> ${
+                                  basics.total_experience_in_years || "未知"
+                                }年</p>
+                                <p><strong>現職:</strong> ${
+                                  basics.current_title || "未提供"
+                                }</p>
                             </div>
                         </div>
                         
@@ -527,8 +750,14 @@
                                 <h6><i class="fas fa-tools me-2"></i>專業技能</h6>
                             </div>
                             <div class="card-body">
-                                ${basics.skills && basics.skills.length > 0 
-                                    ? basics.skills.map(skill => `<span class="badge bg-primary me-1 mb-1">${skill}</span>`).join('')
+                                ${
+                                  basics.skills && basics.skills.length > 0
+                                    ? basics.skills
+                                        .map(
+                                          (skill) =>
+                                            `<span class="badge bg-primary me-1 mb-1">${skill}</span>`
+                                        )
+                                        .join("")
                                     : '<span class="text-muted">未提供</span>'
                                 }
                             </div>
@@ -541,15 +770,32 @@
                                 <h6><i class="fas fa-briefcase me-2"></i>工作經歷</h6>
                             </div>
                             <div class="card-body">
-                                ${experiences.length > 0 
-                                    ? experiences.map(exp => `
+                                ${
+                                  experiences.length > 0
+                                    ? experiences
+                                        .map(
+                                          (exp) => `
                                         <div class="mb-3 pb-3 border-bottom">
-                                            <h6>${exp.title || '未提供職稱'}</h6>
-                                            <p class="text-muted">${exp.company || '未提供公司'} | ${exp.location || ''}</p>
-                                            <p class="small">${exp.start_year || ''}/${exp.start_month || ''} - ${exp.end_year || ''}/${exp.end_month || ''} ${exp.is_current ? '(目前)' : ''}</p>
-                                            <p>${exp.description || '無描述'}</p>
+                                            <h6>${
+                                              exp.title || "未提供職稱"
+                                            }</h6>
+                                            <p class="text-muted">${
+                                              exp.company || "未提供公司"
+                                            } | ${exp.location || ""}</p>
+                                            <p class="small">${
+                                              exp.start_year || ""
+                                            }/${exp.start_month || ""} - ${
+                                            exp.end_year || ""
+                                          }/${exp.end_month || ""} ${
+                                            exp.is_current ? "(目前)" : ""
+                                          }</p>
+                                            <p>${
+                                              exp.description || "無描述"
+                                            }</p>
                                         </div>
-                                    `).join('')
+                                    `
+                                        )
+                                        .join("")
                                     : '<p class="text-muted">無工作經歷資訊</p>'
                                 }
                             </div>
@@ -560,116 +806,164 @@
                                 <h6><i class="fas fa-graduation-cap me-2"></i>教育背景</h6>
                             </div>
                             <div class="card-body">
-                                ${educations.length > 0 
-                                    ? educations.map(edu => `
+                                ${
+                                  educations.length > 0
+                                    ? educations
+                                        .map(
+                                          (edu) => `
                                         <div class="mb-2">
-                                            <h6>${edu.issuing_organization || '未提供學校'}</h6>
-                                            <p>${edu.study_type || ''} - ${edu.department || ''}</p>
-                                            <p class="small text-muted">${edu.start_year || ''} - ${edu.end_year || ''}</p>
+                                            <h6>${
+                                              edu.issuing_organization ||
+                                              "未提供學校"
+                                            }</h6>
+                                            <p>${edu.study_type || ""} - ${
+                                            edu.department || ""
+                                          }</p>
+                                            <p class="small text-muted">${
+                                              edu.start_year || ""
+                                            } - ${edu.end_year || ""}</p>
                                         </div>
-                                    `).join('')
+                                    `
+                                        )
+                                        .join("")
                                     : '<p class="text-muted">無教育背景資訊</p>'
                                 }
                             </div>
                         </div>
                         
-                        ${certifications.length > 0 ? `
+                        ${
+                          certifications.length > 0
+                            ? `
                         <div class="card mt-3">
                             <div class="card-header">
                                 <h6><i class="fas fa-certificate me-2"></i>證照與訓練</h6>
                             </div>
                             <div class="card-body">
-                                ${certifications.map(cert => `
+                                ${certifications
+                                  .map(
+                                    (cert) => `
                                     <div class="mb-2">
-                                        <h6>${cert.description || '未提供證照名稱'}</h6>
-                                        <p class="small text-muted">${cert.issuing_organization || ''} | ${cert.year || ''}</p>
+                                        <h6>${
+                                          cert.description || "未提供證照名稱"
+                                        }</h6>
+                                        <p class="small text-muted">${
+                                          cert.issuing_organization || ""
+                                        } | ${cert.year || ""}</p>
                                     </div>
-                                `).join('')}
+                                `
+                                  )
+                                  .join("")}
                             </div>
                         </div>
-                        ` : ''}
+                        `
+                            : ""
+                        }
                         
-                        ${awards.length > 0 ? `
+                        ${
+                          awards.length > 0
+                            ? `
                         <div class="card mt-3">
                             <div class="card-header">
                                 <h6><i class="fas fa-award me-2"></i>獎項與榮譽</h6>
                             </div>
                             <div class="card-body">
-                                ${awards.map(award => `
+                                ${awards
+                                  .map(
+                                    (award) => `
                                     <div class="mb-2">
-                                        <h6>${award.title || '未提供獎項名稱'}</h6>
-                                        <p class="small text-muted">${award.year || ''}</p>
-                                        <p>${award.description || ''}</p>
+                                        <h6>${
+                                          award.title || "未提供獎項名稱"
+                                        }</h6>
+                                        <p class="small text-muted">${
+                                          award.year || ""
+                                        }</p>
+                                        <p>${award.description || ""}</p>
                                     </div>
-                                `).join('')}
+                                `
+                                  )
+                                  .join("")}
                             </div>
                         </div>
-                        ` : ''}
+                        `
+                            : ""
+                        }
                     </div>
                 </div>
             `;
+      }
+
+      // 聯繫應徵者
+      function contactApplicant(email) {
+        if (email && email !== "未提供") {
+          window.open(`mailto:${email}`, "_blank");
+        } else {
+          alert("該應徵者未提供聯絡信箱");
+        }
+      }
+
+      // 渲染職缺詳情
+      function renderJobInfo() {
+        const titleElement = document.getElementById("jobTitle");
+        const contentElement = document.getElementById("jobInfoContent");
+
+        titleElement.textContent = jobData.job_title;
+
+        // 薪資顯示
+        let salaryDisplay = "面議";
+        if (jobData.salary_min && jobData.salary_max) {
+          salaryDisplay = `$${(jobData.salary_min / 10000).toFixed(0)}萬 - $${(
+            jobData.salary_max / 10000
+          ).toFixed(0)}萬`;
+          if (jobData.salary_note) {
+            salaryDisplay += ` (${jobData.salary_note})`;
+          }
+        } else if (jobData.salary_note) {
+          salaryDisplay = jobData.salary_note;
         }
 
-        // 聯繫應徵者
-        function contactApplicant(email) {
-            if (email && email !== '未提供') {
-                window.open(`mailto:${email}`, '_blank');
-            } else {
-                alert('該應徵者未提供聯絡信箱');
-            }
-        }
-
-        // 渲染職缺詳情
-        function renderJobInfo() {
-            const titleElement = document.getElementById('jobTitle');
-            const contentElement = document.getElementById('jobInfoContent');
-            
-            titleElement.textContent = jobData.job_title;
-            
-            // 薪資顯示
-            let salaryDisplay = '面議';
-            if (jobData.salary_min && jobData.salary_max) {
-                salaryDisplay = `$${(jobData.salary_min/10000).toFixed(0)}萬 - $${(jobData.salary_max/10000).toFixed(0)}萬`;
-                if (jobData.salary_note) {
-                    salaryDisplay += ` (${jobData.salary_note})`;
-                }
-            } else if (jobData.salary_note) {
-                salaryDisplay = jobData.salary_note;
-            }
-
-            contentElement.innerHTML = `
+        contentElement.innerHTML = `
                 <div class="d-flex justify-content-between align-items-start mb-4">
                     <div>
                         <h2>${jobData.job_title}</h2>
                         <div class="text-muted mb-2">
-                            <i class="fas fa-building me-2"></i>團隊 ID: ${jobData.team_id}
+                            <i class="fas fa-building me-2"></i>團隊 ID: ${
+                              jobData.team_id
+                            }
                         </div>
-                        <span class="job-status ${jobData.status}">${getStatusText(jobData.status)}</span>
+                        <span class="job-status ${
+                          jobData.status
+                        }">${getStatusText(jobData.status)}</span>
                     </div>
                     <div class="text-end">
                         <button class="btn btn-outline-primary btn-sm mb-2" onclick="editJob()">
                             <i class="fas fa-edit"></i> 編輯職缺
                         </button>
                         <br>
-                        <small class="text-muted">建立於 ${formatDate(jobData.created_at)}</small>
+                        <small class="text-muted">建立於 ${formatDate(
+                          jobData.created_at
+                        )}</small>
                     </div>
                 </div>
 
                 <div class="row mb-4">
                     <div class="col-md-6">
                         <h6><i class="fas fa-briefcase me-2"></i>聘用類型</h6>
-                        <p>${jobData.employment_type || '未設定'}</p>
+                        <p>${jobData.employment_type || "未設定"}</p>
                     </div>
                     <div class="col-md-6">
                         <h6><i class="fas fa-map-marker-alt me-2"></i>工作地點</h6>
-                        <p>${jobData.location || '未設定'}</p>
+                        <p>${jobData.location || "未設定"}</p>
                     </div>
                 </div>
 
                 <div class="row mb-4">
                     <div class="col-md-6">
                         <h6><i class="fas fa-chart-line me-2"></i>年資要求</h6>
-                        <p>${jobData.min_experience_years ? `${jobData.min_experience_years}年以上` : '不拘'}</p>
+                        <p>${
+                          jobData.min_experience_years
+                            ? `${jobData.min_experience_years}年以上`
+                            : "不拘"
+                        }</p>
                     </div>
                     <div class="col-md-6">
                         <h6><i class="fas fa-dollar-sign me-2"></i>薪資範圍</h6>
@@ -680,9 +974,13 @@
                 <div class="mb-4">
                     <h6><i class="fas fa-tasks me-2"></i>工作內容</h6>
                     <ul>
-                        ${jobData.responsibilities && jobData.responsibilities.length > 0 
-                            ? jobData.responsibilities.map(item => `<li>${item}</li>`).join('')
-                            : '<li>未設定</li>'
+                        ${
+                          jobData.responsibilities &&
+                          jobData.responsibilities.length > 0
+                            ? jobData.responsibilities
+                                .map((item) => `<li>${item}</li>`)
+                                .join("")
+                            : "<li>未設定</li>"
                         }
                     </ul>
                 </div>
@@ -691,8 +989,15 @@
                     <div class="col-md-6">
                         <h6><i class="fas fa-tools me-2"></i>必備技能</h6>
                         <div class="d-flex flex-wrap gap-1 mb-2">
-                            ${jobData.required_skills && jobData.required_skills.length > 0 
-                                ? jobData.required_skills.map(skill => `<span class="badge bg-danger">${skill}</span>`).join('')
+                            ${
+                              jobData.required_skills &&
+                              jobData.required_skills.length > 0
+                                ? jobData.required_skills
+                                    .map(
+                                      (skill) =>
+                                        `<span class="badge bg-danger">${skill}</span>`
+                                    )
+                                    .join("")
                                 : '<span class="text-muted">未設定</span>'
                             }
                         </div>
@@ -700,32 +1005,59 @@
                     <div class="col-md-6">
                         <h6><i class="fas fa-plus-circle me-2"></i>加分技能</h6>
                         <div class="d-flex flex-wrap gap-1 mb-2">
-                            ${jobData.nice_to_have_skills && jobData.nice_to_have_skills.length > 0 
-                                ? jobData.nice_to_have_skills.map(skill => `<span class="badge bg-success">${skill}</span>`).join('')
+                            ${
+                              jobData.nice_to_have_skills &&
+                              jobData.nice_to_have_skills.length > 0
+                                ? jobData.nice_to_have_skills
+                                    .map(
+                                      (skill) =>
+                                        `<span class="badge bg-success">${skill}</span>`
+                                    )
+                                    .join("")
                                 : '<span class="text-muted">無</span>'
                             }
                         </div>
                     </div>
                 </div>
 
-                ${jobData.education_required || (jobData.majors_required && jobData.majors_required.length > 0) ? `
+                ${
+                  jobData.education_required ||
+                  (jobData.majors_required &&
+                    jobData.majors_required.length > 0)
+                    ? `
                 <div class="row mb-4">
-                    ${jobData.education_required ? `
+                    ${
+                      jobData.education_required
+                        ? `
                     <div class="col-md-6">
                         <h6><i class="fas fa-graduation-cap me-2"></i>學歷要求</h6>
                         <p>${jobData.education_required}</p>
                     </div>
-                    ` : ''}
-                    ${jobData.majors_required && jobData.majors_required.length > 0 ? `
+                    `
+                        : ""
+                    }
+                    ${
+                      jobData.majors_required &&
+                      jobData.majors_required.length > 0
+                        ? `
                     <div class="col-md-6">
                         <h6><i class="fas fa-book me-2"></i>主修條件</h6>
                         <div class="d-flex flex-wrap gap-1">
-                            ${jobData.majors_required.map(major => `<span class="badge bg-info">${major}</span>`).join('')}
+                            ${jobData.majors_required
+                              .map(
+                                (major) =>
+                                  `<span class="badge bg-info">${major}</span>`
+                              )
+                              .join("")}
                         </div>
                     </div>
-                    ` : ''}
+                    `
+                        : ""
+                    }
                 </div>
-                ` : ''}
+                `
+                    : ""
+                }
 
                 <div class="border-top pt-3 mt-4">
                     <div class="row text-muted small">
@@ -733,44 +1065,205 @@
                             <strong>職缺 ID:</strong> ${jobData.job_id}
                         </div>
                         <div class="col-md-6">
-                            <strong>最後更新:</strong> ${formatDate(jobData.updated_at)}
+                            <strong>最後更新:</strong> ${formatDate(
+                              jobData.updated_at
+                            )}
                         </div>
                     </div>
                 </div>
             `;
+      }
+
+      // 取得職缺狀態文字
+      function getStatusText(status) {
+        const statusMap = {
+          active: "活躍中",
+          paused: "暫停",
+          closed: "關閉",
+          deleted: "已刪除",
+        };
+        return statusMap[status] || "活躍中";
+      }
+
+      // 格式化日期
+      function formatDate(dateString) {
+        if (!dateString) return "未知";
+        return new Date(dateString).toLocaleDateString("zh-TW");
+      }
+
+      // 編輯職缺
+      function editJob() {
+        if (!jobData) {
+          showAlert('職缺資料尚未載入，請稍後再試', 'warning');
+          return;
         }
 
-        // 取得職缺狀態文字
-        function getStatusText(status) {
-            const statusMap = {
-                'active': '活躍中',
-                'paused': '暫停',
-                'closed': '關閉',
-                'deleted': '已刪除'
-            };
-            return statusMap[status] || '活躍中';
+        console.log('正在編輯職缺:', jobData);
+
+        // 填入系統資訊
+        document.getElementById('editTeamId').value = jobData.team_id || '';
+        document.getElementById('editJobId').value = jobData.job_id || '';
+        
+        // 填入基本資訊
+        document.getElementById('editJobTitle').value = jobData.job_title || '';
+        document.getElementById('editEmploymentType').value = jobData.employment_type || '';
+        document.getElementById('editLocation').value = jobData.location || '';
+        document.getElementById('editMinExperienceYears').value = jobData.min_experience_years || '';
+        document.getElementById('editSalaryMin').value = jobData.salary_min || '';
+        document.getElementById('editSalaryMax').value = jobData.salary_max || '';
+        document.getElementById('editSalaryNote').value = jobData.salary_note || '';
+        document.getElementById('editEducationRequired').value = jobData.education_required || '';
+        document.getElementById('editLanguageRequired').value = jobData.language_required ? jobData.language_required.join(',') : '';
+        document.getElementById('editResponsibilities').value = jobData.responsibilities ? jobData.responsibilities.join('\n') : '';
+        document.getElementById('editJobStatus').value = jobData.status || 'active';
+
+        // 清空並重新填入技能標籤
+        document.getElementById('editRequiredSkillsTags').innerHTML = '';
+        document.getElementById('editNiceToHaveSkillsTags').innerHTML = '';
+        document.getElementById('editMajorsRequiredTags').innerHTML = '';
+
+        // 填入必備技能
+        if (jobData.required_skills && Array.isArray(jobData.required_skills)) {
+            jobData.required_skills.forEach(skill => {
+                addSkillTag(document.getElementById('editRequiredSkillsTags'), skill);
+            });
         }
 
-        // 格式化日期
-        function formatDate(dateString) {
-            if (!dateString) return '未知';
-            return new Date(dateString).toLocaleDateString('zh-TW');
+        // 填入加分技能
+        if (jobData.nice_to_have_skills && Array.isArray(jobData.nice_to_have_skills)) {
+            jobData.nice_to_have_skills.forEach(skill => {
+                addSkillTag(document.getElementById('editNiceToHaveSkillsTags'), skill);
+            });
         }
 
-        // 編輯職缺
-        function editJob() {
-            alert('編輯功能開發中...');
+        // 填入主修要求
+        if (jobData.majors_required && Array.isArray(jobData.majors_required)) {
+            jobData.majors_required.forEach(major => {
+                addSkillTag(document.getElementById('editMajorsRequiredTags'), major);
+            });
         }
 
-        // 顯示錯誤
-        function showError(message) {
-            document.getElementById('jobInfoContent').innerHTML = `
+        // 設置更新按鈕的事件監聽器
+        document.getElementById('updateJob').onclick = updateJob;
+
+        // 顯示 Modal
+        const editModal = new bootstrap.Modal(document.getElementById('editJobModal'));
+        editModal.show();
+      }
+
+      // 更新職缺
+      async function updateJob() {
+        try {
+          const formData = {
+            team_id: document.getElementById('editTeamId').value,
+            job_id: document.getElementById('editJobId').value,
+            job_title: document.getElementById('editJobTitle').value,
+            employment_type: document.getElementById('editEmploymentType').value,
+            location: document.getElementById('editLocation').value,
+            min_experience_years: parseInt(document.getElementById('editMinExperienceYears').value) || null,
+            salary_min: parseInt(document.getElementById('editSalaryMin').value) || null,
+            salary_max: parseInt(document.getElementById('editSalaryMax').value) || null,
+            salary_note: document.getElementById('editSalaryNote').value,
+            education_required: document.getElementById('editEducationRequired').value,
+            language_required: document.getElementById('editLanguageRequired').value.split(',').map(lang => lang.trim()).filter(Boolean),
+            responsibilities: document.getElementById('editResponsibilities').value.split('\n').map(r => r.trim()).filter(Boolean),
+            required_skills: Array.from(document.getElementById('editRequiredSkillsTags').children).map(tag => tag.textContent.replace('×', '').trim()),
+            nice_to_have_skills: Array.from(document.getElementById('editNiceToHaveSkillsTags').children).map(tag => tag.textContent.replace('×', '').trim()),
+            majors_required: Array.from(document.getElementById('editMajorsRequiredTags').children).map(tag => tag.textContent.replace('×', '').trim()),
+            status: document.getElementById('editJobStatus').value
+          };
+
+          const apiUrl = window.CONFIG ? window.CONFIG.API_BASE_URL : 'https://44wy0r4r16.execute-api.ap-southeast-1.amazonaws.com/dev';
+
+          // 發送更新請求
+          const response = await fetch(`${apiUrl}/jobs/${encodeURIComponent(formData.job_id)}`, {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(formData)
+          });
+
+          if (!response.ok) {
+            throw new Error(`更新失敗: ${response.status}`);
+          }
+
+          // 關閉 Modal
+          bootstrap.Modal.getInstance(document.getElementById('editJobModal')).hide();
+
+          // 重新載入職缺資料
+          loadJobData(formData.job_id);
+
+          // 顯示成功訊息
+          showAlert('職缺更新成功！', 'success');
+
+        } catch (error) {
+          console.error('❌ 更新職缺失敗:', error);
+          showAlert('更新失敗，請稍後再試', 'error');
+        }
+      }
+
+      // 添加技能標籤
+      function addSkillTag(container, skill) {
+        const tag = document.createElement('span');
+        tag.className = 'badge bg-primary me-1 mb-1 position-relative';
+        tag.style.cssText = 'padding-right: 25px; cursor: default;';
+        tag.innerHTML = `
+            ${skill}
+            <button type="button" class="btn-close btn-close-white position-absolute" 
+                    style="top: 2px; right: 4px; font-size: 0.6rem;"
+                    onclick="this.parentElement.remove()"></button>
+        `;
+        container.appendChild(tag);
+      }
+
+      // 設置技能標籤輸入
+      function setupSkillTagInput(inputId, tagsContainerId) {
+        const input = document.getElementById(inputId);
+        const tagsContainer = document.getElementById(tagsContainerId);
+        
+        input.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                const skill = input.value.trim();
+                if (skill) {
+                    addSkillTag(tagsContainer, skill);
+                    input.value = '';
+                }
+            }
+        });
+      }
+
+      // 初始化技能標籤輸入
+      document.addEventListener('DOMContentLoaded', function() {
+        setupSkillTagInput('editRequiredSkills', 'editRequiredSkillsTags');
+        setupSkillTagInput('editNiceToHaveSkills', 'editNiceToHaveSkillsTags');
+        setupSkillTagInput('editMajorsRequired', 'editMajorsRequiredTags');
+      });
+
+      // 顯示錯誤
+      function showError(message) {
+        document.getElementById("jobInfoContent").innerHTML = `
                 <div class="alert alert-danger">
                     <i class="fas fa-exclamation-triangle me-2"></i>
                     ${message}
                 </div>
             `;
-        }
+      }
+
+      // 顯示提示
+      function showAlert(message, type) {
+        const alertElement = document.createElement('div');
+        alertElement.className = `alert alert-${type}`;
+        alertElement.innerHTML = `
+            <i class="fas fa-${type === 'success' ? 'check' : type === 'warning' ? 'exclamation-triangle' : 'exclamation-circle'} me-2"></i>
+            ${message}
+        `;
+        document.getElementById('jobInfoContent').appendChild(alertElement);
+        setTimeout(() => {
+          alertElement.remove();
+        }, 3000);
+      }
     </script>
-</body>
-</html> 
+  </body>
+</html>

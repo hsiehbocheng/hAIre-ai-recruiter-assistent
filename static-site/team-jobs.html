@@ -1,305 +1,582 @@
 <!DOCTYPE html>
 <html lang="zh-Hant">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>團隊職缺 - hAIre 招募系統</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+      rel="stylesheet"
+    />
+
     <!-- 載入配置文件 -->
     <script src="js/config.js"></script>
-    
+
     <style>
-        body {
-            background-color: #f8f9fa;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-        
-        .header-section {
-            background: linear-gradient(135deg, #0047AB 0%, #003d99 100%);
-            color: white;
-            padding: 1.5rem 0;
-            margin-bottom: 2rem;
-        }
-        
-        .back-btn {
-            background: rgba(255,255,255,0.2);
-            border: 1px solid rgba(255,255,255,0.3);
-            color: white;
-            padding: 0.5rem 1rem;
-            border-radius: 8px;
-            text-decoration: none;
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            transition: all 0.3s ease;
-            margin-bottom: 1rem;
-        }
-        
-        .back-btn:hover {
-            background: rgba(255,255,255,0.3);
-            color: white;
-            text-decoration: none;
-            transform: translateX(-3px);
-        }
-        
-        .team-info-card {
-            background: white;
-            border-radius: 12px;
-            padding: 1.5rem;
-            margin-bottom: 2rem;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        }
-        
-        .jobs-sidebar {
-            background: white;
-            border-radius: 12px;
-            min-height: 600px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        }
-        
-        .sidebar-header {
-            background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
-            color: white;
-            padding: 1rem;
-            border-radius: 12px 12px 0 0;
-        }
-        
-        .job-item {
-            padding: 1rem;
-            border-bottom: 1px solid #e9ecef;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-        
-        .job-item:hover {
-            background-color: #f8f9ff;
-        }
-        
-        .job-item.active {
-            background-color: #e3f2fd;
-            border-left: 4px solid #007bff;
-        }
-        
-        .job-title {
-            font-weight: 600;
-            color: #333;
-            margin-bottom: 0.5rem;
-        }
-        
-        .job-meta {
-            font-size: 0.85rem;
-            color: #6c757d;
-        }
-        
-        .job-detail-panel {
-            background: white;
-            border-radius: 12px;
-            min-height: 600px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-            padding: 2rem;
-        }
-        
-        .empty-state {
-            text-align: center;
-            padding: 3rem;
-            color: #6c757d;
-        }
-        
-        .btn-add-job {
-            background: linear-gradient(135deg, #0047AB 0%, #003d99 100%);
-            border: none;
-            color: white;
-            padding: 0.5rem 1rem;
-            border-radius: 8px;
-            text-decoration: none;
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            transition: all 0.3s ease;
-        }
-        
-        .btn-add-job:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0,71,171,0.4);
-            color: white;
-            text-decoration: none;
-        }
-        
-        .job-status {
-            padding: 0.25rem 0.75rem;
-            border-radius: 20px;
-            font-size: 0.75rem;
-            font-weight: 500;
-        }
-        
-        .job-status.active {
-            background: #d4edda;
-            color: #155724;
-        }
-        
-        .job-status.paused {
-            background: #fff3cd;
-            color: #856404;
-        }
-        
-        .job-status.closed {
-            background: #f8d7da;
-            color: #721c24;
-        }
+      body {
+        background-color: #f8f9fa;
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      }
+
+      .header-section {
+        background: linear-gradient(135deg, #0047ab 0%, #003d99 100%);
+        color: white;
+        padding: 1.5rem 0;
+        margin-bottom: 2rem;
+      }
+
+      .back-btn {
+        background: rgba(255, 255, 255, 0.2);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        color: white;
+        padding: 0.5rem 1rem;
+        border-radius: 8px;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: all 0.3s ease;
+        margin-bottom: 1rem;
+      }
+
+      .back-btn:hover {
+        background: rgba(255, 255, 255, 0.3);
+        color: white;
+        text-decoration: none;
+        transform: translateX(-3px);
+      }
+
+      .team-info-card {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      }
+
+      .jobs-sidebar {
+        background: white;
+        border-radius: 12px;
+        min-height: 600px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      }
+
+      .sidebar-header {
+        background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+        color: white;
+        padding: 1rem;
+        border-radius: 12px 12px 0 0;
+      }
+
+      .job-item {
+        padding: 1rem;
+        border-bottom: 1px solid #e9ecef;
+        cursor: pointer;
+        transition: all 0.3s ease;
+      }
+
+      .job-item:hover {
+        background-color: #f8f9ff;
+      }
+
+      .job-item.active {
+        background-color: #e3f2fd;
+        border-left: 4px solid #007bff;
+      }
+
+      .job-title {
+        font-weight: 600;
+        color: #333;
+        margin-bottom: 0.5rem;
+      }
+
+      .job-meta {
+        font-size: 0.85rem;
+        color: #6c757d;
+      }
+
+      .job-detail-panel {
+        background: white;
+        border-radius: 12px;
+        min-height: 600px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        padding: 2rem;
+      }
+
+      .empty-state {
+        text-align: center;
+        padding: 3rem;
+        color: #6c757d;
+      }
+
+      .btn-add-job {
+        background: linear-gradient(135deg, #0047ab 0%, #003d99 100%);
+        border: none;
+        color: white;
+        padding: 0.5rem 1rem;
+        border-radius: 8px;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: all 0.3s ease;
+      }
+
+      .btn-add-job:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 71, 171, 0.4);
+        color: white;
+        text-decoration: none;
+      }
+
+      .job-status {
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 500;
+      }
+
+      .job-status.active {
+        background: #d4edda;
+        color: #155724;
+      }
+
+      .job-status.paused {
+        background: #fff3cd;
+        color: #856404;
+      }
+
+      .job-status.closed {
+        background: #f8d7da;
+        color: #721c24;
+      }
     </style>
-</head>
-<body>
+  </head>
+  <body>
     <div class="header-section">
-        <div class="container">
-            <a href="admin-jobs.html" class="back-btn">
-                <i class="fas fa-arrow-left"></i>
-                返回職缺管理
-            </a>
-            <h1 class="page-title mb-0">
-                <i class="fas fa-users me-3"></i>
-                <span id="teamTitle">團隊職缺管理</span>
-            </h1>
-        </div>
+      <div class="container">
+        <a href="admin-jobs.html" class="back-btn">
+          <i class="fas fa-arrow-left"></i>
+          返回職缺管理
+        </a>
+        <h1 class="page-title mb-0">
+          <i class="fas fa-users me-3"></i>
+          <span id="teamTitle">團隊職缺管理</span>
+        </h1>
+      </div>
     </div>
 
     <div class="container">
-        <!-- 團隊資訊卡片 -->
-        <div class="team-info-card" id="teamInfoCard">
-            <!-- 團隊資訊將在這裡載入 -->
+      <!-- 團隊資訊卡片 -->
+      <div class="team-info-card" id="teamInfoCard">
+        <!-- 團隊資訊將在這裡載入 -->
+      </div>
+
+      <div class="row">
+        <!-- 左側：職缺列表 -->
+        <div class="col-md-4">
+          <div class="jobs-sidebar">
+            <div class="sidebar-header">
+              <div class="d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                  <i class="fas fa-briefcase me-2"></i>
+                  職缺列表
+                </h5>
+                <a href="#" class="btn-add-job" onclick="addNewJob()">
+                  <i class="fas fa-plus"></i>
+                  新增
+                </a>
+              </div>
+            </div>
+            <div id="jobsList">
+              <!-- 職缺列表將在這裡載入 -->
+              <div class="empty-state">
+                <i class="fas fa-search fa-2x"></i>
+                <p>載入中...</p>
+              </div>
+            </div>
+          </div>
         </div>
 
-        <div class="row">
-            <!-- 左側：職缺列表 -->
-            <div class="col-md-4">
-                <div class="jobs-sidebar">
-                    <div class="sidebar-header">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <h5 class="mb-0">
-                                <i class="fas fa-briefcase me-2"></i>
-                                職缺列表
-                            </h5>
-                            <a href="#" class="btn-add-job" onclick="addNewJob()">
-                                <i class="fas fa-plus"></i>
-                                新增
-                            </a>
-                        </div>
-                    </div>
-                    <div id="jobsList">
-                        <!-- 職缺列表將在這裡載入 -->
-                        <div class="empty-state">
-                            <i class="fas fa-search fa-2x"></i>
-                            <p>載入中...</p>
-                        </div>
-                    </div>
-                </div>
+        <!-- 右側：職缺詳情 -->
+        <div class="col-md-8">
+          <div class="job-detail-panel">
+            <div id="jobDetailContent">
+              <div class="empty-state">
+                <i class="fas fa-briefcase fa-3x"></i>
+                <h4>選擇一個職缺</h4>
+                <p>點擊左側職缺列表中的任一職缺來查看詳情</p>
+              </div>
             </div>
-
-            <!-- 右側：職缺詳情 -->
-            <div class="col-md-8">
-                <div class="job-detail-panel">
-                    <div id="jobDetailContent">
-                        <div class="empty-state">
-                            <i class="fas fa-briefcase fa-3x"></i>
-                            <h4>選擇一個職缺</h4>
-                            <p>點擊左側職缺列表中的任一職缺來查看詳情</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
+          </div>
         </div>
+      </div>
     </div>
 
     <!-- 新增職缺 Modal -->
-    <div class="modal fade" id="addJobModal" tabindex="-1" aria-labelledby="addJobModalLabel" aria-hidden="true">
+    <div
+      class="modal fade"
+      id="addJobModal"
+      tabindex="-1"
+      aria-labelledby="addJobModalLabel"
+      aria-hidden="true"
+    >
+      <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+          <div
+            class="modal-header"
+            style="
+              background: linear-gradient(135deg, #0047ab 0%, #003d99 100%);
+              color: white;
+            "
+          >
+            <h5 class="modal-title" id="addJobModalLabel">
+              <i class="fas fa-plus me-2"></i>新增職缺
+            </h5>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+              aria-label="關閉"
+              style="filter: invert(1)"
+            ></button>
+          </div>
+          <div class="modal-body">
+            <div class="alert alert-info">
+              <i class="fas fa-info-circle me-2"></i>
+              將為團隊 <strong id="modalTeamName"></strong> 新增職缺
+            </div>
+            <form id="addJobForm">
+              <!-- 基本資訊 -->
+              <div class="row">
+                <div class="col-md-8">
+                  <div class="mb-3">
+                    <label for="jobTitle" class="form-label">職缺名稱 *</label>
+                    <input
+                      type="text"
+                      class="form-control"
+                      id="jobTitle"
+                      required
+                      placeholder="例：資深資料科學家"
+                    />
+                  </div>
+                </div>
+                <div class="col-md-4">
+                  <div class="mb-3">
+                    <label for="jobTeam" class="form-label">所屬團隊</label>
+                    <input
+                      type="text"
+                      class="form-control"
+                      id="jobTeam"
+                      readonly
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <!-- 聘用與地點資訊 -->
+              <div class="row">
+                <div class="col-md-4">
+                  <div class="mb-3">
+                    <label for="employmentType" class="form-label"
+                      >聘用類型 *</label
+                    >
+                    <select class="form-select" id="employmentType" required>
+                      <option value="">選擇類型</option>
+                      <option value="全職">全職</option>
+                      <option value="兼職">兼職</option>
+                      <option value="約聘">約聘</option>
+                      <option value="實習">實習</option>
+                      <option value="顧問">顧問</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="col-md-4">
+                  <div class="mb-3">
+                    <label for="location" class="form-label">工作地點 *</label>
+                    <input
+                      type="text"
+                      class="form-control"
+                      id="location"
+                      required
+                      placeholder="例：台北市信義區"
+                    />
+                  </div>
+                </div>
+                <div class="col-md-4">
+                  <div class="mb-3">
+                    <label for="minExperienceYears" class="form-label"
+                      >最低年資要求</label
+                    >
+                    <input
+                      type="number"
+                      class="form-control"
+                      id="minExperienceYears"
+                      min="0"
+                      placeholder="年"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <!-- 薪資範圍 -->
+              <div class="row">
+                <div class="col-md-4">
+                  <div class="mb-3">
+                    <label for="salaryMin" class="form-label">最低薪資</label>
+                    <input
+                      type="number"
+                      class="form-control"
+                      id="salaryMin"
+                      placeholder="800000"
+                    />
+                  </div>
+                </div>
+                <div class="col-md-4">
+                  <div class="mb-3">
+                    <label for="salaryMax" class="form-label">最高薪資</label>
+                    <input
+                      type="number"
+                      class="form-control"
+                      id="salaryMax"
+                      placeholder="1200000"
+                    />
+                  </div>
+                </div>
+                <div class="col-md-4">
+                  <div class="mb-3">
+                    <label for="salaryNote" class="form-label">薪資說明</label>
+                    <input
+                      type="text"
+                      class="form-control"
+                      id="salaryNote"
+                      placeholder="例：年薪，含年終獎金"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <!-- 學歷與主修要求 -->
+              <div class="row">
+                <div class="col-md-6">
+                  <div class="mb-3">
+                    <label for="educationRequired" class="form-label"
+                      >學歷要求</label
+                    >
+                    <select class="form-select" id="educationRequired">
+                      <option value="">不限</option>
+                      <option value="高中以上">高中以上</option>
+                      <option value="專科以上">專科以上</option>
+                      <option value="大學以上">大學以上</option>
+                      <option value="碩士以上">碩士以上</option>
+                      <option value="博士以上">博士以上</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="mb-3">
+                    <label for="majorsRequired" class="form-label"
+                      >主修條件</label
+                    >
+                    <input
+                      type="text"
+                      class="form-control"
+                      id="majorsRequired"
+                      placeholder="輸入主修科系後按 Enter 新增"
+                    />
+                    <div class="form-text">
+                      輸入主修科系後按 Enter 鍵新增，點擊 × 可刪除
+                    </div>
+                    <div
+                      id="majorsRequiredTags"
+                      class="mt-2 d-flex flex-wrap gap-1"
+                    >
+                      <!-- 主修 tags 將在這裡顯示 -->
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 語言條件 -->
+              <div class="mb-3">
+                <label for="languageRequired" class="form-label"
+                  >語言條件</label
+                >
+                <input
+                  type="text"
+                  class="form-control"
+                  id="languageRequired"
+                  placeholder="以逗號分隔，例：中文,英文"
+                />
+                <div class="form-text">以逗號分隔多種語言</div>
+              </div>
+
+              <!-- 工作內容 -->
+              <div class="mb-3">
+                <label for="responsibilities" class="form-label"
+                  >工作內容 *</label
+                >
+                <textarea
+                  class="form-control"
+                  id="responsibilities"
+                  rows="4"
+                  required
+                  placeholder="請以分行方式列出主要工作內容，例如：&#10;- 開發機器學習模型&#10;- 進行資料分析與視覺化&#10;- 與業務團隊協作定義需求"
+                ></textarea>
+                <div class="form-text">每行一個工作內容項目</div>
+              </div>
+
+              <!-- 必備技能 -->
+              <div class="mb-3">
+                <label for="requiredSkills" class="form-label"
+                  >必備技能 *</label
+                >
+                <input
+                  type="text"
+                  class="form-control"
+                  id="requiredSkills"
+                  placeholder="輸入技能名稱後按 Enter 新增"
+                />
+                <div class="form-text">
+                  輸入技能名稱後按 Enter 鍵新增，點擊 × 可刪除
+                </div>
+                <div
+                  id="requiredSkillsTags"
+                  class="mt-2 d-flex flex-wrap gap-1"
+                >
+                  <!-- 技能 tags 將在這裡顯示 -->
+                </div>
+              </div>
+
+              <!-- 加分技能 -->
+              <div class="mb-3">
+                <label for="niceToHaveSkills" class="form-label"
+                  >加分技能</label
+                >
+                <input
+                  type="text"
+                  class="form-control"
+                  id="niceToHaveSkills"
+                  placeholder="輸入技能名稱後按 Enter 新增"
+                />
+                <div class="form-text">
+                  輸入技能名稱後按 Enter 鍵新增，點擊 × 可刪除
+                </div>
+                <div
+                  id="niceToHaveSkillsTags"
+                  class="mt-2 d-flex flex-wrap gap-1"
+                >
+                  <!-- 技能 tags 將在這裡顯示 -->
+                </div>
+              </div>
+
+              <!-- 職缺狀態 -->
+              <div class="mb-3">
+                <label for="jobStatus" class="form-label">職缺狀態</label>
+                <select class="form-select" id="jobStatus">
+                  <option value="active" selected>活躍中</option>
+                  <option value="paused">暫停</option>
+                  <option value="closed">關閉</option>
+                </select>
+              </div>
+            </form>
+          </div>
+          <div class="modal-footer">
+            <button
+              type="button"
+              class="btn btn-secondary"
+              data-bs-dismiss="modal"
+            >
+              取消
+            </button>
+            <button
+              type="button"
+              id="createJob"
+              class="btn"
+              style="
+                background: linear-gradient(135deg, #0047ab 0%, #003d99 100%);
+                color: white;
+              "
+            >
+              建立職缺
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 編輯職缺 Modal -->
+    <div class="modal fade" id="editJobModal" tabindex="-1">
         <div class="modal-dialog modal-xl">
             <div class="modal-content">
                 <div class="modal-header" style="background: linear-gradient(135deg, #0047AB 0%, #003d99 100%); color: white;">
-                    <h5 class="modal-title" id="addJobModalLabel">
-                        <i class="fas fa-plus me-2"></i>新增職缺
+                    <h5 class="modal-title">
+                        <i class="fas fa-edit me-2"></i>編輯職缺
                     </h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="關閉" style="filter: invert(1);"></button>
                 </div>
                 <div class="modal-body">
-                    <div class="alert alert-info">
-                        <i class="fas fa-info-circle me-2"></i>
-                        將為團隊 <strong id="modalTeamName"></strong> 新增職缺
-                    </div>
-                    <form id="addJobForm">
-                        <!-- 基本資訊 -->
-                        <div class="row">
-                            <div class="col-md-8">
+                    <form id="editJobForm">
+                        <!-- 系統資訊 -->
+                        <div class="row mb-4">
+                            <div class="col-md-6">
                                 <div class="mb-3">
-                                    <label for="jobTitle" class="form-label">職缺名稱 *</label>
-                                    <input type="text" class="form-control" id="jobTitle" required placeholder="例：資深資料科學家">
+                                    <label class="form-label">團隊代號</label>
+                                    <input type="text" class="form-control" id="editTeamId" readonly>
                                 </div>
                             </div>
-                            <div class="col-md-4">
+                            <div class="col-md-6">
                                 <div class="mb-3">
-                                    <label for="jobTeam" class="form-label">所屬團隊</label>
-                                    <input type="text" class="form-control" id="jobTeam" readonly>
+                                    <label class="form-label">職缺代號</label>
+                                    <input type="text" class="form-control" id="editJobId" readonly>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- 聘用與地點資訊 -->
-                        <div class="row">
-                            <div class="col-md-4">
+                        <!-- 基本資訊 -->
+                        <div class="row mb-4">
+                            <div class="col-md-12">
                                 <div class="mb-3">
-                                    <label for="employmentType" class="form-label">聘用類型 *</label>
-                                    <select class="form-select" id="employmentType" required>
-                                        <option value="">選擇類型</option>
+                                    <label class="form-label">職缺名稱 <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" id="editJobTitle" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">聘用類型 <span class="text-danger">*</span></label>
+                                    <select class="form-select" id="editEmploymentType" required>
+                                        <option value="">請選擇</option>
                                         <option value="全職">全職</option>
                                         <option value="兼職">兼職</option>
                                         <option value="約聘">約聘</option>
                                         <option value="實習">實習</option>
-                                        <option value="顧問">顧問</option>
                                     </select>
                                 </div>
                             </div>
-                            <div class="col-md-4">
-                                <div class="mb-3">
-                                    <label for="location" class="form-label">工作地點 *</label>
-                                    <input type="text" class="form-control" id="location" required placeholder="例：台北市信義區">
-                                </div>
-                            </div>
-                            <div class="col-md-4">
-                                <div class="mb-3">
-                                    <label for="minExperienceYears" class="form-label">最低年資要求</label>
-                                    <input type="number" class="form-control" id="minExperienceYears" min="0" placeholder="年">
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- 薪資範圍 -->
-                        <div class="row">
-                            <div class="col-md-4">
-                                <div class="mb-3">
-                                    <label for="salaryMin" class="form-label">最低薪資</label>
-                                    <input type="number" class="form-control" id="salaryMin" placeholder="800000">
-                                </div>
-                            </div>
-                            <div class="col-md-4">
-                                <div class="mb-3">
-                                    <label for="salaryMax" class="form-label">最高薪資</label>
-                                    <input type="number" class="form-control" id="salaryMax" placeholder="1200000">
-                                </div>
-                            </div>
-                            <div class="col-md-4">
-                                <div class="mb-3">
-                                    <label for="salaryNote" class="form-label">薪資說明</label>
-                                    <input type="text" class="form-control" id="salaryNote" placeholder="例：年薪，含年終獎金">
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- 學歷與主修要求 -->
-                        <div class="row">
                             <div class="col-md-6">
                                 <div class="mb-3">
-                                    <label for="educationRequired" class="form-label">學歷要求</label>
-                                    <select class="form-select" id="educationRequired">
+                                    <label class="form-label">工作地點 <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" id="editLocation" required>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 條件要求 -->
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">年資要求（年）</label>
+                                    <input type="number" class="form-control" id="editMinExperienceYears" min="0">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">學歷要求</label>
+                                    <select class="form-select" id="editEducationRequired">
                                         <option value="">不限</option>
                                         <option value="高中以上">高中以上</option>
                                         <option value="專科以上">專科以上</option>
@@ -309,57 +586,82 @@
                                     </select>
                                 </div>
                             </div>
-                            <div class="col-md-6">
+                            <div class="col-md-12">
                                 <div class="mb-3">
-                                    <label for="majorsRequired" class="form-label">主修條件</label>
-                                    <input type="text" class="form-control" id="majorsRequired" placeholder="輸入主修科系後按 Enter 新增">
-                                    <div class="form-text">輸入主修科系後按 Enter 鍵新增，點擊 × 可刪除</div>
-                                    <div id="majorsRequiredTags" class="mt-2 d-flex flex-wrap gap-1">
-                                        <!-- 主修 tags 將在這裡顯示 -->
-                                    </div>
+                                    <label class="form-label">語言要求</label>
+                                    <input type="text" class="form-control" id="editLanguageRequired" placeholder="以逗號分隔，例如：英文,日文">
                                 </div>
                             </div>
                         </div>
 
-                        <!-- 語言條件 -->
-                        <div class="mb-3">
-                            <label for="languageRequired" class="form-label">語言條件</label>
-                            <input type="text" class="form-control" id="languageRequired" placeholder="以逗號分隔，例：中文,英文">
-                            <div class="form-text">以逗號分隔多種語言</div>
-                        </div>
-
-                        <!-- 工作內容 -->
-                        <div class="mb-3">
-                            <label for="responsibilities" class="form-label">工作內容 *</label>
-                            <textarea class="form-control" id="responsibilities" rows="4" required placeholder="請以分行方式列出主要工作內容，例如：&#10;- 開發機器學習模型&#10;- 進行資料分析與視覺化&#10;- 與業務團隊協作定義需求"></textarea>
-                            <div class="form-text">每行一個工作內容項目</div>
-                        </div>
-
-                        <!-- 必備技能 -->
-                        <div class="mb-3">
-                            <label for="requiredSkills" class="form-label">必備技能 *</label>
-                            <input type="text" class="form-control" id="requiredSkills" placeholder="輸入技能名稱後按 Enter 新增">
-                            <div class="form-text">輸入技能名稱後按 Enter 鍵新增，點擊 × 可刪除</div>
-                            <div id="requiredSkillsTags" class="mt-2 d-flex flex-wrap gap-1">
-                                <!-- 技能 tags 將在這裡顯示 -->
+                        <!-- 薪資範圍 -->
+                        <div class="row mb-4">
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label class="form-label">最低薪資</label>
+                                    <input type="number" class="form-control" id="editSalaryMin" min="0" step="10000">
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label class="form-label">最高薪資</label>
+                                    <input type="number" class="form-control" id="editSalaryMax" min="0" step="10000">
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label class="form-label">薪資備註</label>
+                                    <input type="text" class="form-control" id="editSalaryNote" placeholder="例如：面議">
+                                </div>
                             </div>
                         </div>
 
-                        <!-- 加分技能 -->
-                        <div class="mb-3">
-                            <label for="niceToHaveSkills" class="form-label">加分技能</label>
-                            <input type="text" class="form-control" id="niceToHaveSkills" placeholder="輸入技能名稱後按 Enter 新增">
-                            <div class="form-text">輸入技能名稱後按 Enter 鍵新增，點擊 × 可刪除</div>
-                            <div id="niceToHaveSkillsTags" class="mt-2 d-flex flex-wrap gap-1">
-                                <!-- 技能 tags 將在這裡顯示 -->
+                        <!-- 工作內容 -->
+                        <div class="mb-4">
+                            <label class="form-label">工作內容 <span class="text-danger">*</span></label>
+                            <textarea class="form-control" id="editResponsibilities" rows="5" required 
+                                placeholder="每行一項工作內容"></textarea>
+                        </div>
+
+                        <!-- 技能要求 -->
+                        <div class="row mb-4">
+                            <div class="col-md-12">
+                                <div class="mb-3">
+                                    <label class="form-label">必備技能 <span class="text-danger">*</span></label>
+                                    <div class="input-group mb-2">
+                                        <input type="text" class="form-control" id="editRequiredSkills" 
+                                            placeholder="按Enter新增技能">
+                                    </div>
+                                    <div id="editRequiredSkillsTags" class="d-flex flex-wrap gap-1"></div>
+                                </div>
+                            </div>
+                            <div class="col-md-12">
+                                <div class="mb-3">
+                                    <label class="form-label">加分技能</label>
+                                    <div class="input-group mb-2">
+                                        <input type="text" class="form-control" id="editNiceToHaveSkills" 
+                                            placeholder="按Enter新增技能">
+                                    </div>
+                                    <div id="editNiceToHaveSkillsTags" class="d-flex flex-wrap gap-1"></div>
+                                </div>
+                            </div>
+                            <div class="col-md-12">
+                                <div class="mb-3">
+                                    <label class="form-label">主修要求</label>
+                                    <div class="input-group mb-2">
+                                        <input type="text" class="form-control" id="editMajorsRequired" 
+                                            placeholder="按Enter新增主修">
+                                    </div>
+                                    <div id="editMajorsRequiredTags" class="d-flex flex-wrap gap-1"></div>
+                                </div>
                             </div>
                         </div>
 
                         <!-- 職缺狀態 -->
-                        <div class="mb-3">
-                            <label for="jobStatus" class="form-label">職缺狀態</label>
-                            <select class="form-select" id="jobStatus">
-                                <option value="active" selected>活躍中</option>
+                        <div class="mb-4">
+                            <label class="form-label">職缺狀態</label>
+                            <select class="form-select" id="editJobStatus">
+                                <option value="active">活躍中</option>
                                 <option value="paused">暫停</option>
                                 <option value="closed">關閉</option>
                             </select>
@@ -368,7 +670,7 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
-                    <button type="button" id="createJob" class="btn" style="background: linear-gradient(135deg, #0047AB 0%, #003d99 100%); color: white;">建立職缺</button>
+                    <button type="button" id="updateJob" class="btn" style="background: linear-gradient(135deg, #0047AB 0%, #003d99 100%); color: white;">更新職缺</button>
                 </div>
             </div>
         </div>
@@ -376,177 +678,206 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        // 全域變數
-        let teamData = null;
-        let jobsData = [];
-        let currentJobId = null;
-        let isSubmitting = false; // 防止重複提交的標記變量
+      // 全域變數
+      let teamData = null;
+      let jobsData = [];
+      let currentJobId = null;
+      let isSubmitting = false; // 防止重複提交的標記變量
 
-        // 頁面載入完成後執行
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log('團隊職缺頁面載入完成');
-            
-            // 從 URL 參數取得團隊 ID
-            const urlParams = new URLSearchParams(window.location.search);
-            const teamId = urlParams.get('team_id');
-            
-            if (!teamId) {
-                showError('未指定團隊 ID');
-                return;
+      // 頁面載入完成後執行
+      document.addEventListener("DOMContentLoaded", function () {
+        console.log("團隊職缺頁面載入完成");
+
+        // 從 URL 參數取得團隊 ID
+        const urlParams = new URLSearchParams(window.location.search);
+        const teamId = urlParams.get("team_id");
+
+        if (!teamId) {
+          showError("未指定團隊 ID");
+          return;
+        }
+
+        loadTeamData(teamId);
+
+        // 初始化事件監聽器（只初始化一次）
+        initializeEventListeners();
+      });
+
+      // 初始化事件監聽器
+      function initializeEventListeners() {
+        // 檢查是否已經綁定過，避免重複綁定
+        const createJobBtn = document.getElementById("createJob");
+        if (!createJobBtn.hasAttribute("data-listener-bound")) {
+          createJobBtn.addEventListener("click", createJob);
+          createJobBtn.setAttribute("data-listener-bound", "true");
+        }
+
+        // 添加 Modal 關閉事件監聽器
+        const addJobModal = document.getElementById("addJobModal");
+        if (!addJobModal.hasAttribute("data-listener-bound")) {
+          addJobModal.addEventListener("hidden.bs.modal", function () {
+            // Modal 關閉時重置狀態
+            resetJobForm();
+          });
+          addJobModal.setAttribute("data-listener-bound", "true");
+        }
+
+        // 設置技能 tag 輸入
+        setupSkillTagInput("requiredSkills", "requiredSkillsTags");
+        setupSkillTagInput("niceToHaveSkills", "niceToHaveSkillsTags");
+        setupSkillTagInput("majorsRequired", "majorsRequiredTags");
+
+        // 添加更新職缺按鈕事件監聽器
+        const updateJobBtn = document.getElementById("updateJob");
+        if (!updateJobBtn.hasAttribute("data-listener-bound")) {
+          updateJobBtn.addEventListener("click", updateJob);
+          updateJobBtn.setAttribute("data-listener-bound", "true");
+        }
+
+        // 添加編輯 Modal 關閉事件監聽器
+        const editJobModal = document.getElementById("editJobModal");
+        if (!editJobModal.hasAttribute("data-listener-bound")) {
+          editJobModal.addEventListener("hidden.bs.modal", function () {
+            // Modal 關閉時重置表單
+            document.getElementById("editRequiredSkillsTags").innerHTML = "";
+            document.getElementById("editNiceToHaveSkillsTags").innerHTML = "";
+            document.getElementById("editMajorsRequiredTags").innerHTML = "";
+          });
+          editJobModal.setAttribute("data-listener-bound", "true");
+        }
+      }
+
+      // 設置技能 tag 輸入功能
+      function setupSkillTagInput(inputId, tagsContainerId) {
+        const input = document.getElementById(inputId);
+        const tagsContainer = document.getElementById(tagsContainerId);
+
+        input.addEventListener("keypress", function (e) {
+          if (e.key === "Enter") {
+            e.preventDefault();
+            const skill = input.value.trim();
+            if (skill && !isSkillExists(tagsContainer, skill)) {
+              addSkillTag(tagsContainer, skill);
+              input.value = "";
             }
-            
-            loadTeamData(teamId);
-            
-            // 初始化事件監聽器（只初始化一次）
-            initializeEventListeners();
+          }
         });
+      }
 
-        // 初始化事件監聽器
-        function initializeEventListeners() {
-            // 檢查是否已經綁定過，避免重複綁定
-            const createJobBtn = document.getElementById('createJob');
-            if (!createJobBtn.hasAttribute('data-listener-bound')) {
-                createJobBtn.addEventListener('click', createJob);
-                createJobBtn.setAttribute('data-listener-bound', 'true');
-            }
-            
-            // 添加 Modal 關閉事件監聽器
-            const addJobModal = document.getElementById('addJobModal');
-            if (!addJobModal.hasAttribute('data-listener-bound')) {
-                addJobModal.addEventListener('hidden.bs.modal', function() {
-                    // Modal 關閉時重置狀態
-                    resetJobForm();
-                });
-                addJobModal.setAttribute('data-listener-bound', 'true');
-            }
-            
-            // 設置技能 tag 輸入
-            setupSkillTagInput('requiredSkills', 'requiredSkillsTags');
-            setupSkillTagInput('niceToHaveSkills', 'niceToHaveSkillsTags');
-            setupSkillTagInput('majorsRequired', 'majorsRequiredTags');
-        }
+      // 檢查技能是否已存在
+      function isSkillExists(container, skill) {
+        const existingTags = Array.from(container.children);
+        return existingTags.some(
+          (tag) =>
+            tag.textContent.replace("×", "").trim().toLowerCase() ===
+            skill.toLowerCase()
+        );
+      }
 
-        // 設置技能 tag 輸入功能
-        function setupSkillTagInput(inputId, tagsContainerId) {
-            const input = document.getElementById(inputId);
-            const tagsContainer = document.getElementById(tagsContainerId);
-            
-            input.addEventListener('keypress', function(e) {
-                if (e.key === 'Enter') {
-                    e.preventDefault();
-                    const skill = input.value.trim();
-                    if (skill && !isSkillExists(tagsContainer, skill)) {
-                        addSkillTag(tagsContainer, skill);
-                        input.value = '';
-                    }
-                }
-            });
-        }
-
-        // 檢查技能是否已存在
-        function isSkillExists(container, skill) {
-            const existingTags = Array.from(container.children);
-            return existingTags.some(tag => 
-                tag.textContent.replace('×', '').trim().toLowerCase() === skill.toLowerCase()
-            );
-        }
-
-        // 添加技能 tag
-        function addSkillTag(container, skill) {
-            const tag = document.createElement('span');
-            tag.className = 'badge bg-primary me-1 mb-1 position-relative';
-            tag.style.cssText = 'padding-right: 25px; cursor: default;';
-            tag.innerHTML = `
+      // 添加技能 tag
+      function addSkillTag(container, skill) {
+        const tag = document.createElement("span");
+        tag.className = "badge bg-primary me-1 mb-1 position-relative";
+        tag.style.cssText = "padding-right: 25px; cursor: default;";
+        tag.innerHTML = `
                 ${skill}
                 <button type="button" class="btn-close btn-close-white position-absolute" 
                         style="top: 2px; right: 4px; font-size: 0.6rem;"
                         onclick="removeSkillTag(this)"></button>
             `;
-            container.appendChild(tag);
-        }
+        container.appendChild(tag);
+      }
 
-        // 移除技能 tag
-        function removeSkillTag(button) {
-            button.parentElement.remove();
-        }
+      // 移除技能 tag
+      function removeSkillTag(button) {
+        button.parentElement.remove();
+      }
 
-        // 重置職缺表單
-        function resetJobForm() {
-            document.getElementById('addJobForm').reset();
-            document.getElementById('requiredSkillsTags').innerHTML = '';
-            document.getElementById('niceToHaveSkillsTags').innerHTML = '';
-            document.getElementById('majorsRequiredTags').innerHTML = '';
-            
-            // 重置提交狀態
-            isSubmitting = false;
-            const createJobBtn = document.getElementById('createJob');
-            createJobBtn.disabled = false;
-            createJobBtn.innerHTML = '建立職缺';
-        }
+      // 重置職缺表單
+      function resetJobForm() {
+        document.getElementById("addJobForm").reset();
+        document.getElementById("requiredSkillsTags").innerHTML = "";
+        document.getElementById("niceToHaveSkillsTags").innerHTML = "";
+        document.getElementById("majorsRequiredTags").innerHTML = "";
 
-        // 載入團隊資料
-        async function loadTeamData(teamId) {
-            try {
-                console.log('🔄 載入團隊資料:', teamId);
-                
-                const apiUrl = window.CONFIG ? window.CONFIG.API_BASE_URL : 'https://44wy0r4r16.execute-api.ap-southeast-1.amazonaws.com/dev';
-                
-                // 載入團隊資訊
-                const teamResponse = await fetch(`${apiUrl}/teams/${encodeURIComponent(teamId)}`, {
-                    method: 'GET',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    }
-                });
+        // 重置提交狀態
+        isSubmitting = false;
+        const createJobBtn = document.getElementById("createJob");
+        createJobBtn.disabled = false;
+        createJobBtn.innerHTML = "建立職缺";
+      }
 
-                if (!teamResponse.ok) {
-                    throw new Error(`載入團隊資料失敗: ${teamResponse.status}`);
-                }
+      // 載入團隊資料
+      async function loadTeamData(teamId) {
+        try {
+          console.log("🔄 載入團隊資料:", teamId);
 
-                const teamResult = await teamResponse.json();
-                teamData = teamResult.team || teamResult; // 支援兩種回應格式
-                console.log('✅ 團隊資料載入成功:', teamData);
-                
-                // 載入該團隊的職缺
-                const jobsResponse = await fetch(`${apiUrl}/jobs?team_id=${encodeURIComponent(teamId)}`, {
-                    method: 'GET',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    }
-                });
+          const apiUrl = window.CONFIG
+            ? window.CONFIG.API_BASE_URL
+            : "https://44wy0r4r16.execute-api.ap-southeast-1.amazonaws.com/dev";
 
-                if (!jobsResponse.ok) {
-                    throw new Error(`載入職缺資料失敗: ${jobsResponse.status}`);
-                }
-
-                const jobsResult = await jobsResponse.json();
-                jobsData = jobsResult.data || [];
-                console.log('✅ 職缺資料載入成功:', jobsData.length, '個職缺');
-                
-                // 渲染頁面
-                renderTeamInfo();
-                renderJobsList();
-                
-            } catch (error) {
-                console.error('❌ 載入資料失敗:', error);
-                showError('載入資料失敗: ' + error.message);
+          // 載入團隊資訊
+          const teamResponse = await fetch(
+            `${apiUrl}/teams/${encodeURIComponent(teamId)}`,
+            {
+              method: "GET",
+              headers: {
+                "Content-Type": "application/json",
+              },
             }
-        }
+          );
 
-        // 渲染團隊資訊
-        function renderTeamInfo() {
-            const titleElement = document.getElementById('teamTitle');
-            const cardElement = document.getElementById('teamInfoCard');
-            
-            // 安全地取得團隊資訊，提供預設值
-            const company = teamData.company || '未知公司';
-            const department = teamData.department || '未知部門';  
-            const teamName = teamData.team_name || '未知團隊';
-            const description = teamData.description || teamData.team_description || '暫無描述';
-            
-            titleElement.textContent = `${company} - ${department} - ${teamName}`;
-            
-            cardElement.innerHTML = `
+          if (!teamResponse.ok) {
+            throw new Error(`載入團隊資料失敗: ${teamResponse.status}`);
+          }
+
+          const teamResult = await teamResponse.json();
+          teamData = teamResult.team || teamResult; // 支援兩種回應格式
+          console.log("✅ 團隊資料載入成功:", teamData);
+
+          // 載入該團隊的職缺
+          const jobsResponse = await fetch(
+            `${apiUrl}/jobs?team_id=${encodeURIComponent(teamId)}`,
+            {
+              method: "GET",
+              headers: {
+                "Content-Type": "application/json",
+              },
+            }
+          );
+
+          if (!jobsResponse.ok) {
+            throw new Error(`載入職缺資料失敗: ${jobsResponse.status}`);
+          }
+
+          const jobsResult = await jobsResponse.json();
+          jobsData = jobsResult.data || [];
+          console.log("✅ 職缺資料載入成功:", jobsData.length, "個職缺");
+
+          // 渲染頁面
+          renderTeamInfo();
+          renderJobsList();
+        } catch (error) {
+          console.error("❌ 載入資料失敗:", error);
+          showError("載入資料失敗: " + error.message);
+        }
+      }
+
+      // 渲染團隊資訊
+      function renderTeamInfo() {
+        const titleElement = document.getElementById("teamTitle");
+        const cardElement = document.getElementById("teamInfoCard");
+
+        // 安全地取得團隊資訊，提供預設值
+        const company = teamData.company || "未知公司";
+        const department = teamData.department || "未知部門";
+        const teamName = teamData.team_name || "未知團隊";
+        const description =
+          teamData.description || teamData.team_description || "暫無描述";
+
+        titleElement.textContent = `${company} - ${department} - ${teamName}`;
+
+        cardElement.innerHTML = `
                 <div class="row">
                     <div class="col-md-8">
                         <h3>${company} - ${department}</h3>
@@ -565,86 +896,112 @@
                     </div>
                 </div>
             `;
-        }
+      }
 
-        // 渲染職缺列表
-        function renderJobsList() {
-            const container = document.getElementById('jobsList');
-            
-            if (jobsData.length === 0) {
-                container.innerHTML = `
+      // 渲染職缺列表
+      function renderJobsList() {
+        const container = document.getElementById("jobsList");
+
+        if (jobsData.length === 0) {
+          container.innerHTML = `
                     <div class="empty-state">
                         <i class="fas fa-briefcase fa-2x"></i>
                         <h5>尚無職缺</h5>
                         <p>點擊上方「新增」按鈕來建立第一個職缺</p>
                     </div>
                 `;
-                return;
-            }
+          return;
+        }
 
-            container.innerHTML = jobsData.map(job => `
-                <div class="job-item" onclick="selectJob('${job.job_id}')" id="job-${job.job_id}">
-                    <div class="job-title">${job.job_title || '未命名職缺'}</div>
+        container.innerHTML = jobsData
+          .map(
+            (job) => `
+                <div class="job-item" onclick="selectJob('${
+                  job.job_id
+                }')" id="job-${job.job_id}">
+                    <div class="job-title">${
+                      job.job_title || "未命名職缺"
+                    }</div>
                     <div class="job-meta">
                         <div class="mb-1">
-                            <i class="fas fa-briefcase me-1"></i>${job.employment_type || '未設定'}
-                            <i class="fas fa-map-marker-alt ms-2 me-1"></i>${job.location || '未設定'}
+                            <i class="fas fa-briefcase me-1"></i>${
+                              job.employment_type || "未設定"
+                            }
+                            <i class="fas fa-map-marker-alt ms-2 me-1"></i>${
+                              job.location || "未設定"
+                            }
                         </div>
                         <div class="d-flex justify-content-between align-items-center">
-                            <span class="job-status ${job.status || 'active'}">${getStatusText(job.status)}</span>
-                            <small class="text-muted">${formatDate(job.created_at)}</small>
+                            <span class="job-status ${
+                              job.status || "active"
+                            }">${getStatusText(job.status)}</span>
+                            <small class="text-muted">${formatDate(
+                              job.created_at
+                            )}</small>
                         </div>
                     </div>
                 </div>
-            `).join('');
+            `
+          )
+          .join("");
+      }
+
+      // 選擇職缺
+      function selectJob(jobId) {
+        // 移除之前的選中狀態
+        document.querySelectorAll(".job-item").forEach((item) => {
+          item.classList.remove("active");
+        });
+
+        // 添加選中狀態
+        document.getElementById(`job-${jobId}`).classList.add("active");
+
+        currentJobId = jobId;
+        const job = jobsData.find((j) => j.job_id === jobId);
+
+        if (job) {
+          renderJobDetail(job);
+        }
+      }
+
+      // 渲染職缺詳情
+      function renderJobDetail(job) {
+        const container = document.getElementById("jobDetailContent");
+
+        // 薪資顯示
+        let salaryDisplay = "面議";
+        if (job.salary_min && job.salary_max) {
+          salaryDisplay = `$${(job.salary_min / 10000).toFixed(0)}萬 - $${(
+            job.salary_max / 10000
+          ).toFixed(0)}萬`;
+          if (job.salary_note) {
+            salaryDisplay += ` (${job.salary_note})`;
+          }
+        } else if (job.salary_note) {
+          salaryDisplay = job.salary_note;
         }
 
-        // 選擇職缺
-        function selectJob(jobId) {
-            // 移除之前的選中狀態
-            document.querySelectorAll('.job-item').forEach(item => {
-                item.classList.remove('active');
-            });
-            
-            // 添加選中狀態
-            document.getElementById(`job-${jobId}`).classList.add('active');
-            
-            currentJobId = jobId;
-            const job = jobsData.find(j => j.job_id === jobId);
-            
-            if (job) {
-                renderJobDetail(job);
-            }
-        }
-
-        // 渲染職缺詳情
-        function renderJobDetail(job) {
-            const container = document.getElementById('jobDetailContent');
-            
-            // 薪資顯示
-            let salaryDisplay = '面議';
-            if (job.salary_min && job.salary_max) {
-                salaryDisplay = `$${(job.salary_min/10000).toFixed(0)}萬 - $${(job.salary_max/10000).toFixed(0)}萬`;
-                if (job.salary_note) {
-                    salaryDisplay += ` (${job.salary_note})`;
-                }
-            } else if (job.salary_note) {
-                salaryDisplay = job.salary_note;
-            }
-
-            container.innerHTML = `
+        container.innerHTML = `
                 <div class="d-flex justify-content-between align-items-start mb-4">
                     <div>
-                        <h2>${job.job_title || '未命名職缺'}</h2>
+                        <h2>${job.job_title || "未命名職缺"}</h2>
                         <div class="text-muted">
-                            <i class="fas fa-building me-2"></i>${(teamData.company || '未知公司')} - ${(teamData.department || '未知部門')} - ${(teamData.team_name || '未知團隊')}
+                            <i class="fas fa-building me-2"></i>${
+                              teamData.company || "未知公司"
+                            } - ${teamData.department || "未知部門"} - ${
+          teamData.team_name || "未知團隊"
+        }
                         </div>
                     </div>
                     <div class="d-flex gap-2">
-                        <button class="btn btn-outline-primary btn-sm" onclick="editJob('${job.job_id}')">
+                        <button class="btn btn-outline-primary btn-sm" onclick="editJob('${
+                          job.job_id
+                        }')">
                             <i class="fas fa-edit"></i> 編輯
                         </button>
-                        <button class="btn btn-outline-info btn-sm" onclick="viewJobPage('${job.job_id}')">
+                        <button class="btn btn-outline-info btn-sm" onclick="viewJobPage('${
+                          job.job_id
+                        }')">
                             <i class="fas fa-external-link-alt"></i> 檢視頁面
                         </button>
                     </div>
@@ -653,15 +1010,19 @@
                 <div class="row mb-4">
                     <div class="col-md-3">
                         <h6><i class="fas fa-briefcase me-2"></i>聘用類型</h6>
-                        <p>${job.employment_type || '未設定'}</p>
+                        <p>${job.employment_type || "未設定"}</p>
                     </div>
                     <div class="col-md-3">
                         <h6><i class="fas fa-map-marker-alt me-2"></i>工作地點</h6>
-                        <p>${job.location || '未設定'}</p>
+                        <p>${job.location || "未設定"}</p>
                     </div>
                     <div class="col-md-3">
                         <h6><i class="fas fa-chart-line me-2"></i>年資要求</h6>
-                        <p>${job.min_experience_years ? `${job.min_experience_years}年以上` : '不拘'}</p>
+                        <p>${
+                          job.min_experience_years
+                            ? `${job.min_experience_years}年以上`
+                            : "不拘"
+                        }</p>
                     </div>
                     <div class="col-md-3">
                         <h6><i class="fas fa-dollar-sign me-2"></i>薪資範圍</h6>
@@ -672,9 +1033,13 @@
                 <div class="mb-4">
                     <h6><i class="fas fa-tasks me-2"></i>工作內容</h6>
                     <ul>
-                        ${job.responsibilities && job.responsibilities.length > 0 
-                            ? job.responsibilities.map(item => `<li>${item}</li>`).join('')
-                            : '<li>未設定</li>'
+                        ${
+                          job.responsibilities &&
+                          job.responsibilities.length > 0
+                            ? job.responsibilities
+                                .map((item) => `<li>${item}</li>`)
+                                .join("")
+                            : "<li>未設定</li>"
                         }
                     </ul>
                 </div>
@@ -683,8 +1048,15 @@
                     <div class="col-md-6">
                         <h6><i class="fas fa-tools me-2"></i>必備技能</h6>
                         <div class="d-flex flex-wrap gap-1">
-                            ${job.required_skills && job.required_skills.length > 0 
-                                ? job.required_skills.map(skill => `<span class="badge bg-danger">${skill}</span>`).join('')
+                            ${
+                              job.required_skills &&
+                              job.required_skills.length > 0
+                                ? job.required_skills
+                                    .map(
+                                      (skill) =>
+                                        `<span class="badge bg-danger">${skill}</span>`
+                                    )
+                                    .join("")
                                 : '<span class="text-muted">未設定</span>'
                             }
                         </div>
@@ -692,32 +1064,57 @@
                     <div class="col-md-6">
                         <h6><i class="fas fa-plus-circle me-2"></i>加分技能</h6>
                         <div class="d-flex flex-wrap gap-1">
-                            ${job.nice_to_have_skills && job.nice_to_have_skills.length > 0 
-                                ? job.nice_to_have_skills.map(skill => `<span class="badge bg-success">${skill}</span>`).join('')
+                            ${
+                              job.nice_to_have_skills &&
+                              job.nice_to_have_skills.length > 0
+                                ? job.nice_to_have_skills
+                                    .map(
+                                      (skill) =>
+                                        `<span class="badge bg-success">${skill}</span>`
+                                    )
+                                    .join("")
                                 : '<span class="text-muted">無</span>'
                             }
                         </div>
                     </div>
                 </div>
 
-                ${job.education_required || (job.majors_required && job.majors_required.length > 0) ? `
+                ${
+                  job.education_required ||
+                  (job.majors_required && job.majors_required.length > 0)
+                    ? `
                 <div class="row mb-4">
-                    ${job.education_required ? `
+                    ${
+                      job.education_required
+                        ? `
                     <div class="col-md-6">
                         <h6><i class="fas fa-graduation-cap me-2"></i>學歷要求</h6>
                         <p>${job.education_required}</p>
                     </div>
-                    ` : ''}
-                    ${job.majors_required && job.majors_required.length > 0 ? `
+                    `
+                        : ""
+                    }
+                    ${
+                      job.majors_required && job.majors_required.length > 0
+                        ? `
                     <div class="col-md-6">
                         <h6><i class="fas fa-book me-2"></i>主修條件</h6>
                         <div class="d-flex flex-wrap gap-1">
-                            ${job.majors_required.map(major => `<span class="badge bg-info">${major}</span>`).join('')}
+                            ${job.majors_required
+                              .map(
+                                (major) =>
+                                  `<span class="badge bg-info">${major}</span>`
+                              )
+                              .join("")}
                         </div>
                     </div>
-                    ` : ''}
+                    `
+                        : ""
+                    }
                 </div>
-                ` : ''}
+                `
+                    : ""
+                }
 
                 <div class="border-top pt-3 mt-4">
                     <div class="row text-muted small">
@@ -725,201 +1122,370 @@
                             <strong>職缺 ID:</strong> ${job.job_id}
                         </div>
                         <div class="col-md-4">
-                            <strong>建立時間:</strong> ${formatDate(job.created_at)}
+                            <strong>建立時間:</strong> ${formatDate(
+                              job.created_at
+                            )}
                         </div>
                         <div class="col-md-4">
-                            <strong>狀態:</strong> <span class="job-status ${job.status}">${getStatusText(job.status)}</span>
+                            <strong>狀態:</strong> <span class="job-status ${
+                              job.status
+                            }">${getStatusText(job.status)}</span>
                         </div>
                     </div>
                 </div>
             `;
+      }
+
+      // 取得狀態文字
+      function getStatusText(status) {
+        const statusMap = {
+          active: "活躍中",
+          paused: "暫停",
+          closed: "關閉",
+          deleted: "已刪除",
+        };
+        return statusMap[status] || "活躍中";
+      }
+
+      // 格式化日期
+      function formatDate(dateString) {
+        if (!dateString) return "未知";
+        return new Date(dateString).toLocaleDateString("zh-TW");
+      }
+
+      // 新增職缺
+      function addNewJob() {
+        if (!teamData) {
+          showAlert("團隊資料尚未載入，請稍後再試", "warning");
+          return;
         }
 
-        // 取得狀態文字
-        function getStatusText(status) {
-            const statusMap = {
-                'active': '活躍中',
-                'paused': '暫停',
-                'closed': '關閉',
-                'deleted': '已刪除'
-            };
-            return statusMap[status] || '活躍中';
+        // 設置團隊資訊，提供預設值避免 undefined
+        const company = teamData.company || "未知公司";
+        const department = teamData.department || "未知部門";
+        const teamName = teamData.team_name || "未知團隊";
+
+        const teamDisplayName = `${company} - ${department} - ${teamName}`;
+
+        document.getElementById("modalTeamName").textContent = teamDisplayName;
+        document.getElementById("jobTeam").value = teamDisplayName;
+
+        // 重置表單
+        resetJobForm();
+
+        // 顯示 Modal
+        new bootstrap.Modal(document.getElementById("addJobModal")).show();
+      }
+
+      // 建立職缺
+      async function createJob() {
+        // 防止重複提交
+        if (isSubmitting) {
+          console.log("⚠️ 正在提交中，請勿重複點擊");
+          return;
         }
 
-        // 格式化日期
-        function formatDate(dateString) {
-            if (!dateString) return '未知';
-            return new Date(dateString).toLocaleDateString('zh-TW');
+        const createJobBtn = document.getElementById("createJob");
+        const originalText = createJobBtn.innerHTML;
+
+        try {
+          // 設置提交狀態
+          isSubmitting = true;
+          createJobBtn.disabled = true;
+          createJobBtn.innerHTML =
+            '<i class="fas fa-spinner fa-spin me-2"></i>建立中...';
+
+          // 處理工作內容陣列
+          const responsibilitiesText = document
+            .getElementById("responsibilities")
+            .value.trim();
+          const responsibilities = responsibilitiesText
+            .split("\n")
+            .map((line) => line.trim().replace(/^-\s*/, ""))
+            .filter((line) => line.length > 0);
+
+          // 處理技能陣列 (從 tags 取得)
+          const requiredSkills = Array.from(
+            document.getElementById("requiredSkillsTags").children
+          )
+            .map((tag) => tag.textContent.replace("×", "").trim())
+            .filter((skill) => skill);
+
+          const niceToHaveSkills = Array.from(
+            document.getElementById("niceToHaveSkillsTags").children
+          )
+            .map((tag) => tag.textContent.replace("×", "").trim())
+            .filter((skill) => skill);
+
+          // 處理主修陣列 (從 tags 取得)
+          const majorsText = Array.from(
+            document.getElementById("majorsRequiredTags").children
+          )
+            .map((tag) => tag.textContent.replace("×", "").trim())
+            .filter((major) => major);
+
+          const languagesText = document
+            .getElementById("languageRequired")
+            .value.trim();
+          const languageRequired = languagesText
+            ? languagesText
+                .split(",")
+                .map((s) => s.trim())
+                .filter((s) => s)
+            : [];
+
+          // 建構職缺資料
+          const formData = {
+            job_title: document.getElementById("jobTitle").value.trim(),
+            team_id: teamData.team_id,
+            employment_type: document.getElementById("employmentType").value,
+            location: document.getElementById("location").value.trim(),
+            salary_min: document.getElementById("salaryMin").value
+              ? parseInt(document.getElementById("salaryMin").value)
+              : null,
+            salary_max: document.getElementById("salaryMax").value
+              ? parseInt(document.getElementById("salaryMax").value)
+              : null,
+            salary_note: document.getElementById("salaryNote").value.trim(),
+            responsibilities: responsibilities,
+            required_skills: requiredSkills,
+            nice_to_have_skills: niceToHaveSkills,
+            min_experience_years: document.getElementById("minExperienceYears")
+              .value
+              ? parseInt(document.getElementById("minExperienceYears").value)
+              : null,
+            education_required:
+              document.getElementById("educationRequired").value,
+            majors_required: majorsText,
+            language_required: languageRequired,
+            status: document.getElementById("jobStatus").value,
+          };
+
+          // 驗證必填欄位
+          if (
+            !formData.job_title ||
+            !formData.employment_type ||
+            !formData.location ||
+            !formData.responsibilities.length ||
+            !formData.required_skills.length
+          ) {
+            showAlert("請填寫所有必填欄位", "warning");
+            return;
+          }
+
+          console.log("📤 建立職缺資料:", formData);
+
+          const apiUrl = window.CONFIG
+            ? window.CONFIG.API_BASE_URL
+            : "https://44wy0r4r16.execute-api.ap-southeast-1.amazonaws.com/dev";
+
+          const response = await fetch(apiUrl + "/jobs", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(formData),
+          });
+
+          if (!response.ok) {
+            const errorData = await response.text();
+            throw new Error(`HTTP ${response.status}: ${errorData}`);
+          }
+
+          const result = await response.json();
+          console.log("✅ 職缺建立成功:", result);
+
+          // 關閉 modal 並重新載入資料
+          bootstrap.Modal.getInstance(
+            document.getElementById("addJobModal")
+          ).hide();
+          resetJobForm();
+
+          // 重新載入團隊職缺資料
+          await loadTeamData(teamData.team_id);
+
+          showAlert("職缺建立成功！", "success");
+        } catch (error) {
+          console.error("❌ 建立職缺失敗:", error);
+          showAlert("建立職缺失敗: " + error.message, "danger");
+        } finally {
+          // 恢復按鈕狀態
+          isSubmitting = false;
+          createJobBtn.disabled = false;
+          createJobBtn.innerHTML = originalText;
+        }
+      }
+
+      // 編輯職缺
+      function editJob(jobId) {
+        if (!jobsData) {
+          showAlert('職缺資料尚未載入，請稍後再試', 'warning');
+          return;
         }
 
-        // 新增職缺
-        function addNewJob() {
-            if (!teamData) {
-                showAlert('團隊資料尚未載入，請稍後再試', 'warning');
-                return;
-            }
-            
-            // 設置團隊資訊，提供預設值避免 undefined
-            const company = teamData.company || '未知公司';
-            const department = teamData.department || '未知部門';
-            const teamName = teamData.team_name || '未知團隊';
-            
-            const teamDisplayName = `${company} - ${department} - ${teamName}`;
-            
-            document.getElementById('modalTeamName').textContent = teamDisplayName;
-            document.getElementById('jobTeam').value = teamDisplayName;
-            
-            // 重置表單
-            resetJobForm();
-            
-            // 顯示 Modal
-            new bootstrap.Modal(document.getElementById('addJobModal')).show();
+        const job = jobsData.find(j => j.job_id === jobId);
+        if (!job) {
+          showAlert('找不到該職缺資料', 'warning');
+          return;
         }
 
-        // 建立職缺
-        async function createJob() {
-            // 防止重複提交
-            if (isSubmitting) {
-                console.log('⚠️ 正在提交中，請勿重複點擊');
-                return;
-            }
+        console.log('正在編輯職缺:', job);
 
-            const createJobBtn = document.getElementById('createJob');
-            const originalText = createJobBtn.innerHTML;
-            
-            try {
-                // 設置提交狀態
-                isSubmitting = true;
-                createJobBtn.disabled = true;
-                createJobBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>建立中...';
-                
-                // 處理工作內容陣列
-                const responsibilitiesText = document.getElementById('responsibilities').value.trim();
-                const responsibilities = responsibilitiesText.split('\n')
-                    .map(line => line.trim().replace(/^-\s*/, ''))
-                    .filter(line => line.length > 0);
+        // 填入系統資訊
+        document.getElementById('editTeamId').value = job.team_id || '';
+        document.getElementById('editJobId').value = job.job_id || '';
+        
+        // 填入基本資訊
+        document.getElementById('editJobTitle').value = job.job_title || '';
+        document.getElementById('editEmploymentType').value = job.employment_type || '';
+        document.getElementById('editLocation').value = job.location || '';
+        document.getElementById('editMinExperienceYears').value = job.min_experience_years || '';
+        document.getElementById('editSalaryMin').value = job.salary_min || '';
+        document.getElementById('editSalaryMax').value = job.salary_max || '';
+        document.getElementById('editSalaryNote').value = job.salary_note || '';
+        document.getElementById('editEducationRequired').value = job.education_required || '';
+        document.getElementById('editLanguageRequired').value = job.language_required ? job.language_required.join(',') : '';
+        document.getElementById('editResponsibilities').value = job.responsibilities ? job.responsibilities.join('\n') : '';
+        document.getElementById('editJobStatus').value = job.status || 'active';
 
-                // 處理技能陣列 (從 tags 取得)
-                const requiredSkills = Array.from(document.getElementById('requiredSkillsTags').children)
-                    .map(tag => tag.textContent.replace('×', '').trim())
-                    .filter(skill => skill);
-                
-                const niceToHaveSkills = Array.from(document.getElementById('niceToHaveSkillsTags').children)
-                    .map(tag => tag.textContent.replace('×', '').trim())
-                    .filter(skill => skill);
+        // 清空並重新填入技能標籤
+        document.getElementById('editRequiredSkillsTags').innerHTML = '';
+        document.getElementById('editNiceToHaveSkillsTags').innerHTML = '';
+        document.getElementById('editMajorsRequiredTags').innerHTML = '';
 
-                // 處理主修陣列 (從 tags 取得)
-                const majorsText = Array.from(document.getElementById('majorsRequiredTags').children)
-                    .map(tag => tag.textContent.replace('×', '').trim())
-                    .filter(major => major);
-                
-                const languagesText = document.getElementById('languageRequired').value.trim();
-                const languageRequired = languagesText ? languagesText.split(',').map(s => s.trim()).filter(s => s) : [];
-
-                // 建構職缺資料
-                const formData = {
-                    job_title: document.getElementById('jobTitle').value.trim(),
-                    team_id: teamData.team_id,
-                    employment_type: document.getElementById('employmentType').value,
-                    location: document.getElementById('location').value.trim(),
-                    salary_min: document.getElementById('salaryMin').value ? parseInt(document.getElementById('salaryMin').value) : null,
-                    salary_max: document.getElementById('salaryMax').value ? parseInt(document.getElementById('salaryMax').value) : null,
-                    salary_note: document.getElementById('salaryNote').value.trim(),
-                    responsibilities: responsibilities,
-                    required_skills: requiredSkills,
-                    nice_to_have_skills: niceToHaveSkills,
-                    min_experience_years: document.getElementById('minExperienceYears').value ? parseInt(document.getElementById('minExperienceYears').value) : null,
-                    education_required: document.getElementById('educationRequired').value,
-                    majors_required: majorsText,
-                    language_required: languageRequired,
-                    status: document.getElementById('jobStatus').value
-                };
-
-                // 驗證必填欄位
-                if (!formData.job_title || !formData.employment_type || 
-                    !formData.location || !formData.responsibilities.length || !formData.required_skills.length) {
-                    showAlert('請填寫所有必填欄位', 'warning');
-                    return;
-                }
-
-                console.log('📤 建立職缺資料:', formData);
-
-                const apiUrl = window.CONFIG ? window.CONFIG.API_BASE_URL : 'https://44wy0r4r16.execute-api.ap-southeast-1.amazonaws.com/dev';
-                
-                const response = await fetch(apiUrl + '/jobs', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(formData)
-                });
-
-                if (!response.ok) {
-                    const errorData = await response.text();
-                    throw new Error(`HTTP ${response.status}: ${errorData}`);
-                }
-
-                const result = await response.json();
-                console.log('✅ 職缺建立成功:', result);
-
-                // 關閉 modal 並重新載入資料
-                bootstrap.Modal.getInstance(document.getElementById('addJobModal')).hide();
-                resetJobForm();
-                
-                // 重新載入團隊職缺資料
-                await loadTeamData(teamData.team_id);
-                
-                showAlert('職缺建立成功！', 'success');
-
-            } catch (error) {
-                console.error('❌ 建立職缺失敗:', error);
-                showAlert('建立職缺失敗: ' + error.message, 'danger');
-            } finally {
-                // 恢復按鈕狀態
-                isSubmitting = false;
-                createJobBtn.disabled = false;
-                createJobBtn.innerHTML = originalText;
-            }
+        // 填入必備技能
+        if (job.required_skills && Array.isArray(job.required_skills)) {
+            job.required_skills.forEach(skill => {
+                addSkillTag(document.getElementById('editRequiredSkillsTags'), skill);
+            });
         }
 
-        // 編輯職缺
-        function editJob(jobId) {
-            showAlert('編輯功能開發中...', 'info');
+        // 填入加分技能
+        if (job.nice_to_have_skills && Array.isArray(job.nice_to_have_skills)) {
+            job.nice_to_have_skills.forEach(skill => {
+                addSkillTag(document.getElementById('editNiceToHaveSkillsTags'), skill);
+            });
         }
 
-        // 檢視職缺頁面
-        function viewJobPage(jobId) {
-            window.location.href = `job-detail.html?job_id=${encodeURIComponent(jobId)}`;
+        // 填入主修要求
+        if (job.majors_required && Array.isArray(job.majors_required)) {
+            job.majors_required.forEach(major => {
+                addSkillTag(document.getElementById('editMajorsRequiredTags'), major);
+            });
         }
 
-        // 顯示錯誤
-        function showError(message) {
-            document.getElementById('teamInfoCard').innerHTML = `
+        // 設置技能輸入事件
+        setupSkillTagInput('editRequiredSkills', 'editRequiredSkillsTags');
+        setupSkillTagInput('editNiceToHaveSkills', 'editNiceToHaveSkillsTags');
+        setupSkillTagInput('editMajorsRequired', 'editMajorsRequiredTags');
+
+        // 顯示 Modal
+        const editModal = new bootstrap.Modal(document.getElementById('editJobModal'));
+        editModal.show();
+      }
+
+      // 更新職缺
+      async function updateJob() {
+        try {
+          const formData = {
+            team_id: document.getElementById('editTeamId').value,
+            job_id: document.getElementById('editJobId').value,
+            job_title: document.getElementById('editJobTitle').value,
+            employment_type: document.getElementById('editEmploymentType').value,
+            location: document.getElementById('editLocation').value,
+            min_experience_years: parseInt(document.getElementById('editMinExperienceYears').value) || null,
+            salary_min: parseInt(document.getElementById('editSalaryMin').value) || null,
+            salary_max: parseInt(document.getElementById('editSalaryMax').value) || null,
+            salary_note: document.getElementById('editSalaryNote').value,
+            education_required: document.getElementById('editEducationRequired').value,
+            language_required: document.getElementById('editLanguageRequired').value.split(',').map(lang => lang.trim()).filter(Boolean),
+            responsibilities: document.getElementById('editResponsibilities').value.split('\n').map(r => r.trim()).filter(Boolean),
+            required_skills: Array.from(document.getElementById('editRequiredSkillsTags').children).map(tag => tag.textContent.replace('×', '').trim()),
+            nice_to_have_skills: Array.from(document.getElementById('editNiceToHaveSkillsTags').children).map(tag => tag.textContent.replace('×', '').trim()),
+            majors_required: Array.from(document.getElementById('editMajorsRequiredTags').children).map(tag => tag.textContent.replace('×', '').trim()),
+            status: document.getElementById('editJobStatus').value
+          };
+
+          // 驗證必填欄位
+          if (!formData.job_title || !formData.employment_type || !formData.location || !formData.responsibilities.length || !formData.required_skills.length) {
+            showAlert('請填寫所有必填欄位', 'warning');
+            return;
+          }
+
+          const apiUrl = window.CONFIG ? window.CONFIG.API_BASE_URL : 'https://44wy0r4r16.execute-api.ap-southeast-1.amazonaws.com/dev';
+
+          // 發送更新請求
+          const response = await fetch(`${apiUrl}/jobs/${encodeURIComponent(formData.job_id)}`, {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(formData)
+          });
+
+          if (!response.ok) {
+            throw new Error(`更新失敗: ${response.status}`);
+          }
+
+          // 關閉 Modal
+          bootstrap.Modal.getInstance(document.getElementById('editJobModal')).hide();
+
+          // 儲存當前選中的職缺 ID
+          const currentJobId = formData.job_id;
+
+          // 重新載入團隊職缺資料
+          await loadTeamData(teamData.team_id);
+
+          // 重新選中並顯示更新後的職缺
+          if (currentJobId) {
+            selectJob(currentJobId);
+          }
+
+          // 顯示成功訊息
+          showAlert('職缺更新成功！', 'success');
+
+        } catch (error) {
+          console.error('❌ 更新職缺失敗:', error);
+          showAlert('更新失敗: ' + error.message, 'danger');
+        }
+      }
+
+      // 檢視職缺頁面
+      function viewJobPage(jobId) {
+        window.location.href = `job-detail.html?job_id=${encodeURIComponent(
+          jobId
+        )}`;
+      }
+
+      // 顯示錯誤
+      function showError(message) {
+        document.getElementById("teamInfoCard").innerHTML = `
                 <div class="alert alert-danger">
                     <i class="fas fa-exclamation-triangle me-2"></i>
                     ${message}
                 </div>
             `;
-        }
+      }
 
-        // 顯示警告訊息
-        function showAlert(message, type = 'info') {
-            const alertDiv = document.createElement('div');
-            alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
-            alertDiv.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
-            alertDiv.innerHTML = `
+      // 顯示警告訊息
+      function showAlert(message, type = "info") {
+        const alertDiv = document.createElement("div");
+        alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+        alertDiv.style.cssText =
+          "top: 20px; right: 20px; z-index: 9999; min-width: 300px;";
+        alertDiv.innerHTML = `
                 ${message}
                 <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
             `;
 
-            document.body.appendChild(alertDiv);
+        document.body.appendChild(alertDiv);
 
-            setTimeout(() => {
-                if (alertDiv && alertDiv.parentNode) {
-                    alertDiv.remove();
-                }
-            }, 3000);
-        }
+        setTimeout(() => {
+          if (alertDiv && alertDiv.parentNode) {
+            alertDiv.remove();
+          }
+        }, 3000);
+      }
     </script>
-</body>
-</html> 
+  </body>
+</html>

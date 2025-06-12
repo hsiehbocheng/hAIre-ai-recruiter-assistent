@@ -461,7 +461,7 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
-                    <button type="button" id="createTeam" class="btn btn-primary" onclick="window.teamsUI && window.teamsUI.handleFormSubmit()">儲存團隊</button>
+                    <button type="button" id="createTeam" class="btn btn-primary">儲存團隊</button>
                 </div>
             </div>
         </div>
@@ -533,29 +533,27 @@
                             <textarea class="form-control" id="editTeamDescription" rows="3" 
                                       placeholder="例如：負責企業智能化專案開發與維運"></textarea>
                         </div>
+                        <div class="mb-3">
+                            <label class="form-label">現有文件</label>
+                            <div id="existingFiles" class="border rounded p-3 bg-light">
+                                <!-- 現有文件列表 -->
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">上傳新文件 (可選)</label>
+                            <div class="upload-area" id="editUploadArea">
+                                <i class="fas fa-cloud-upload-alt fa-3x text-muted mb-3"></i>
+                                <p class="mb-2">點擊或拖拽文件到此處</p>
+                                <p class="text-muted small">支援 TXT, JSON, CSV, PDF 格式</p>
+                                <input type="file" id="editFileInput" multiple accept=".txt,.json,.csv,.pdf" style="display: none;">
+                            </div>
+                            <div id="editFileList" class="mt-2"></div>
+                        </div>
                     </form>
-                    
-                    <!-- 將文件相關區塊移到表單外部 -->
-                    <div class="mb-3">
-                        <label class="form-label">現有文件</label>
-                        <div id="existingFiles" class="border rounded p-3 bg-light">
-                            <!-- 現有文件列表 -->
-                        </div>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">上傳新文件 (可選)</label>
-                        <div class="upload-area" id="editUploadArea">
-                            <i class="fas fa-cloud-upload-alt fa-3x text-muted mb-3"></i>
-                            <p class="mb-2">點擊或拖拽文件到此處</p>
-                            <p class="text-muted small">支援 TXT, JSON, CSV, PDF 格式</p>
-                            <input type="file" id="editFileInput" multiple accept=".txt,.json,.csv,.pdf" style="display: none;">
-                        </div>
-                        <div id="editFileList" class="mt-2"></div>
-                    </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
-                    <button type="button" id="updateTeam" class="btn btn-primary" onclick="window.teamsUI && window.teamsUI.handleFormSubmit()">更新團隊</button>
+                    <button type="button" id="updateTeam" class="btn btn-primary">更新團隊</button>
                 </div>
             </div>
         </div>
@@ -616,213 +614,48 @@
             
             // 載入團隊資料
             fetchTeams();
-
-            // 監聽編輯 modal 顯示事件 - 重新初始化文件上傳
-            document.getElementById('editTeamModal').addEventListener('shown.bs.modal', function () {
-                console.log('📝 編輯模態框顯示，重新初始化文件上傳');
-                // 稍微延遲以確保DOM元素完全載入
-                setTimeout(() => {
-                    reinitializeEditFileUpload();
-                }, 50);
-            });
             
-            // 監聽 modal 關閉事件 - 使用 TeamsUI 統一管理
-            document.getElementById('editTeamModal').addEventListener('hidden.bs.modal', function () {
-                console.log('📝 編輯模態框關閉，執行清理');
-                if (window.teamsUI) {
-                    window.teamsUI.resetForm();
-                } else {
-                    // 後備清理邏輯
-                    const editFileList = document.getElementById('editFileList');
-                    if (editFileList) {
-                        editFileList.innerHTML = '';
-                    }
-                    const editFileInput = document.getElementById('editFileInput');
-                    if (editFileInput) {
-                        editFileInput.value = '';
-                    }
-                }
-            });
-
-            // 監聽新增 modal 顯示事件 - 確保文件上傳功能正常
-            document.getElementById('addTeamModal').addEventListener('shown.bs.modal', function () {
-                console.log('➕ 新增模態框顯示，檢查文件上傳功能');
-                // 確保新增模式的文件上傳功能正常
-                const uploadArea = document.getElementById('uploadArea');
-                if (uploadArea && !uploadArea.hasAttribute('data-upload-initialized')) {
-                    console.log('🔄 新增模式文件上傳需要重新初始化');
-                    setupFileUpload('uploadArea', 'fileInput', 'fileList', selectedFiles);
-                }
-            });
-            
-            document.getElementById('addTeamModal').addEventListener('hidden.bs.modal', function () {
-                console.log('➕ 新增模態框關閉，執行清理');
-                // 清空新增文件列表 - 使用全局變數（舊版本相容）
-                if (typeof selectedFiles !== 'undefined') {
-                    selectedFiles.length = 0;
-                }
-                const fileList = document.getElementById('fileList');
-                if (fileList) {
-                    fileList.innerHTML = '';
-                }
-                const fileInput = document.getElementById('fileInput');
-                if (fileInput) {
-                    fileInput.value = '';
-                }
-            });
+            // 初始化事件監聽器
+            initializeEventListeners();
         });
 
         // 初始化事件監聽器
         function initializeEventListeners() {
-            // 檢查是否已經初始化過
-            if (window.eventListenersInitialized) {
-                console.log('⚠️ 事件監聽器已經初始化過，跳過重複初始化');
-                return;
-            }
+            // 新增團隊按鈕
+            document.getElementById('createTeam').addEventListener('click', createTeam);
             
-            console.log('🔧 開始初始化事件監聽器...');
+            // 更新團隊按鈕
+            document.getElementById('updateTeam').addEventListener('click', updateTeam);
             
-            // 設置新增模式文件上傳
-            const addUploadResult = setupFileUpload('uploadArea', 'fileInput', 'fileList', selectedFiles);
-            console.log('➕ 新增模式文件上傳設置結果:', addUploadResult);
-            
-            // 設置編輯模式文件上傳（初始設置，會在每次編輯時重新設置）
-            const editUploadResult = setupFileUpload('editUploadArea', 'editFileInput', 'editFileList', editSelectedFiles);
-            console.log('✏️ 編輯模式文件上傳設置結果:', editUploadResult);
+            // 文件上傳相關
+            setupFileUpload('uploadArea', 'fileInput', 'fileList', selectedFiles);
+            setupFileUpload('editUploadArea', 'editFileInput', 'editFileList', editSelectedFiles);
             
             // 從詳情頁編輯
-            const editFromDetailBtn = document.getElementById('editFromDetail');
-            if (editFromDetailBtn) {
-                editFromDetailBtn.addEventListener('click', function() {
-                    const teamId = this.getAttribute('data-team-id');
-                    showEditModal(teamId);
-                    bootstrap.Modal.getInstance(document.getElementById('teamDetailModal')).hide();
-                });
-            }
+            document.getElementById('editFromDetail').addEventListener('click', function() {
+                const teamId = this.getAttribute('data-team-id');
+                showEditModal(teamId);
+                bootstrap.Modal.getInstance(document.getElementById('teamDetailModal')).hide();
+            });
 
             // 新增團隊預覽功能
             const previewFields = ['company', 'companyCode', 'department', 'deptCode', 'teamName', 'teamCode'];
             previewFields.forEach(fieldId => {
-                const field = document.getElementById(fieldId);
-                if (field) {
-                    field.addEventListener('input', updateAllPreviews);
-                } else {
-                    console.warn(`⚠️ 預覽欄位不存在: ${fieldId}`);
-                }
+                document.getElementById(fieldId).addEventListener('input', updateAllPreviews);
             });
-            
-            // 標記為已初始化
-            window.eventListenersInitialized = true;
-            console.log('✅ 事件監聽器初始化完成');
         }
 
         // 設置文件上傳功能
         function setupFileUpload(areaId, inputId, listId, filesArray) {
-            console.log(`🔧 設置文件上傳功能: ${areaId}, ${inputId}, ${listId}`);
-            
             const uploadArea = document.getElementById(areaId);
             const fileInput = document.getElementById(inputId);
             const fileList = document.getElementById(listId);
-            
-            // 如果找不到必要元素，返回
-            if (!uploadArea || !fileInput || !fileList) {
-                console.warn(`⚠️ 找不到必要元素: ${areaId}, ${inputId}, ${listId}`, {
-                    uploadArea: !!uploadArea,
-                    fileInput: !!fileInput,
-                    fileList: !!fileList
-                });
-                return false;
-            }
-            
-            // 對於編輯模式，總是重新設置（不檢查是否已初始化）
-            if (areaId === 'editUploadArea') {
-                console.log(`🔄 重新設置編輯模式文件上傳: ${areaId}`);
-                
-                // 移除舊的標記
-                uploadArea.removeAttribute('data-upload-initialized');
-                
-                // 清空可能存在的舊事件監聽器
-                const newUploadArea = uploadArea.cloneNode(true);
-                uploadArea.parentNode.replaceChild(newUploadArea, uploadArea);
-                
-                // 重新獲取元素引用
-                const refreshedUploadArea = document.getElementById(areaId);
-                const refreshedFileInput = document.getElementById(inputId);
-                
-                if (!refreshedUploadArea || !refreshedFileInput) {
-                    console.error(`❌ 重新獲取元素失敗: ${areaId}, ${inputId}`);
-                    return false;
-                }
-                
-                // 設置事件監聽器
-                setupFileUploadEvents(refreshedUploadArea, refreshedFileInput, fileList, filesArray);
-                
-                // 標記為已初始化
-                refreshedUploadArea.setAttribute('data-upload-initialized', 'true');
-                console.log(`✅ ${areaId} 編輯文件上傳功能設置完成`);
-                return true;
-            }
-            
-            // 對於新增模式，檢查是否已經初始化過
-            if (uploadArea.hasAttribute('data-upload-initialized')) {
-                console.log(`⚠️ ${areaId} 已經初始化過，跳過重複設置`);
-                return true;
-            }
 
-            // 設置事件監聽器
-            setupFileUploadEvents(uploadArea, fileInput, fileList, filesArray);
-            
-            // 標記為已初始化
-            uploadArea.setAttribute('data-upload-initialized', 'true');
-            console.log(`✅ ${areaId} 文件上傳功能初始化完成`);
-            return true;
-        }
-
-        // 設置文件上傳事件監聽器的輔助函數
-        function setupFileUploadEvents(uploadArea, fileInput, fileList, filesArray) {
-            // 檢查必要元素
-            if (!uploadArea || !fileInput || !fileList) {
-                console.error('❌ setupFileUploadEvents: 缺少必要元素', {
-                    uploadArea: !!uploadArea,
-                    fileInput: !!fileInput,
-                    fileList: !!fileList
-                });
-                return;
-            }
-            
-            console.log('📎 設置文件上傳事件監聽器:', {
-                uploadAreaId: uploadArea.id,
-                fileInputId: fileInput.id,
-                fileListId: fileList.id
-            });
-            
             // 點擊上傳區域觸發文件選擇
-            uploadArea.addEventListener('click', function(e) {
-                console.log('🖱️ 點擊上傳區域:', uploadArea.id);
-                
-                // 確保不是點擊了子元素（如關閉按鈕）
-                if (e.target !== uploadArea && !uploadArea.contains(e.target)) {
-                    return;
-                }
-                
-                e.preventDefault();
-                e.stopPropagation();
-                
-                if (fileInput && typeof fileInput.click === 'function') {
-                    console.log('📁 觸發文件選擇對話框');
-                    try {
-                        fileInput.click();
-                    } catch (error) {
-                        console.error('❌ 無法觸發文件選擇:', error);
-                    }
-                } else {
-                    console.error('❌ fileInput 元素不存在或無效');
-                }
-            });
+            uploadArea.addEventListener('click', () => fileInput.click());
 
             // 文件選擇事件
             fileInput.addEventListener('change', function(e) {
-                console.log('📄 文件選擇事件觸發，文件數量:', e.target.files.length);
                 handleFiles(e.target.files, filesArray, fileList);
             });
 
@@ -840,11 +673,8 @@
             uploadArea.addEventListener('drop', function(e) {
                 e.preventDefault();
                 uploadArea.classList.remove('dragover');
-                console.log('📂 拖拽文件事件觸發，文件數量:', e.dataTransfer.files.length);
                 handleFiles(e.dataTransfer.files, filesArray, fileList);
             });
-            
-            console.log(`✅ ${uploadArea.id} 事件監聽器設置完成`);
         }
 
         // 處理文件
@@ -969,90 +799,181 @@
             });
         }
 
-        // 建立團隊 - 舊版本函數（已棄用，統一使用 TeamsUI）
-        async function createTeamLegacy() {
-            console.warn('⚠️ 使用了棄用的 createTeamLegacy 函數，請使用 TeamsUI.handleFormSubmit()');
-            // 重定向到新的 TeamsUI 處理函數
-            if (window.teamsUI) {
-                return await window.teamsUI.handleFormSubmit();
-            } else {
-                console.error('❌ TeamsUI 未初始化');
-                showAlert('系統錯誤：TeamsUI 未初始化', 'danger');
-            }
-        }
-
-        // 重新設置編輯文件上傳功能（供外部調用）
-        function reinitializeEditFileUpload() {
-            console.log('🔄 重新初始化編輯文件上傳功能');
-            
-            // 確保 editSelectedFiles 數組存在
-            if (typeof editSelectedFiles === 'undefined') {
-                window.editSelectedFiles = [];
-            }
-            
-            // 重新設置編輯模式的文件上傳
-            const result = setupFileUpload('editUploadArea', 'editFileInput', 'editFileList', editSelectedFiles);
-            console.log('✏️ 編輯文件上傳重新設置結果:', result);
-            
-            return result;
-        }
-        
-        // 顯示編輯 Modal - 統一使用 TeamsUI
-        async function showEditModal(teamId) {
-            try {
-                console.log('🔧 開始編輯團隊 (統一使用 TeamsUI):', teamId);
-                
-                // 檢查 TeamsUI 是否可用
-                if (!window.teamsUI) {
-                    throw new Error('TeamsUI 尚未初始化');
-                }
-                
-                // 使用 TeamsUI 的 editTeam 方法
-                await window.teamsUI.editTeam(teamId);
-                
-                // 編輯模態框顯示後，重新設置文件上傳功能
-                setTimeout(() => {
-                    reinitializeEditFileUpload();
-                }, 100);
-                
-            } catch (error) {
-                console.error('❌ 編輯團隊失敗:', error);
-                showAlert('編輯團隊失敗: ' + error.message, 'danger');
-            }
-        }
-
-        // 建立團隊 - 統一使用 TeamsUI
+        // 建立團隊
         async function createTeam() {
             try {
-                console.log('🔧 開始建立團隊 (統一使用 TeamsUI)');
-                
-                // 檢查 TeamsUI 是否可用
-                if (!window.teamsUI) {
-                    throw new Error('TeamsUI 尚未初始化');
+                const requiredFields = ['company', 'companyCode', 'department', 'deptCode', 'teamName', 'teamCode'];
+                for (const fieldId of requiredFields) {
+                    const value = document.getElementById(fieldId).value.trim();
+                    if (!value) {
+                        showAlert(`請填寫${fieldId}`, 'danger');
+                        return;
+                    }
                 }
+
+                const formData = {
+                    company: document.getElementById('company').value.trim(),
+                    company_code: document.getElementById('companyCode').value.trim(),
+                    department: document.getElementById('department').value.trim(),
+                    dept_code: document.getElementById('deptCode').value.trim(),
+                    team_name: document.getElementById('teamName').value.trim(),
+                    team_code: document.getElementById('teamCode').value.trim(),
+                    description: document.getElementById('teamDescription').value.trim()
+                };
+
+                console.log('📤 建立團隊資料:', formData);
+
+                // 使用正確的 API URL
+                const apiUrl = window.CONFIG ? window.CONFIG.API_BASE_URL : 'https://44wy0r4r16.execute-api.ap-southeast-1.amazonaws.com/dev';
                 
-                // 使用 TeamsUI 的 handleFormSubmit 方法來處理建立
-                await window.teamsUI.handleFormSubmit();
-                
+                const response = await fetch(apiUrl + '/teams', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(formData)
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.text();
+                    throw new Error(`HTTP ${response.status}: ${errorData}`);
+                }
+
+                const result = await response.json();
+                console.log('✅ 團隊建立成功:', result);
+
+                // 如果有檔案需要上傳，使用返回的 team_id
+                if (selectedFiles.length > 0) {
+                    const teamId = result.team_id || `${formData.company_code}-${formData.department_code}-${formData.section_code}`;
+                    console.log('📁 開始上傳文件到團隊:', teamId);
+                    try {
+                        await uploadFilesWithAPI(teamId, selectedFiles);
+                        console.log('✅ 檔案上傳完成');
+                    } catch (fileError) {
+                        console.error('❌ 檔案上傳失敗:', fileError);
+                        showAlert('團隊建立成功，但檔案上傳失敗: ' + fileError.message, 'warning');
+                    }
+                }
+
+                // 關閉 modal 並重新載入資料
+                bootstrap.Modal.getInstance(document.getElementById('addTeamModal')).hide();
+                resetAddForm();
+                fetchTeams();
+                showAlert('團隊建立成功！', 'success');
+
             } catch (error) {
                 console.error('❌ 建立團隊失敗:', error);
                 showAlert('建立團隊失敗: ' + error.message, 'danger');
             }
         }
 
-        // 更新團隊 - 統一使用 TeamsUI
+        // 顯示編輯 Modal
+        function showEditModal(teamId) {
+            console.log('🔧 開始編輯團隊:', teamId);
+            
+            const team = teamsData.find(t => t.team_id === teamId);
+            if (!team) {
+                console.error('❌ 找不到團隊資料:', teamId);
+                showAlert('找不到團隊資料', 'danger');
+                return;
+            }
+            
+            console.log('📋 載入團隊資料進行編輯:', team);
+
+            // 填入基本資訊，處理不同的欄位名稱
+            document.getElementById('editTeamId').value = team.team_id || '';
+            document.getElementById('editCompany').value = team.company || '';
+            document.getElementById('editCompanyCode').value = team.company_code || '';
+            document.getElementById('editDepartment').value = team.department || '';
+            
+            // 處理部門代碼的不同名稱
+            const deptCode = team.department_code || team.dept_code || '';
+            document.getElementById('editDeptCode').value = deptCode;
+            
+            document.getElementById('editTeamName').value = team.team_name || '';
+            
+            // 處理團隊代碼的不同名稱
+            const teamCode = team.section_code || team.team_code || '';
+            document.getElementById('editTeamCode').value = teamCode;
+            
+            // 處理描述的不同名稱
+            const description = team.description || team.team_description || '';
+            document.getElementById('editTeamDescription').value = description;
+
+            console.log('✅ 編輯表單填入完成:', {
+                teamId: team.team_id,
+                company: team.company,
+                companyCode: team.company_code,
+                department: team.department,
+                deptCode: deptCode,
+                teamName: team.team_name,
+                teamCode: teamCode,
+                description: description
+            });
+
+            // 清空編輯文件列表
+            editSelectedFiles = [];
+            renderFileList(editSelectedFiles, document.getElementById('editFileList'));
+
+            // 顯示現有文件（如果有的話）
+            displayExistingFiles(team.team_id);
+
+            // 顯示模態框
+            new bootstrap.Modal(document.getElementById('editTeamModal')).show();
+        }
+
+        // 更新團隊
         async function updateTeam() {
             try {
-                console.log('🔧 開始更新團隊 (統一使用 TeamsUI)');
+                const teamId = document.getElementById('editTeamId').value;
                 
-                // 檢查 TeamsUI 是否可用
-                if (!window.teamsUI) {
-                    throw new Error('TeamsUI 尚未初始化');
+                // 只發送允許更新的欄位，不包括會影響 team_id 的 code 欄位
+                const formData = {
+                    company: document.getElementById('editCompany').value.trim(),
+                    department: document.getElementById('editDepartment').value.trim(),
+                    team_name: document.getElementById('editTeamName').value.trim(),
+                    description: document.getElementById('editTeamDescription').value.trim()
+                };
+
+                console.log('📤 更新團隊資料:', formData);
+                console.log('🔒 受保護的欄位（不會更新）: company_code, department_code, section_code');
+
+                // 使用正確的 API URL
+                const apiUrl = window.CONFIG ? window.CONFIG.API_BASE_URL : 'https://44wy0r4r16.execute-api.ap-southeast-1.amazonaws.com/dev';
+                
+                const response = await fetch(apiUrl + '/teams/' + teamId, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(formData)
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.text();
+                    throw new Error(`HTTP ${response.status}: ${errorData}`);
                 }
-                
-                // 使用 TeamsUI 的 handleFormSubmit 方法來處理更新
-                await window.teamsUI.handleFormSubmit();
-                
+
+                const result = await response.json();
+                console.log('✅ 團隊更新成功:', result);
+
+                // 如果有新文件需要上傳
+                if (editSelectedFiles.length > 0) {
+                    console.log('📁 開始上傳新文件到團隊:', teamId);
+                    try {
+                        await uploadFilesWithAPI(teamId, editSelectedFiles);
+                        console.log('✅ 新檔案上傳完成');
+                    } catch (fileError) {
+                        console.error('❌ 檔案上傳失敗:', fileError);
+                        showAlert('團隊更新成功，但檔案上傳失敗: ' + fileError.message, 'warning');
+                    }
+                }
+
+                // 關閉 modal 並重新載入資料
+                bootstrap.Modal.getInstance(document.getElementById('editTeamModal')).hide();
+                fetchTeams();
+                showAlert('團隊更新成功！', 'success');
+
             } catch (error) {
                 console.error('❌ 更新團隊失敗:', error);
                 showAlert('更新團隊失敗: ' + error.message, 'danger');
@@ -1187,8 +1108,11 @@
                                 </div>
                             </div>
                             <div class="btn-group">
-                                <button type="button" class="btn btn-sm btn-outline-success" onclick="downloadTeamFile('${file.key}', '${teamId}')" title="下載文件">
+                                <button class="btn btn-sm btn-outline-success" onclick="downloadTeamFile('${fileName}', '${teamId}')" title="下載文件">
                                     <i class="fas fa-download"></i>
+                                </button>
+                                <button class="btn btn-sm btn-outline-danger" onclick="deleteTeamFile('${file.key || file.name}', '${teamId}')" title="刪除文件">
+                                    <i class="fas fa-trash"></i>
                                 </button>
                             </div>
                         </div>
@@ -1202,77 +1126,125 @@
             }
         }
 
-        // 顯示現有文件
-        async function displayExistingFiles(teamId) {
+        // 下載團隊文件
+        async function downloadTeamFile(fileName, teamId) {
             try {
+                console.log('📥 下載文件:', fileName, '團隊:', teamId);
+                
                 const apiUrl = window.CONFIG ? window.CONFIG.API_BASE_URL : 'https://44wy0r4r16.execute-api.ap-southeast-1.amazonaws.com/dev';
-                const response = await fetch(`${apiUrl}/teams/${encodeURIComponent(teamId)}?action=files`);
+                
+                // 使用檔案名稱和 team_id 參數，避免 URL 路徑中的斜線問題
+                const encodedFileName = encodeURIComponent(fileName);
+                const response = await fetch(`${apiUrl}/download-team-file/${encodedFileName}?team_id=${encodeURIComponent(teamId)}`);
                 
                 if (!response.ok) {
-                    throw new Error(`HTTP ${response.status}`);
+                    throw new Error(`下載失敗: ${response.status}`);
                 }
-                
+
                 const result = await response.json();
-                const files = Array.isArray(result) ? result : (result.files || []);
-                const container = document.getElementById('existingFiles');
+                console.log('📥 下載 URL 取得成功:', result);
                 
-                if (files.length === 0) {
-                    container.innerHTML = '<p class="text-muted">目前沒有任何文件</p>';
-                    return;
+                // 開啟下載 URL
+                window.open(result.downloadUrl, '_blank');
+                
+            } catch (error) {
+                console.error('❌ 下載文件失敗:', error);
+                showAlert('下載文件失敗: ' + error.message, 'danger');
+            }
+        }
+
+        // 刪除團隊文件
+        async function deleteTeamFile(fileKey, teamId) {
+            if (!confirm(`確定要刪除文件 "${fileKey}" 嗎？此操作無法復原。`)) {
+                return;
+            }
+
+            try {
+                console.log('🗑️ 刪除文件:', fileKey);
+                
+                const apiUrl = window.CONFIG ? window.CONFIG.API_BASE_URL : 'https://44wy0r4r16.execute-api.ap-southeast-1.amazonaws.com/dev';
+                
+                const response = await fetch(`${apiUrl}/delete-team-file`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        key: fileKey
+                    })
+                });
+
+                if (!response.ok) {
+                    if (response.status === 404) {
+                        showAlert('刪除功能開發中...', 'info');
+                        return;
+                    }
+                    throw new Error(`刪除失敗: ${response.status}`);
                 }
+
+                console.log('✅ 文件刪除成功');
+                showAlert('文件刪除成功', 'success');
                 
-                let html = '';
-                files.forEach(file => {
-                    // 從 S3 key 中提取文件名稱
-                    const fileName = file.key ? file.key.split('/').pop() : (file.name || '未知文件');
-                    const fileKey = file.key || fileName;
-                    const fileSize = file.size ? formatFileSize(file.size) : '未知大小';
+                // 重新載入文件列表
+                loadTeamFiles(teamId);
+                
+            } catch (error) {
+                console.error('❌ 刪除文件失敗:', error);
+                showAlert('刪除文件失敗: ' + error.message, 'danger');
+            }
+        }
+
+        // 顯示現有文件
+        async function displayExistingFiles(teamId) {
+            const container = document.getElementById('existingFiles');
+            try {
+                console.log('📂 載入現有文件:', teamId);
+                
+                const apiUrl = window.CONFIG ? window.CONFIG.API_BASE_URL : 'https://44wy0r4r16.execute-api.ap-southeast-1.amazonaws.com/dev';
+                
+                const response = await fetch(`${apiUrl}/teams/${encodeURIComponent(teamId)}?action=files`, {
+                    method: 'GET'
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    const files = result.files || [];
                     
-                    html += `
-                        <div class="file-item d-flex justify-content-between align-items-center mb-2">
-                            <div class="file-info">
-                                <i class="fas fa-file me-2"></i>
-                                <span class="file-name">${fileName}</span>
-                                <small class="text-muted ms-2">${fileSize}</small>
-                            </div>
-                            <div class="file-actions">
-                                <button class="btn btn-sm btn-outline-primary me-2" 
-                                        onclick="downloadTeamFile('${fileKey}', '${teamId}')">
-                                    <i class="fas fa-download"></i>
-                                </button>
-                                <button class="btn btn-sm btn-outline-danger delete-file-btn" 
-                                        data-file-key="${fileKey}" 
-                                        data-deleted="false"
-                                        onclick="toggleFileDelete(this)">
+                    if (!files || files.length === 0) {
+                        container.innerHTML = '<p class="text-muted">尚無現有文件</p>';
+                        return;
+                    }
+
+                    const fileList = files.map(file => {
+                        // 使用回傳的檔案名稱
+                        const fileName = file.name || '未知檔案';
+                        const fileSize = file.size ? (file.size / 1024).toFixed(1) + ' KB' : '未知';
+                        const uploadDate = file.lastModified ? new Date(file.lastModified).toLocaleString('zh-TW') : '未知';
+                        
+                        return `
+                            <div class="d-flex justify-content-between align-items-center border-bottom py-1">
+                                <div>
+                                    <span><i class="fas fa-file me-2"></i>${fileName}</span>
+                                    <div class="small text-muted">
+                                        大小: ${fileSize} | 上傳: ${uploadDate}
+                                    </div>
+                                </div>
+                                <button class="btn btn-sm btn-outline-danger" onclick="deleteFile('${file.key}')">
                                     <i class="fas fa-trash"></i>
                                 </button>
                             </div>
-                        </div>
-                    `;
-                });
-                
-                container.innerHTML = html;
+                        `;
+                    }).join('');
+                    
+                    container.innerHTML = fileList;
+                } else {
+                    console.error('❌ 載入現有文件失敗:', response.status);
+                    container.innerHTML = '<p class="text-danger">載入現有文件失敗</p>';
+                }
             } catch (error) {
-                console.error('載入文件失敗:', error);
-                document.getElementById('existingFiles').innerHTML = 
-                    '<p class="text-danger"><i class="fas fa-exclamation-circle me-2"></i>載入文件失敗</p>';
+                console.error('❌ 載入現有文件失敗:', error);
+                container.innerHTML = '<p class="text-danger">載入現有文件失敗</p>';
             }
-        }
-
-        // 切換文件刪除狀態（這個函數會被 teamsUI.toggleFileDelete 取代）
-        function toggleFileDelete(button) {
-            if (window.teamsUI && window.teamsUI.toggleFileDelete) {
-                window.teamsUI.toggleFileDelete(button);
-            }
-        }
-
-        // 格式化檔案大小
-        function formatFileSize(bytes) {
-            if (bytes === 0) return '0 Bytes';
-            const k = 1024;
-            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-            const i = Math.floor(Math.log(bytes) / Math.log(k));
-            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
         }
 
         // 使用新的 API 上傳文件到團隊
@@ -1338,17 +1310,8 @@
         // 重置新增表單
         function resetAddForm() {
             document.getElementById('addTeamForm').reset();
-            selectedFiles.length = 0; // 使用 length = 0 而不是重新賦值
-            const fileList = document.getElementById('fileList');
-            if (fileList) {
-                fileList.innerHTML = '';
-            }
-            const fileInput = document.getElementById('fileInput');
-            if (fileInput) {
-                fileInput.value = '';
-            }
-            // 重置預覽
-            updateAllPreviews();
+            selectedFiles = [];
+            renderFileList(selectedFiles, document.getElementById('fileList'));
         }
 
         // 顯示警告訊息
@@ -1433,103 +1396,40 @@
                 previewElement.className = 'fw-bold text-muted';
             }
         }
-
-        // 下載團隊文件
-        async function downloadTeamFile(fileKeyOrName, teamId) {
-            try {
-                console.log('📥 開始下載文件:', fileKeyOrName, '團隊:', teamId);
-                
-                const apiUrl = window.CONFIG ? window.CONFIG.API_BASE_URL : 'https://44wy0r4r16.execute-api.ap-southeast-1.amazonaws.com/dev';
-                
-                // 構建正確的文件 key
-                let fileKey = fileKeyOrName;
-                if (!fileKey.startsWith('team_info_docs/')) {
-                    // 如果不是完整的 S3 key，構建完整路徑
-                    fileKey = `team_info_docs/${teamId}/${fileKeyOrName}`;
-                }
-                
-                console.log('📥 使用文件 key:', fileKey);
-                
-                // 使用正確的下載 API 路徑
-                const response = await fetch(`${apiUrl}/download-team-file/${encodeURIComponent(fileKey)}`);
-                
-                console.log('📥 API 回應狀態:', response.status);
-                
-                if (!response.ok) {
-                    const errorText = await response.text();
-                    console.error('📥 下載錯誤:', errorText);
-                    throw new Error(`下載失敗 HTTP ${response.status}: ${errorText}`);
-                }
-                
-                const result = await response.json();
-                console.log('📥 下載結果:', result);
-                
-                if (result.success && result.download_url) {
-                    // 使用預簽名 URL 進行下載
-                    const fileName = result.original_filename || fileKeyOrName.split('/').pop() || 'download';
-                    
-                    // 創建隱藏的下載連結
-                    const link = document.createElement('a');
-                    link.href = result.download_url;
-                    link.download = fileName;
-                    link.style.display = 'none';
-                    
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
-                    
-                    console.log('✅ 文件下載已開始:', fileName);
-                    showAlert('文件下載已開始！', 'success');
-                } else {
-                    throw new Error('無法取得下載連結');
-                }
-                
-            } catch (error) {
-                console.error('❌ 下載文件失敗:', error);
-                showAlert('下載文件失敗: ' + error.message, 'danger');
-            }
-        }
     </script>
     
     <!-- 載入必要的 JavaScript 檔案 -->
     <script src="js/teams-api.js"></script>
     <script src="js/teams-ui.js"></script>
-    <!-- 注意：teams-api.js 必須在 teams-ui.js 之前載入 -->
     
     <script>
+        // 初始化全域 API 實例
+        let teamsAPI = null;
+        let teamsUI = null;
+        
         // 等待頁面載入完成後初始化
-        document.addEventListener('DOMContentLoaded', async function() {
-            console.log('開始初始化團隊管理系統...');
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🔥 開始初始化團隊管理系統...');
             
-            try {
-                // 檢查配置
-                if (window.CONFIG) {
-                    console.log('✅ 配置載入成功:', window.CONFIG);
-                } else {
-                    console.warn('⚠️ 未找到配置，將使用預設值');
-                }
-                
-                // 等待 TeamsAPI 初始化完成
-                if (!window.teamsAPI) {
-                    console.log('⏳ 等待 TeamsAPI 初始化...');
-                    window.teamsAPI = new TeamsAPI();
-                }
-                console.log('✅ 團隊 API 客戶端初始化成功');
-                
-                // 初始化 UI 管理器
-                window.teamsUI = new TeamsUI();
-                window.teamsUI.init();
-                console.log('✅ 團隊 UI 管理器初始化成功');
-                
-                // 只在頁面載入時初始化一次事件監聽器
-                if (!window.eventListenersInitialized) {
-                    initializeEventListeners();
-                    window.eventListenersInitialized = true;
-                }
-            } catch (error) {
-                console.error('❌ 初始化失敗:', error);
-                showAlert('系統初始化失敗: ' + error.message, 'danger');
+            // 檢查配置
+            if (window.CONFIG) {
+                console.log('✅ 配置載入成功:', window.CONFIG);
+            } else {
+                console.error('❌ 配置載入失敗');
             }
+            
+            // 初始化 API 客戶端
+            teamsAPI = new TeamsAPI();
+            console.log('✅ 團隊 API 客戶端初始化成功');
+            
+            // 初始化 UI 管理器
+            teamsUI = new TeamsUI();
+            teamsUI.init();
+            console.log('✅ 團隊 UI 管理器初始化成功');
+            
+            // 為了向後兼容，也執行舊的初始化邏輯
+            fetchTeams();
+            initializeEventListeners();
         });
     </script>
 </body>

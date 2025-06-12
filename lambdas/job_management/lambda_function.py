@@ -346,54 +346,81 @@ def update_job(job_id: str, data: Dict[str, Any]) -> Dict[str, Any]:
         existing_job = existing_response['Item']
         
         # 如果要更新 team_id，檢查新團隊是否存在
+        new_team_data = None
         if 'team_id' in data and data['team_id'] != existing_job['team_id']:
-            team_data = check_team_exists(data['team_id'])
-            if not team_data:
+            new_team_data = check_team_exists(data['team_id'])
+            if not new_team_data:
                 return response(404, {'error': '指定的新團隊不存在'})
+            print(f"更新職缺團隊，從 {existing_job['team_id']} 到 {data['team_id']}")
+            print(f"新團隊資料: {new_team_data}")
         
         # 準備更新表達式
-        update_expression = 'SET updated_at = :updated_at'
+        update_expression = 'SET #updated_at = :updated_at'
+        expression_names = {'#updated_at': 'updated_at'}
         expression_values = {':updated_at': datetime.utcnow().isoformat()}
         
-        # 建立可更新欄位列表
-        updatable_fields = [
-            'team_id', 'job_title', 'employment_type', 'location', 'responsibilities', 'required_skills',
-            'salary_min', 'salary_max', 'salary_note', 'min_experience_years', 'education_required', 'majors_required',
-            'language_required', 'status'
-        ]
+        # 建立可更新欄位列表及其對應的屬性名稱
+        updatable_fields = {
+            'team_id': 'team_id',
+            'job_title': 'job_title',
+            'employment_type': 'employment_type',
+            'location': 'location',  # 保留字
+            'responsibilities': 'responsibilities',
+            'required_skills': 'required_skills',
+            'nice_to_have_skills': 'nice_to_have_skills',
+            'salary_min': 'salary_min',
+            'salary_max': 'salary_max',
+            'salary_note': 'salary_note',
+            'min_experience_years': 'min_experience_years',
+            'education_required': 'education_required',
+            'majors_required': 'majors_required',
+            'language_required': 'language_required',
+            'status': 'status'  # 保留字
+        }
         
         # 動態建構更新表達式
-        for field in updatable_fields:
+        for field, attr_name in updatable_fields.items():
             if field in data:
-                update_expression += f', {field} = :{field}'
+                update_expression += f', #{attr_name} = :{field}'
+                expression_names[f'#{attr_name}'] = field
                 if field in ['salary_min', 'salary_max'] and data[field] is not None:
                     expression_values[f':{field}'] = int(data[field])
                 else:
                     expression_values[f':{field}'] = data[field]
         
         # 如果更新了 team_id，也要更新相關的團隊資訊
-        if 'team_id' in data and data['team_id'] != existing_job['team_id']:
-            team_data = check_team_exists(data['team_id'])
-            update_expression += ', company = :company, company_code = :company_code, department = :department, dept_code = :dept_code, team_name = :team_name, team_code = :team_code'
-            expression_values.update({
-                ':company': team_data['company'],
-                ':company_code': team_data['company_code'],
-                ':department': team_data['department'],
-                ':dept_code': team_data['dept_code'],
-                ':team_name': team_data['team_name'],
-                ':team_code': team_data['team_code']
-            })
+        if new_team_data:
+            team_fields = {
+                'company': 'company',
+                'company_code': 'company_code',
+                'department': 'department',
+                'dept_code': 'dept_code',
+                'team_name': 'team_name',
+                'team_code': 'team_code'
+            }
+            for field, attr_name in team_fields.items():
+                if field in new_team_data:  # 只更新存在的欄位
+                    update_expression += f', #{attr_name} = :{field}'
+                    expression_names[f'#{attr_name}'] = field
+                    expression_values[f':{field}'] = new_team_data[field]
+        
+        print(f"更新表達式: {update_expression}")
+        print(f"表達式名稱: {expression_names}")
+        print(f"表達式值: {expression_values}")
         
         # 執行更新
         jobs_table.update_item(
             Key={'job_id': job_id},
             UpdateExpression=update_expression,
+            ExpressionAttributeNames=expression_names,
             ExpressionAttributeValues=expression_values
         )
         
         # 取得更新後的資料
         updated_response = jobs_table.get_item(Key={'job_id': job_id})
         updated_job = updated_response['Item']
+        
+        print(f"更新後的職缺資料: {updated_job}")
         
         # 備份到 S3
         backup_key = f"backups/jobs/{job_id}.json"
@@ -411,6 +438,8 @@ def update_job(job_id: str, data: Dict[str, Any]) -> Dict[str, Any]:
         
     except Exception as e:
         print(f"更新職缺失敗: {str(e)}")
+        import traceback
+        print(traceback.format_exc())
         return response(500, {'error': '更新職缺失敗'})
 
 def delete_job(job_id: str) -> Dict[str, Any]:

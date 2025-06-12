@@ -1406,32 +1406,32 @@ resource "aws_sns_topic" "cost_alerts" {
 }
 
 # 自動生成前端配置檔案
-resource "local_file" "frontend_config" {
-  content = templatefile("${path.module}/static-site/js/config.js", local.config_template_vars)
-  filename = "${path.module}/static-site/js/config-generated.js"
-  
-  depends_on = [
-    aws_api_gateway_rest_api.haire_api,
-    aws_api_gateway_stage.haire_api_stage,
-    aws_cloudfront_distribution.static_site_distribution
-  ]
-}
+# resource "local_file" "frontend_config" {
+#   content = templatefile("${path.module}/static-site/js/config.js", local.config_template_vars)
+#   filename = "${path.module}/static-site/js/config-generated.js"
+#   
+#   depends_on = [
+#     aws_api_gateway_rest_api.haire_api,
+#     aws_api_gateway_stage.haire_api_stage,
+#     aws_cloudfront_distribution.static_site_distribution
+#   ]
+# }
 
 # 上傳生成的配置檔案到 S3
-resource "aws_s3_object" "frontend_config" {
-  bucket = aws_s3_bucket.static_site.bucket
-  key    = "js/config.js"
-  content = templatefile("${path.module}/static-site/js/config.js", local.config_template_vars)
-  content_type = "application/javascript"
-  
-  depends_on = [
-    aws_api_gateway_rest_api.haire_api,
-    aws_api_gateway_stage.haire_api_stage,
-    aws_cloudfront_distribution.static_site_distribution
-  ]
-  
-  tags = merge(local.common_tags, { Name = "frontend-config" })
-}
+# resource "aws_s3_object" "frontend_config" {
+#   bucket = aws_s3_bucket.static_site.bucket
+#   key    = "js/config.js"
+#   content = templatefile("${path.module}/static-site/js/config.js", local.config_template_vars)
+#   content_type = "application/javascript"
+#   
+#   depends_on = [
+#     aws_api_gateway_rest_api.haire_api,
+#     aws_api_gateway_stage.haire_api_stage,
+#     aws_cloudfront_distribution.static_site_distribution
+#   ]
+#   
+#   tags = merge(local.common_tags, { Name = "frontend-config" })
+# }
 
 # 新增：CORS Integration Response for /teams/{team_id}/files
 resource "aws_api_gateway_integration_response" "team_files_upload_options_integration_response" {

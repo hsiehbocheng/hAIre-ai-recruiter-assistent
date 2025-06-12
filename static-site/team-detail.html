@@ -528,6 +528,7 @@
         let currentTeamId = null;
         let jobsApiClient = null;
         let requiredSkills = [];
+        let deletedFiles = []; // 添加待刪除文件列表
 
         // 頁面載入完成後初始化
         document.addEventListener('DOMContentLoaded', function() {
@@ -904,30 +905,38 @@
         }
 
         async function deleteTeamFile(fileKey, fileName) {
-            if (!confirm(`確定要刪除文件「${fileName}」嗎？此操作無法復原。`)) {
+            if (!confirm(`確定要標記刪除文件「${fileName}」嗎？此操作將在儲存團隊資訊時執行。`)) {
                 return;
             }
 
             try {
-                const apiUrl = window.CONFIG ? window.CONFIG.API_BASE_URL : 'https://44wy0r4r16.execute-api.ap-southeast-1.amazonaws.com/dev';
+                // 將文件添加到待刪除列表
+                deletedFiles.push(fileKey);
                 
-                const response = await fetch(`${apiUrl}/delete-team-file`, {
-                    method: 'DELETE',
+                // 更新團隊資訊，包含待刪除文件
+                const teamData = {
+                    team_id: currentTeamId,
+                    deleted_files: deletedFiles
+                };
+                
+                const apiUrl = window.CONFIG ? window.CONFIG.API_BASE_URL : 'https://44wy0r4r16.execute-api.ap-southeast-1.amazonaws.com/dev';
+                const response = await fetch(`${apiUrl}/teams/${currentTeamId}`, {
+                    method: 'PUT',
                     headers: {
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify({ key: fileKey })
+                    body: JSON.stringify(teamData)
                 });
-                
+
                 if (!response.ok) {
-                    throw new Error(`刪除失敗 HTTP ${response.status}`);
+                    throw new Error(`更新失敗 HTTP ${response.status}`);
                 }
 
-                alert('文件刪除成功');
+                alert('文件已標記為刪除，將在儲存團隊資訊時執行');
                 await loadTeamFiles(); // 重新載入文件列表
             } catch (error) {
-                console.error('文件刪除失敗:', error);
-                alert('文件刪除失敗：' + error.message);
+                console.error('標記文件刪除失敗:', error);
+                alert('標記文件刪除失敗：' + error.message);
             }
         }
 

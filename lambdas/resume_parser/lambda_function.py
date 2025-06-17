@@ -3,8 +3,11 @@ import json
 import urllib.parse
 import logging
 from datetime import datetime
+import io
+import time
 
 import boto3
+from pdf2image import convert_from_bytes
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)  # 或 DEBUG, WARNING, ERROR
@@ -161,20 +164,30 @@ def extract_filename(key: str) -> str:
 
 def generate_output_key(key: str) -> str:
     """
-    保留原始 key 的 prefix 路徑，只在檔名前加上 parsed-
+    保留原始 key 的 prefix 路徑，將檔名改為 .json 副檔名
     範例:
-      輸入: raw_resume/TECH-FE-DEV/TECH-FE-DEV-89c83426/zhang-xiaoming-resume.json
+      輸入: raw_resume/TECH-FE-DEV/TECH-FE-DEV-89c83426/zhang-xiaoming-resume.pdf
       輸出: parsed_resume/TECH-FE-DEV/TECH-FE-DEV-89c83426/zhang-xiaoming-resume.json
     """
     key = urllib.parse.unquote(key)  # decode URL encoding
-    # 將 raw_resume 替換為 parsed_resume，保持其他路徑不變
+    
+    # 將 raw_resume 替換為 parsed_resume
     if key.startswith('raw_resume/'):
-        return key.replace('raw_resume/', 'parsed_resume/')
+        # 替換前綴
+        output_key = key.replace('raw_resume/', 'parsed_resume/')
+        
+        # 確保副檔名是 .json
+        dir_name = os.path.dirname(output_key)
+        base_name = os.path.basename(output_key)
+        name_without_ext = os.path.splitext(base_name)[0]
+        
+        return f"{dir_name}/{name_without_ext}.json" if dir_name else f"{name_without_ext}.json"
     else:
-        # 如果不是預期格式，加上 parsed- 前綴到檔名
+        # 如果不是預期格式，加上 parsed- 前綴到檔名並確保是 .json 副檔名
         dir_name = os.path.dirname(key)
         base_name = os.path.basename(key)
-        new_base = f"parsed-{base_name}"
+        name_without_ext = os.path.splitext(base_name)[0]
+        new_base = f"parsed-{name_without_ext}.json"
         return f"{dir_name}/{new_base}" if dir_name else new_base
 
 def extract_path_info(s3_key: str) -> dict:
@@ -248,6 +261,96 @@ def extract_basic_info(profile_data: dict) -> dict:
             'current_title': ''
         }
 
+def convert_pdf_to_image_bytes_list(pdf_bytes, 
+                                    max_pages=5,
+                                    image_format='png',
+                                    dpi=300):
+    """
+    將 PDF bytes 轉換為多頁圖片，每頁一張，回傳圖片 bytes list。
+
+    :param pdf_bytes: PDF 的 bytes 資料
+    :param image_format: 圖片格式，如 'png', 'jpeg'
+    :param dpi: 解析度（越高越清楚，但圖片也越大）
+    :param max_pages: 最多保留幾頁（超過則只保留前 max_pages 頁）
+    :return: List[bytes]，每張圖片為一筆 bytes
+    """
+    try:
+        images = convert_from_bytes(pdf_bytes, dpi=dpi)
+
+        if max_pages is not None:
+            images = images[:max_pages]
+
+        image_bytes_list = []
+        for img in images:
+            buf = io.BytesIO()
+            img.save(buf, format=image_format.upper())
+            image_bytes_list.append(buf.getvalue())
+
+        return image_bytes_list
+    except Exception as e:
+        logger.error(f"PDF 轉圖片失敗: {str(e)}")
+        raise e
+
+def bedrock_converse_convert_images_to_text_batch(bedrock_client, model_id, images_bytes_list, batch_size=3, sleep_sec=1):
+    """
+    分批將多張圖片丟給 Claude 模型，避免一次丟太多造成 timeout。
+
+    :param bedrock_client: boto3 的 bedrock client
+    :param model_id: Claude 模型 ID（例如 Claude 3.5）
+    :param images_bytes_list: List of image bytes（每張為一頁）
+    :param batch_size: 每批最多幾張圖片（預設 3）
+    :param sleep_sec: 每批間隔幾秒（預設 1 秒，避免觸發限速）
+    :return: 完整的履歷文字內容｀
+    """
+    try:
+        all_text_content = []
+        total_batches = (len(images_bytes_list) + batch_size - 1) // batch_size
+
+        for i in range(0, len(images_bytes_list), batch_size):
+            batch = images_bytes_list[i:i + batch_size]
+
+            content_list = [{"text": f"""
+                             我會傳給你求職者的履歷資訊，當中的內容都非常重要，請你擷取圖片中的所有履歷文字內容
+                             不要省略任何欄位，也不要自行生成額外資訊，這非常重要
+                             """}]
+            for img_bytes in batch:
+                content_list.append({
+                    "image": {
+                        "format": "png",
+                        "source": {"bytes": img_bytes}
+                    }
+                })
+
+            messages = [{
+                "role": "user",
+                "content": content_list
+            }]
+
+            logger.info(f"發送 batch {i//batch_size + 1} / {total_batches} ...")
+            response = bedrock_client.converse(
+                modelId=model_id,
+                messages=messages
+            )
+            
+            text = response["output"]["message"]["content"][0]["text"]
+            all_text_content.append(text)
+
+            if sleep_sec > 0 and i + batch_size < len(images_bytes_list):
+                time.sleep(sleep_sec)
+
+        # 串接所有批次回覆成一段完整文字
+        full_resume_content = "\n".join(all_text_content)
+        logger.info(f"Claude 解析完成，解析結果{full_resume_content}")
+        return full_resume_content
+        
+    except Exception as e:
+        logger.error(f"批次處理圖片失敗: {str(e)}")
+        raise e
+
+def is_pdf_file(file_content_bytes):
+    """檢查檔案是否為 PDF 格式"""
+    return file_content_bytes.startswith(b'%PDF')
+
 def lambda_handler(event, context):
     logger.info(f"收到事件: {event}")
     
@@ -273,19 +376,51 @@ def lambda_handler(event, context):
 
         # 從 S3 讀取原始履歷檔案
         try:
-            body = s3.get_object(Bucket=bucket, Key=key)["Body"].read().decode("utf-8")
-            logger.info(f"成功讀取原始履歷檔案，大小: {len(body)} 字元")
+            file_content_bytes = s3.get_object(Bucket=bucket, Key=key)["Body"].read()
+            logger.info(f"成功讀取原始履歷檔案，大小: {len(file_content_bytes)} bytes")
         except Exception as e:
             logger.error(f"讀取 S3 檔案失敗: {str(e)}")
             continue
 
-        # 使用 Claude 解析履歷
+        # 判斷檔案格式並處理
         try:
-            user_message = {
-                "role": "user",
-                "content": [{"text": f"Resume Raw Json Data 為: {body}"}]
-            }
+            if is_pdf_file(file_content_bytes):
+                logger.info("偵測到 PDF 檔案，進行 PDF 轉圖片處理...")
+                
+                # 將 PDF 轉換為圖片
+                images_bytes_list = convert_pdf_to_image_bytes_list(
+                    file_content_bytes, 
+                    max_pages=10, 
+                    dpi=300
+                )
+                logger.info(f"PDF 轉換完成，共 {len(images_bytes_list)} 頁")
+                
+                # 使用批次處理將圖片轉換為文字
+                resume_text_content = bedrock_converse_convert_images_to_text_batch(
+                    bedrock_client=bedrock_client,
+                    model_id=model_id,
+                    images_bytes_list=images_bytes_list,
+                    batch_size=2,
+                    sleep_sec=1
+                )
+                
+                # 使用 Claude 解析履歷文字
+                user_message = {
+                    "role": "user",
+                    "content": [{"text": f"Resume Raw Json Data 為: {resume_text_content}"}]
+                }
+                
+            else:
+                # 處理 JSON 格式（原來的邏輯）
+                logger.info("偵測到 JSON 檔案，進行 JSON 解析...")
+                body = file_content_bytes.decode("utf-8")
+                
+                user_message = {
+                    "role": "user",
+                    "content": [{"text": f"Resume Raw Json Data 為: {body}"}]
+                }
 
+            # 使用 Claude 解析履歷
             response = bedrock_client.converse(
                 modelId=model_id,
                 messages=[user_message],
@@ -296,8 +431,10 @@ def lambda_handler(event, context):
             result = json.loads(response['output']['message']["content"][0]["text"])
             logger.info(f"Claude 解析成功，解析結果大小: {len(str(result))} 字元")
             
+            logger.info(f"Claude 解析完成，解析結果{result}")
+            
         except Exception as e:
-            logger.error(f"Claude 解析失敗: {str(e)}")
+            logger.error(f"檔案處理或 Claude 解析失敗: {str(e)}")
             continue
 
         # 寫入解析後的履歷到 S3 parsed bucket
